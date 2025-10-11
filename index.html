@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Оренда житла</title>
+    <link rel="stylesheet" href="main.css" />
+</head>
+<body>
+<header>
+    <label>
+        <input type="text" placeholder="Пошук..." />
+    </label>
+    <button id="btnFilters" class="red-btn">Фільтри</button>
+    <button id="btnMenu" class="red-btn">Меню</button>
+    <button id="btnListings" class="red-btn">Оголошення</button>
+</header>
+
+<!-- Вікно 1: Фільтри -->
+<section id="filtersWindow" class="window active">
+    <h2>Фільтри</h2>
+    <ul>
+        <li>Оренда з сусідом / без</li>
+        <li>Місто</li>
+        <li>Ціна</li>
+        <li>К-ть кімнат</li>
+        <li>Характеристики сусіда</li>
+        <li>К-ть сусідів</li>
+    </ul>
+</section>
+
+<!-- Вікно 2: Меню -->
+<section id="menuWindow" class="window">
+    <h2>Меню користувача</h2>
+    <ul>
+        <li>Додати оголошення</li>
+        <li>Зареєструватись</li>
+        <li>Сповістити про проблему</li>
+    </ul>
+</section>
+
+<!-- Вікно 3: Оголошення -->
+<section id="listingsWindow" class="window">
+    <h2>Оголошення</h2>
+    <div class="card">Квартира біля центру — Львів</div>
+    <div class="card">Шукаю сусіда — Київ</div>
+    <!-- Додай більше карток -->
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>
