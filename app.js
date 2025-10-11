@@ -1,18 +1,33 @@
-const filtersBtn = document.getElementById('btnFilters');
-const menuBtn = document.getElementById('btnMenu');
-const listingsBtn = document.getElementById('btnListings');
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. УПРАВЛІННЯ МОБІЛЬНИМ МЕНЮ (якщо потрібно)
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    const desktopNav = document.querySelector('.desktop-nav');
 
-const filtersWindow = document.getElementById('filtersWindow');
-const menuWindow = document.getElementById('menuWindow');
-const listingsWindow = document.getElementById('listingsWindow');
+    if (menuToggle && desktopNav) {
+        menuToggle.addEventListener('click', () => {
+            // Тут потрібно додати логіку для показу/приховування мобільного меню
+            // Наприклад, додати/видалити клас 'active' до/з body або nav
+            // desktopNav.classList.toggle('active-mobile'); 
+            console.log('Mobile menu toggled');
+        });
+    }
 
-function showWindow(activeWindow) {
-    [filtersWindow, menuWindow, listingsWindow].forEach(win => {
-        win.classList.remove('active');
-    });
-    activeWindow.classList.add('active');
-}
+    // 2. ФІЛЬТРИ (заглушка)
+    const filterBtn = document.querySelector('.filter-btn');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', () => {
+            alert('Відкриття вікна/панелі фільтрів...');
+        });
+    }
 
-filtersBtn.addEventListener('click', () => showWindow(filtersWindow));
-menuBtn.addEventListener('click', () => showWindow(menuWindow));
-listingsBtn.addEventListener('click', () => showWindow(listingsWindow));
+    // 3. ПОШУК (заглушка)
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Пошук за запитом:', searchInput.value);
+                // Тут буде логіка API-запиту
+            }
+        });
+    }
+});

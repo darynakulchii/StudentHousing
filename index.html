@@ -1,51 +1,98 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Оренда житла</title>
-    <link rel="stylesheet" href="main.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniHome | Пошук студентського житла</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
-<header>
-    <label>
-        <input type="text" placeholder="Пошук..." />
-    </label>
-    <button id="btnFilters" class="red-btn">Фільтри</button>
-    <button id="btnMenu" class="red-btn">Меню</button>
-    <button id="btnListings" class="red-btn">Оголошення</button>
+
+<header class="main-header">
+    <div class="logo">UniHome</div>
+
+    <nav class="desktop-nav">
+        <a href="#">Головна</a>
+        <a href="#">Вибрані</a>
+        <a href="#">Чат</a>
+    </nav>
+
+    <div class="header-icons">
+        <i class="fas fa-bell"></i>
+        <div class="user-avatar"></div>
+        <i class="fas fa-bars mobile-menu-toggle"></i>
+    </div>
 </header>
 
-<!-- Вікно 1: Фільтри -->
-<section id="filtersWindow" class="window active">
-    <h2>Фільтри</h2>
-    <ul>
-        <li>Оренда з сусідом / без</li>
-        <li>Місто</li>
-        <li>Ціна</li>
-        <li>К-ть кімнат</li>
-        <li>Характеристики сусіда</li>
-        <li>К-ть сусідів</li>
-    </ul>
-</section>
+<main>
+    <h1>Discover your new house!</h1>
 
-<!-- Вікно 2: Меню -->
-<section id="menuWindow" class="window">
-    <h2>Меню користувача</h2>
-    <ul>
-        <li>Додати оголошення</li>
-        <li>Зареєструватись</li>
-        <li>Сповістити про проблему</li>
-    </ul>
-</section>
+    <section class="search-section">
+        <div class="search-block">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" placeholder="Пошук: район, вулиця, університет..." class="search-input">
+            <button class="filter-btn">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+    </section>
 
-<!-- Вікно 3: Оголошення -->
-<section id="listingsWindow" class="window">
-    <h2>Оголошення</h2>
-    <div class="card">Квартира біля центру — Львів</div>
-    <div class="card">Шукаю сусіда — Київ</div>
-    <!-- Додай більше карток -->
-</section>
+    <section class="main-actions-menu" id="actionsMenu">
+        <button class="action-card action-btn" data-type="find_home">Шукаю житло</button>
+        <button class="action-card action-btn" data-type="find_mate">Шукаю сусіда</button>
+        <button class="action-card action-btn" data-type="rent_out">Хочу здати житло</button>
+        <button class="action-card action-btn active-action" data-type="all_listings">Всі оголошення</button>
+    </section>
+
+    <section class="listings-grid">
+        <h2>Свіжі оголошення</h2>
+        <div class="listings-container">
+
+            <div class="listing-card large-card">
+                <img src="https://picsum.photos/400/300?random=1" alt="Квартира" class="listing-image">
+                <div class="info-overlay">
+                    <span class="price-tag">₴12,000 / міс</span>
+                </div>
+                <div class="listing-content">
+                    <h3>Park Avenue</h3>
+                    <p class="details"><i class="fas fa-map-marker-alt"></i> Modern Enclave</p>
+                </div>
+            </div>
+
+            <div class="listing-card large-card">
+                <img src="https://picsum.photos/400/300?random=2" alt="Квартира" class="listing-image">
+                <div class="info-overlay">
+                    <span class="price-tag">₴10,500 / міс</span>
+                </div>
+                <div class="listing-content">
+                    <h3>Max House</h3>
+                    <p class="details"><i class="fas fa-map-marker-alt"></i> Model Town</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</main>
+
+<nav class="mobile-nav-bar">
+    <a href="#" class="nav-item active"><i class="fas fa-home"></i> <span>Головна</span></a>
+    <a href="#" class="nav-item"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
+    <a href="#" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
+</nav>
+
+<!--<div id="mobileMenuWindow" class="menu-sidebar">-->
+<!--    <div class="sidebar-header">-->
+<!--        <i class="fas fa-times" id="btnCloseMenu"></i>-->
+<!--    </div>-->
+<!--    <nav class="sidebar-nav">-->
+<!--        <a href="#">Додати оголошення</a>-->
+<!--        <a href="#">Налаштування</a>-->
+<!--        <a href="#">Повідомити про помилку</a>-->
+<!--    </nav>-->
+<!--</div>-->
+
+<div id="overlay"></div>
 
 <script src="app.js"></script>
 </body>
