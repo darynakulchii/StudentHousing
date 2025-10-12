@@ -13,13 +13,17 @@
     <div class="logo">UniHome</div>
 
     <nav class="desktop-nav">
-        <a href="#">Головна</a>
+        <a href="#" class="active">Головна</a>
         <a href="#">Вибрані</a>
         <a href="#">Чат</a>
     </nav>
 
     <div class="header-icons">
-        <i class="fas fa-bell"></i>
+        <div class="notification-icon-container">
+            <i class="fas fa-bell notification-icon"></i>
+            <span class="notification-badge" id="notificationBadge"></span>
+        </div>
+
         <div class="user-avatar"></div>
         <i class="fas fa-bars mobile-menu-toggle"></i>
     </div>
@@ -81,18 +85,75 @@
     <a href="#" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
 </nav>
 
-<!--<div id="mobileMenuWindow" class="menu-sidebar">-->
-<!--    <div class="sidebar-header">-->
-<!--        <i class="fas fa-times" id="btnCloseMenu"></i>-->
-<!--    </div>-->
-<!--    <nav class="sidebar-nav">-->
-<!--        <a href="#">Додати оголошення</a>-->
-<!--        <a href="#">Налаштування</a>-->
-<!--        <a href="#">Повідомити про помилку</a>-->
-<!--    </nav>-->
-<!--</div>-->
+<div id="mobileMenuWindow" class="menu-sidebar">
+    <div class="sidebar-header">
+        <i class="fas fa-times" id="btnCloseMenu"></i>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="#">Зареєструватись</a>
+        <a href="#">Додати оголошення</a>
+        <a href="#">Налаштування</a>
+        <a href="#">Повідомити про помилку</a>
+    </nav>
+</div>
+
 
 <div id="overlay"></div>
+
+
+<div id="filterSidebar" class="filter-sidebar">
+    <div class="sidebar-header">
+        <h2>Фільтри</h2>
+        <i class="fas fa-times" id="btnCloseFilters"></i>
+    </div>
+    <form class="filters-form">
+
+        <div class="filter-group">
+            <label for="city">Місто</label>
+            <select id="city" name="city">
+                <option value="">Усі міста</option>
+                <option value="kyiv">Київ</option>
+                <option value="lviv">Львів</option>
+                <option value="odesa">Одеса</option>
+                <option value="kharkiv">Харків</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="price">Максимальна ціна (₴/міс): <span id="priceValue">30000</span></label>
+            <input type="range" id="price" name="max_price" min="1000" max="30000" value="30000" step="500"
+                   oninput="document.getElementById('priceValue').innerText=this.value">
+        </div>
+
+        <div class="filter-group">
+            <label for="university">Університет</label>
+            <input type="text" id="university" name="university" placeholder="Наприклад, КНУ ім. Шевченка">
+        </div>
+
+        <div class="filter-group">
+            <label>Кількість сусідів</label>
+            <div class="radio-options">
+                <input type="radio" id="mates_0" name="roommates" value="0" checked> <label for="mates_0">Я один</label>
+                <input type="radio" id="mates_1" name="roommates" value="1"> <label for="mates_1">1</label>
+                <input type="radio" id="mates_2" name="roommates" value="2"> <label for="mates_2">2+</label>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>Характеристики сусіда (важливі для вас)</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="char_quiet" name="characteristics" value="quiet"> <label for="char_quiet">Тихий</label>
+                <input type="checkbox" id="char_pet" name="characteristics" value="pet_friendly"> <label for="char_pet">З тваринами OK</label>
+                <input type="checkbox" id="char_smoker" name="characteristics" value="non_smoker"> <label for="char_smoker">Не палить</label>
+            </div>
+        </div>
+
+        <button type="submit" class="apply-filters-btn">Застосувати фільтри</button>
+        <button type="reset" class="reset-filters-btn">Скинути</button>
+
+    </form>
+</div>
+
 
 <script src="app.js"></script>
 </body>
