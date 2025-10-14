@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
     // 1. УПРАВЛІННЯ МОБІЛЬНИМ МЕНЮ (Side-Menu)
     const menuToggle = document.querySelector('.mobile-menu-toggle');
     const mobileMenuWindow = document.getElementById('mobileMenuWindow');
@@ -11,6 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterSidebar = document.getElementById('filterSidebar');
     const btnCloseFilters = document.getElementById('btnCloseFilters');
 
+    // 2.1. УПРАВЛІННЯ СПОВІЩЕННЯМИ (Side-Notifications)
+    const notificationIconContainer = document.querySelector('.notification-icon-container');
+    const notificationSidebar = document.getElementById('notificationSidebar');
+    const btnCloseNotifications = document.getElementById('btnCloseNotifications');
+
+
     // Функція для відкриття/закриття меню
     const toggleMenu = (action) => {
         if (action === 'open') {
@@ -19,9 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = 'hidden';
         } else if (action === 'close') {
             mobileMenuWindow.classList.remove('open');
-            overlay.classList.remove('active');
-            // Відновлення прокручування, тільки якщо фільтри теж закриті
-            if (filterSidebar && !filterSidebar.classList.contains('open')) {
+            // Перевіряємо, чи інші сайдбари не відкриті, перш ніж приховати оверлей
+            if (!filterSidebar.classList.contains('open') && !notificationSidebar.classList.contains('open')) {
+                overlay.classList.remove('active');
                 document.body.style.overflow = '';
             }
         }
@@ -35,58 +40,63 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = 'hidden';
         } else if (action === 'close') {
             filterSidebar.classList.remove('open');
-            overlay.classList.remove('active');
-            // Відновлення прокручування, тільки якщо меню теж закрите
-            if (mobileMenuWindow && !mobileMenuWindow.classList.contains('open')) {
+            // Перевіряємо, чи інші сайдбари не відкриті
+            if (!mobileMenuWindow.classList.contains('open') && !notificationSidebar.classList.contains('open')) {
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+    };
+
+    // Функція для відкриття/закриття сповіщень
+    const toggleNotifications = (action) => {
+        if (action === 'open') {
+            notificationSidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // Скидаємо лічильник при відкритті
+            if (currentNotificationCount > 0) {
+                updateNotificationCount(0);
+                currentNotificationCount = 0;
+            }
+        } else if (action === 'close') {
+            notificationSidebar.classList.remove('open');
+            // Перевіряємо, чи інші сайдбари не відкриті
+            if (!mobileMenuWindow.classList.contains('open') && !filterSidebar.classList.contains('open')) {
+                overlay.classList.remove('active');
                 document.body.style.overflow = '';
             }
         }
     };
 
 
-    // ====================================
-    // 5. ЛОГІКА СПОВІЩЕНЬ
-    // ====================================
+    // ЛОГІКА СПОВІЩЕНЬ
     const notificationBadge = document.getElementById('notificationBadge');
-    const notificationIconContainer = document.querySelector('.notification-icon-container');
 
-    /**
-     * Оновлює лічильник сповіщень.
-     * @param {number} count - Кількість нових повідомлень.
-     */
     const updateNotificationCount = (count) => {
         if (notificationBadge) {
             if (count > 0) {
-                // Відображаємо кількість
                 notificationBadge.textContent = count > 9 ? '9+' : count;
                 notificationBadge.style.display = 'flex';
             } else {
-                // Приховуємо, якщо немає сповіщень
                 notificationBadge.style.display = 'none';
             }
         }
     };
 
-    // ЦЕЙ БЛОК ТРЕБА ПЕРЕПИСАТИ
-    //
-    // (це поки тільки чернетка як це мало б працювати)
-    // Ініціалізуємо лічильник (наприклад, 3 нових сповіщення)
-    let currentNotificationCount =0;
+    let currentNotificationCount = 2; // Приклад
     updateNotificationCount(currentNotificationCount);
 
-    // Додаємо обробник кліку на іконку
     if (notificationIconContainer) {
         notificationIconContainer.addEventListener('click', () => {
-            alert(`Ви відкрили сповіщення. Було ${currentNotificationCount} нових повідомлень.`);
-
-            // Скидаємо лічильник після "перегляду"
-            currentNotificationCount = 0;
-            updateNotificationCount(currentNotificationCount);
-
-            // Тут може бути логіка для переходу на сторінку сповіщень
+            toggleNotifications('open');
         });
     }
-    //
+
+    // Обробник для кнопки закриття сповіщень
+    if (btnCloseNotifications) {
+        btnCloseNotifications.addEventListener('click', () => toggleNotifications('close'));
+    }
 
     // Логіка для меню-бургера
     if (menuToggle && mobileMenuWindow && btnCloseMenu && overlay) {
@@ -100,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseFilters.addEventListener('click', () => toggleFilters('close'));
     }
 
-    // Закриття обох при кліку на оверлей
+    // Закриття всіх сайдбарів при кліку на оверлей
     if (overlay) {
         overlay.addEventListener('click', () => {
             if (mobileMenuWindow && mobileMenuWindow.classList.contains('open')) {
@@ -108,6 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (filterSidebar && filterSidebar.classList.contains('open')) {
                 toggleFilters('close');
+            }
+            // НОВИЙ КОД: Закриття сайдбара сповіщень
+            if (notificationSidebar && notificationSidebar.classList.contains('open')) {
+                toggleNotifications('close');
             }
         });
     }
@@ -125,6 +139,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Логіка застосування/скидання фільтрів
     const filtersForm = document.querySelector('.filters-form');
+    const priceInput = document.getElementById('price');
+    const priceValueSpan = document.getElementById('priceValue');
+
+    // Для оновлення ціни
+    if (priceInput && priceValueSpan) {
+        priceInput.addEventListener('input', () => {
+            priceValueSpan.innerText = priceInput.value;
+        });
+    }
+
     if (filtersForm) {
         filtersForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -147,6 +171,19 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleFilters('close'); // Закриваємо сайдбар
 
             // *Тут має бути логіка відправки запиту на API для фільтрування*
+
+            // Обробник для кнопки "Скинути"
+            filtersForm.querySelector('.reset-filters-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                filtersForm.reset();
+
+                // Скидаємо відображення ціни
+                if (priceInput && priceValueSpan) {
+                    priceValueSpan.innerText = priceInput.max;
+                }
+                console.log('Фільтри скинуто');
+                // *Тут має бути функція для завантаження всіх оголошень без фільтрів*
+            });
         });
 
         // Обробник для кнопки "Скинути"
@@ -160,4 +197,25 @@ document.addEventListener('DOMContentLoaded', () => {
             // *Тут має бути функція для завантаження всіх оголошень без фільтрів*
         });
     }
+
+    // 4.1. ЛОГІКА КНОПОК ДІЙ
+    const actionButtons = document.querySelectorAll('.main-actions-menu .action-btn');
+
+    if (actionButtons.length > 0) {
+        actionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // 1. Видаляємо клас 'active-action' з усіх кнопок
+                actionButtons.forEach(btn => btn.classList.remove('active-action'));
+
+                // 2. Додаємо клас 'active-action' до поточної кнопки
+                button.classList.add('active-action');
+
+                // 3. (Заглушка) Виводимо в консоль обрану дію
+                const actionType = button.getAttribute('data-type');
+                console.log('Обрана дія:', actionType);
+                // Тут має бути логіка для фільтрування оголошень за типом
+            });
+        });
+    }
+
 });

@@ -13,9 +13,9 @@
     <div class="logo">UniHome</div>
 
     <nav class="desktop-nav">
-        <a href="#" class="active">Головна</a>
-        <a href="#">Вибрані</a>
-        <a href="#">Чат</a>
+        <a href="index.html" class="active">Головна</a>
+        <a href="pages/favorites.html">Вибрані</a>
+        <a href="pages/chat.html">Чат</a>
     </nav>
 
     <div class="header-icons">
@@ -24,7 +24,7 @@
             <span class="notification-badge" id="notificationBadge"></span>
         </div>
 
-        <div class="user-avatar"></div>
+        <a href="pages/profile.html" class="user-avatar"></a>
         <i class="fas fa-bars mobile-menu-toggle"></i>
     </div>
 </header>
@@ -80,9 +80,9 @@
 </main>
 
 <nav class="mobile-nav-bar">
-    <a href="#" class="nav-item active"><i class="fas fa-home"></i> <span>Головна</span></a>
-    <a href="#" class="nav-item"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
-    <a href="#" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
+    <a href="index.html" class="nav-item active"><i class="fas fa-home"></i> <span>Головна</span></a>
+    <a href="pages/favorites.html" class="nav-item"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
+    <a href="pages/chat.html" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
 </nav>
 
 <div id="mobileMenuWindow" class="menu-sidebar">
@@ -90,10 +90,10 @@
         <i class="fas fa-times" id="btnCloseMenu"></i>
     </div>
     <nav class="sidebar-nav">
-        <a href="#">Зареєструватись</a>
-        <a href="#">Додати оголошення</a>
-        <a href="#">Налаштування</a>
-        <a href="#">Повідомити про помилку</a>
+        <a href="pages/register.html">Зареєструватись</a>
+        <a href="pages/add_listing.html">Додати оголошення</a>
+        <a href="pages/settings.html">Налаштування</a>
+        <a href="pages/report_bug.html">Повідомити про помилку</a>
     </nav>
 </div>
 
@@ -152,6 +152,36 @@
         <button type="reset" class="reset-filters-btn">Скинути</button>
 
     </form>
+</div>
+
+
+<div id="notificationSidebar" class="notification-sidebar">
+    <div class="sidebar-header">
+        <h2>Сповіщення</h2>
+        <i class="fas fa-times" id="btnCloseNotifications"></i>
+    </div>
+
+    <div class="notification-list">
+        <div class="notification-item unread">
+            <i class="fas fa-comment-dots"></i>
+            <p>Нове повідомлення від **Іван Орендатор**.</p>
+            <span class="notification-time">5 хв тому</span>
+        </div>
+
+        <div class="notification-item unread">
+            <i class="fas fa-heart"></i>
+            <p>**Анна Власниця** додала ваше оголошення у вибрані.</p>
+            <span class="notification-time">2 год тому</span>
+        </div>
+
+        <div class="notification-item">
+            <i class="fas fa-home"></i>
+            <p>Ваше оголошення про житло було опубліковано.</p>
+            <span class="notification-time">Вчора</span>
+        </div>
+    </div>
+
+    <a href="pages/chat.html" class="view-all-btn">Перейти до чату та сповіщень</a>
 </div>
 
 

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniHome | Повідомити про помилку</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="../main.css">
+</head>
+<body>
+
+<header class="main-header">
+    <div class="logo">UniHome</div>
+    <nav class="desktop-nav">
+        <a href="../index.html">Головна</a>
+        <a href="favorites.html">Вибрані</a>
+        <a href="chat.html">Чат</a>
+    </nav>
+    <div class="header-icons">
+        <div class="notification-icon-container">
+            <i class="fas fa-bell notification-icon"></i>
+            <span class="notification-badge" id="notificationBadge"></span>
+        </div>
+        <a href="profile.html" class="user-avatar"></a>
+        <i class="fas fa-bars mobile-menu-toggle"></i>
+    </div>
+</header>
+
+<main>
+    <h1>Повідомити про проблему</h1>
+    <p style="text-align: center; margin-top: 50px; color: var(--text-light);">
+        Тут буде форма зворотного зв'язку для повідомлення про технічні проблеми.
+    </p>
+</main>
+
+<nav class="mobile-nav-bar">
+    <a href="../index.html" class="nav-item"><i class="fas fa-home"></i> <span>Головна</span></a>
+    <a href="favorites.html" class="nav-item"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
+    <a href="chat.html" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
+</nav>
+
+<div id="mobileMenuWindow" class="menu-sidebar">...</div>
+<div id="overlay"></div>
+<div id="filterSidebar" class="filter-sidebar">...</div>
+
+<script src="../app.js"></script>
+</body>
+</html>
