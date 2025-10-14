@@ -149,7 +149,7 @@ h2 {
 
 
 /* ==================================== */
-/* 2.2. OFF-CANVAS МЕНЮ-САЙДБАР */
+/* 2.2. МЕНЮ-САЙДБАР */
 /* ==================================== */
 .menu-sidebar {
     position: fixed;
@@ -218,6 +218,112 @@ h2 {
 #overlay.active {
     display: block;
     opacity: 1;
+}
+
+
+/* 2.3 СПОВІЩЕННЯ ВИСУВНА ПАНЕЛЬ */
+
+.notification-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 90%;
+    max-width: 350px;
+    height: 100%;
+    background: #fff;
+    z-index: 102; /* Вище, ніж меню-бургер (101) */
+    transform: translateX(100%); /* Приховуємо за межами екрану */
+    transition: transform 0.3s ease-out;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.notification-sidebar.open {
+    transform: translateX(0); /* Висуваємо, коли відкрито */
+}
+
+.notification-sidebar .sidebar-header {
+    /* Використовуємо стилі sidebar-header з 2.2 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.notification-sidebar h2 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+#btnCloseNotifications {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-dark);
+}
+
+.notification-list {
+    flex-grow: 1;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+    background-color: #fafafa;
+}
+
+.notification-item i {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.notification-item p {
+    flex-grow: 1;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.notification-item span.notification-time {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+/* Стиль для непрочитаних */
+.notification-item.unread {
+    background-color: #f7f7ff;
+    font-weight: 600;
+}
+
+.view-all-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+    margin-top: 15px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.view-all-btn:hover {
+    opacity: 0.9;
 }
 
 
@@ -319,6 +425,15 @@ h2 {
     border-radius: 8px;
     font-size: 1rem;
     outline: none;
+}
+
+/* Стилі для range input (повзунка ціни) */
+.filter-group input[type="range"] {
+    width: 100%; /* Розтягує на всю ширину контейнера */
+    height: 8px;
+    background: transparent;
+    margin: 10px 0;
+    cursor: pointer;
 }
 
 /* Стилі для радіо-кнопок/чекбоксів */
