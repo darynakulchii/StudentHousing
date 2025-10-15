@@ -41,9 +41,46 @@
 </nav>
 
 <div id="mobileMenuWindow" class="menu-sidebar">
+    <div class="sidebar-header">
+        <i class="fas fa-times" id="btnCloseMenu"></i>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="register.html">Зареєструватись</a>
+        <a href="add_listing.html">Додати оголошення</a>
+        <a href="settings.html">Налаштування</a>
+        <a href="report_bug.html">Повідомити про помилку</a>
+    </nav>
 </div>
 <div id="overlay"></div>
-<div id="filterSidebar" class="filter-sidebar">
+<div id="filterSidebar" class="filter-sidebar"></div>
+
+<div id="notificationSidebar" class="notification-sidebar">
+    <div class="sidebar-header">
+        <h2>Сповіщення</h2>
+        <i class="fas fa-times" id="btnCloseNotifications"></i>
+    </div>
+
+    <div class="notification-list">
+        <div class="notification-item unread">
+            <i class="fas fa-comment-dots"></i>
+            <p>Нове повідомлення від **Іван Орендатор**.</p>
+            <span class="notification-time">5 хв тому</span>
+        </div>
+
+        <div class="notification-item unread">
+            <i class="fas fa-heart"></i>
+            <p>**Анна Власниця** додала ваше оголошення у вибрані.</p>
+            <span class="notification-time">2 год тому</span>
+        </div>
+
+        <div class="notification-item">
+            <i class="fas fa-home"></i>
+            <p>Ваше оголошення про житло було опубліковано.</p>
+            <span class="notification-time">Вчора</span>
+        </div>
+    </div>
+
+    <a href="chat.html" class="view-all-btn">Перейти до чату та сповіщень</a>
 </div>
 
 <script src="../app.js"></script>

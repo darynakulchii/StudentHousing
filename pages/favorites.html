@@ -23,7 +23,7 @@
             <i class="fas fa-bell notification-icon"></i>
             <span class="notification-badge" id="notificationBadge"></span>
         </div>
-        <div class="user-avatar"></div>
+        <a href="profile.html" class="user-avatar"></a>
         <i class="fas fa-bars mobile-menu-toggle"></i>
     </div>
 </header>
@@ -38,7 +38,7 @@
 <nav class="mobile-nav-bar">
     <a href="../index.html" class="nav-item"><i class="fas fa-home"></i> <span>Головна</span></a>
     <a href="favorites.html" class="nav-item active"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
-    <a href="#" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
+    <a href="chat.html" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
 </nav>
 
 <div id="mobileMenuWindow" class="menu-sidebar">
@@ -55,6 +55,35 @@
 
 <div id="overlay"></div>
 <div id="filterSidebar" class="filter-sidebar">...</div>
+
+<div id="notificationSidebar" class="notification-sidebar">
+    <div class="sidebar-header">
+        <h2>Сповіщення</h2>
+        <i class="fas fa-times" id="btnCloseNotifications"></i>
+    </div>
+
+    <div class="notification-list">
+        <div class="notification-item unread">
+            <i class="fas fa-comment-dots"></i>
+            <p>Нове повідомлення від **Іван Орендатор**.</p>
+            <span class="notification-time">5 хв тому</span>
+        </div>
+
+        <div class="notification-item unread">
+            <i class="fas fa-heart"></i>
+            <p>**Анна Власниця** додала ваше оголошення у вибрані.</p>
+            <span class="notification-time">2 год тому</span>
+        </div>
+
+        <div class="notification-item">
+            <i class="fas fa-home"></i>
+            <p>Ваше оголошення про житло було опубліковано.</p>
+            <span class="notification-time">Вчора</span>
+        </div>
+    </div>
+
+    <a href="chat.html" class="view-all-btn">Перейти до чату та сповіщень</a>
+</div>
 
 
 <script src="../app.js"></script>
