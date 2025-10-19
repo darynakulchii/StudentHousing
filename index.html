@@ -7,184 +7,113 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="main.css">
 </head>
+
 <body>
+    <div id="navigation-placeholder"></div>
 
-<header class="main-header">
-    <div class="logo">UniHome</div>
+    <main class="main-content">
+        <h1>Знайди своє комфортне житло!</h1>
 
-    <nav class="desktop-nav">
-        <a href="index.html" class="active">Головна</a>
-        <a href="pages/favorites.html">Вибрані</a>
-        <a href="pages/chat.html">Чат</a>
-    </nav>
+        <section class="search-section">
+            <div class="search-block">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Пошук: район, вулиця, університет..." class="search-input">
+                <button class="filter-btn">
+                    <i class="fas fa-sliders-h"></i>
+                </button>
+            </div>
+        </section>
 
-    <div class="header-icons">
-        <div class="notification-icon-container">
-            <i class="fas fa-bell notification-icon"></i>
-            <span class="notification-badge" id="notificationBadge"></span>
-        </div>
+        <section class="main-actions-menu" id="actionsMenu">
+            <button class="action-card action-btn active-action" data-type="all_listings">Всі оголошення</button>
+            <button class="action-card action-btn" data-type="find_home">Шукаю житло</button>
+            <button class="action-card action-btn" data-type="find_mate">Шукаю сусіда</button>
+            <button class="action-card action-btn" data-type="rent_out">Хочу здати житло</button>
+        </section>
 
-        <a href="pages/profile.html" class="user-avatar"></a>
-        <i class="fas fa-bars mobile-menu-toggle"></i>
-    </div>
-</header>
+        <section class="listings-grid">
+            <h2>Свіжі оголошення</h2>
+            <div class="listings-container">
 
-<main>
-    <h1>Знайди своє комфортне житло!</h1>
-
-    <section class="search-section">
-        <div class="search-block">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" placeholder="Пошук: район, вулиця, університет..." class="search-input">
-            <button class="filter-btn">
-                <i class="fas fa-sliders-h"></i>
-            </button>
-        </div>
-    </section>
-
-    <section class="main-actions-menu" id="actionsMenu">
-        <button class="action-card action-btn active-action" data-type="all_listings">Всі оголошення</button>
-        <button class="action-card action-btn" data-type="find_home">Шукаю житло</button>
-        <button class="action-card action-btn" data-type="find_mate">Шукаю сусіда</button>
-        <button class="action-card action-btn" data-type="rent_out">Хочу здати житло</button>
-    </section>
-
-    <section class="listings-grid">
-        <h2>Свіжі оголошення</h2>
-        <div class="listings-container">
-
-            <div class="listing-card large-card">
-                <img src="https://picsum.photos/400/300?random=1" alt="Квартира" class="listing-image">
-                <div class="info-overlay">
-                    <span class="price-tag">₴12,000 / міс</span>
+                <div class="listing-card large-card">
+                    <img src="https://picsum.photos/400/300?random=1" alt="Квартира" class="listing-image">
+                    <div class="info-overlay">
+                        <span class="price-tag">₴12,000 / міс</span>
+                    </div>
+                    <div class="listing-content">
+                        <h3>Park Avenue</h3>
+                        <p class="details"><i class="fas fa-map-marker-alt"></i> Modern Enclave</p>
+                    </div>
                 </div>
-                <div class="listing-content">
-                    <h3>Park Avenue</h3>
-                    <p class="details"><i class="fas fa-map-marker-alt"></i> Modern Enclave</p>
+
+                <div class="listing-card large-card">
+                    <img src="https://picsum.photos/400/300?random=2" alt="Квартира" class="listing-image">
+                    <div class="info-overlay">
+                        <span class="price-tag">₴10,500 / міс</span>
+                    </div>
+                    <div class="listing-content">
+                        <h3>Max House</h3>
+                        <p class="details"><i class="fas fa-map-marker-alt"></i> Model Town</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <div id="filterSidebar" class="filter-sidebar">
+        <div class="sidebar-header">
+            <h2>Фільтри</h2>
+            <i class="fas fa-times" id="btnCloseFilters"></i>
+        </div>
+        <form class="filters-form">
+
+            <div class="filter-group">
+                <label for="city">Місто</label>
+                <select id="city" name="city">
+                    <option value="">Усі міста</option>
+                    <option value="kyiv">Київ</option>
+                    <option value="lviv">Львів</option>
+                    <option value="odesa">Одеса</option>
+                    <option value="kharkiv">Харків</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="price">Максимальна ціна (₴/міс): <span id="priceValue">30000</span></label>
+                <input type="range" id="price" name="max_price" min="1000" max="30000" value="30000" step="500"
+                       oninput="document.getElementById('priceValue').innerText=this.value">
+            </div>
+
+            <div class="filter-group">
+                <label for="university">Університет</label>
+                <input type="text" id="university" name="university" placeholder="Наприклад, КНУ ім. Шевченка">
+            </div>
+
+            <div class="filter-group">
+                <label>Кількість сусідів</label>
+                <div class="radio-options">
+                    <input type="radio" id="mates_0" name="roommates" value="0" checked> <label for="mates_0">Я один</label>
+                    <input type="radio" id="mates_1" name="roommates" value="1"> <label for="mates_1">1</label>
+                    <input type="radio" id="mates_2" name="roommates" value="2"> <label for="mates_2">2+</label>
                 </div>
             </div>
 
-            <div class="listing-card large-card">
-                <img src="https://picsum.photos/400/300?random=2" alt="Квартира" class="listing-image">
-                <div class="info-overlay">
-                    <span class="price-tag">₴10,500 / міс</span>
-                </div>
-                <div class="listing-content">
-                    <h3>Max House</h3>
-                    <p class="details"><i class="fas fa-map-marker-alt"></i> Model Town</p>
+            <div class="filter-group">
+                <label>Характеристики сусіда (важливі для вас)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="char_quiet" name="characteristics" value="quiet"> <label for="char_quiet">Тихий</label>
+                    <input type="checkbox" id="char_pet" name="characteristics" value="pet_friendly"> <label for="char_pet">З тваринами OK</label>
+                    <input type="checkbox" id="char_smoker" name="characteristics" value="non_smoker"> <label for="char_smoker">Не палить</label>
                 </div>
             </div>
 
-        </div>
-    </section>
-</main>
+            <button type="submit" class="apply-filters-btn">Застосувати фільтри</button>
+            <button type="reset" class="reset-filters-btn">Скинути</button>
 
-<nav class="mobile-nav-bar">
-    <a href="index.html" class="nav-item active"><i class="fas fa-home"></i> <span>Головна</span></a>
-    <a href="pages/favorites.html" class="nav-item"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
-    <a href="pages/chat.html" class="nav-item"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
-</nav>
-
-<div id="mobileMenuWindow" class="menu-sidebar">
-    <div class="sidebar-header">
-        <i class="fas fa-times" id="btnCloseMenu"></i>
-    </div>
-    <nav class="sidebar-nav">
-        <a href="pages/register.html">Зареєструватись</a>
-        <a href="pages/add_listing.html">Додати оголошення</a>
-        <a href="pages/settings.html">Налаштування</a>
-        <a href="pages/report_bug.html">Повідомити про помилку</a>
-    </nav>
-</div>
-
-
-<div id="overlay"></div>
-
-
-<div id="filterSidebar" class="filter-sidebar">
-    <div class="sidebar-header">
-        <h2>Фільтри</h2>
-        <i class="fas fa-times" id="btnCloseFilters"></i>
-    </div>
-    <form class="filters-form">
-
-        <div class="filter-group">
-            <label for="city">Місто</label>
-            <select id="city" name="city">
-                <option value="">Усі міста</option>
-                <option value="kyiv">Київ</option>
-                <option value="lviv">Львів</option>
-                <option value="odesa">Одеса</option>
-                <option value="kharkiv">Харків</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="price">Максимальна ціна (₴/міс): <span id="priceValue">30000</span></label>
-            <input type="range" id="price" name="max_price" min="1000" max="30000" value="30000" step="500"
-                   oninput="document.getElementById('priceValue').innerText=this.value">
-        </div>
-
-        <div class="filter-group">
-            <label for="university">Університет</label>
-            <input type="text" id="university" name="university" placeholder="Наприклад, КНУ ім. Шевченка">
-        </div>
-
-        <div class="filter-group">
-            <label>Кількість сусідів</label>
-            <div class="radio-options">
-                <input type="radio" id="mates_0" name="roommates" value="0" checked> <label for="mates_0">Я один</label>
-                <input type="radio" id="mates_1" name="roommates" value="1"> <label for="mates_1">1</label>
-                <input type="radio" id="mates_2" name="roommates" value="2"> <label for="mates_2">2+</label>
-            </div>
-        </div>
-
-        <div class="filter-group">
-            <label>Характеристики сусіда (важливі для вас)</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="char_quiet" name="characteristics" value="quiet"> <label for="char_quiet">Тихий</label>
-                <input type="checkbox" id="char_pet" name="characteristics" value="pet_friendly"> <label for="char_pet">З тваринами OK</label>
-                <input type="checkbox" id="char_smoker" name="characteristics" value="non_smoker"> <label for="char_smoker">Не палить</label>
-            </div>
-        </div>
-
-        <button type="submit" class="apply-filters-btn">Застосувати фільтри</button>
-        <button type="reset" class="reset-filters-btn">Скинути</button>
-
-    </form>
-</div>
-
-
-<div id="notificationSidebar" class="notification-sidebar">
-    <div class="sidebar-header">
-        <h2>Сповіщення</h2>
-        <i class="fas fa-times" id="btnCloseNotifications"></i>
+        </form>
     </div>
 
-    <div class="notification-list">
-        <div class="notification-item unread">
-            <i class="fas fa-comment-dots"></i>
-            <p>Нове повідомлення від **Іван Орендатор**.</p>
-            <span class="notification-time">5 хв тому</span>
-        </div>
-
-        <div class="notification-item unread">
-            <i class="fas fa-heart"></i>
-            <p>**Анна Власниця** додала ваше оголошення у вибрані.</p>
-            <span class="notification-time">2 год тому</span>
-        </div>
-
-        <div class="notification-item">
-            <i class="fas fa-home"></i>
-            <p>Ваше оголошення про житло було опубліковано.</p>
-            <span class="notification-time">Вчора</span>
-        </div>
-    </div>
-
-    <a href="pages/chat.html" class="view-all-btn">Перейти до чату та сповіщень</a>
-</div>
-
-
-<script src="js/app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
