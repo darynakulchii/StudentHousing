@@ -13,9 +13,74 @@
 
 <main class="add-listing-page">
     <h1>Створити нове оголошення</h1>
-    <p style="text-align: center; margin-top: 50px; color: var(--text-light);">
-        Тут буде багатоступенева форма для додавання житла або пошуку сусіда.
-    </p>
+
+    <form id="addListingForm" class="listing-form">
+
+        <div class="form-group type-group">
+            <label>Я хочу:</label>
+            <div class="radio-options">
+                <input type="radio" id="type_rent_out" name="listing_type" value="rent_out" required>
+                <label for="type_rent_out">Здати житло</label>
+
+                <input type="radio" id="type_find_mate" name="listing_type" value="find_mate" required>
+                <label for="type_find_mate">Знайти сусіда</label>
+
+                <input type="radio" id="type_find_home" name="listing_type" value="find_home" required>
+                <label for="type_find_home">Знайти житло</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="title">Заголовок оголошення</label>
+            <input type="text" id="title" name="title" placeholder="Наприклад, 'Затишна кімната біля КПІ'" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Детальний опис</label>
+            <textarea id="description" name="description" rows="5" placeholder="Опишіть умови, район, транспорт, вимоги до сусіда..." required></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="city">Місто</label>
+                <select id="city" name="city" required>
+                    <option value="" disabled selected>Виберіть місто</option>
+                    <option value="Київ">Київ</option>
+                    <option value="Львів">Львів</option>
+                    <option value="Одеса">Одеса</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="price">Ціна (₴/міс)</label>
+                <input type="number" id="price" name="price" placeholder="Наприклад, 10000" min="1000" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="main_photo_url">Головне фото (URL)</label>
+            <input type="text" id="main_photo_url" name="main_photo_url" placeholder="URL зображення">
+        </div>
+
+        <div class="form-group">
+            <label>Характеристики житла/сусіда:</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="char_quiet" name="characteristics" value="quiet">
+                <label for="char_quiet">Тихий/Тиша</label>
+
+                <input type="checkbox" id="char_pet" name="characteristics" value="pet_friendly">
+                <label for="char_pet">З тваринами OK</label>
+
+                <input type="checkbox" id="char_smoker" name="characteristics" value="non_smoker">
+                <label for="char_smoker">Не палить</label>
+
+                <input type="checkbox" id="char_wifi" name="characteristics" value="has_wifi">
+                <label for="char_wifi">Wi-Fi</label>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-listing-btn">Опублікувати оголошення</button>
+    </form>
 </main>
 
 <script src="app.js"></script>

@@ -877,7 +877,131 @@ h2 {
 }
 
 /* ==================================== */
-/* 7. МЕДІА-ЗАПИТИ (ADAPTATION TO DESKTOP) */
+/* 7. СТИЛІ ФОРМИ ДОДАВАННЯ ОГОЛОШЕННЯ */
+/* ==================================== */
+
+/* Контейнер сторінки */
+.add-listing-page {
+    /* Наслідує стиль profile-page, але без flex-center, якщо він не потрібен */
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Оболонка форми */
+.listing-form {
+    /* Наслідує стиль profile-info, але без flex-1 */
+    background: #FCFCFC;
+    border: 1px solid #C7D9E5;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.listing-form h1 {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #2F4157;
+}
+
+/* Стилі для всіх полів введення та textarea */
+.listing-form input:not([type="radio"]),
+.listing-form select,
+.listing-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #C7D9E5;
+    border-radius: 8px;
+    background: #f0f7ff; /* Світло-блакитний фон, як у профілі */
+    font-size: 15px;
+    color: var(--text-dark);
+}
+
+.listing-form textarea {
+    resize: vertical;
+}
+
+/* Стилі фокусу */
+.listing-form input:focus,
+.listing-form select:focus,
+.listing-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color); /* Основний колір при фокусі */
+    background: #FCFCFC;
+}
+
+/* Розміщення елементів у ряду */
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Стилі плейсхолдерів (наслідують стиль профілю) */
+.listing-form input::placeholder,
+.listing-form textarea::placeholder {
+    color: #577C8E;
+    opacity: 1;
+}
+
+
+/* СТИЛІЗАЦІЯ RADIO BUTTONS (TYPE-GROUP) */
+.form-group.type-group .radio-options {
+    gap: 15px; /* Збільшуємо відступ */
+    justify-content: space-between;
+}
+
+.form-group.type-group .radio-options label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* СТИЛІЗАЦІЯ КНОПКИ САБМІТУ */
+.submit-listing-btn {
+    /* Наслідує стиль кнопки "Зберегти зміни" */
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    background: #2F4157;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+    font-size: 1rem;
+}
+
+.submit-listing-btn:hover {
+    background: var(--primary-color);
+}
+
+
+/* Адаптивність для рядів */
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+/* ==================================== */
+/* 8. МЕДІА-ЗАПИТИ (ADAPTATION TO DESKTOP) */
 /* ==================================== */
 
 @media (min-width: 768px) {

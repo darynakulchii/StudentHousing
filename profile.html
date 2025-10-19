@@ -12,76 +12,72 @@
 <div id="navigation-placeholder"></div>
 
 <main class="profile-page">
-    <main class="profile-page">
 
-        <div class="profile-container">
+    <div class="profile-container">
+        <aside class="profile-sidebar">
+            <div class="profile-avatar">
+                <img src="https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg" alt="Avatar">
+                <label for="avatar-upload" class="edit-icon">✎</label>
+                <input type="file" id="avatar-upload" style="display: none;">
+                <p>Баранчик Шон</p>
+            </div>
 
-            <aside class="profile-sidebar">
-                <div class="profile-avatar">
-                    <img src="https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg" alt="Avatar">
-                    <label for="avatar-upload" class="edit-icon">✎</label>
-                    <input type="file" id="avatar-upload" style="display: none;">
-                    <p>Баранчик Шон</p>
+            <hr class="sidebar-divider">
+
+            <nav class="profile-menu">
+                <ul>
+                    <li class="active"><i class="fas fa-user"></i> Особиста інформація</li>
+                    <li><i class="fa-solid fa-money-check"></i> Мої оголошення</li>
+                    <li><i class="fa-solid fa-lock"></i> Логін і пароль</li>
+                    <li><i class="fa-solid fa-arrow-right-from-bracket"></i> Вийти</li>
+                </ul>
+            </nav>
+        </aside>
+
+        <section class="profile-info">
+            <h2>Особиста інформація</h2>
+
+            <form class="profile-form">
+                <div class="form-row">
+                    <input type="text" placeholder="Прізвище" value="Баранчик">
+                    <input type="text" placeholder="Ім’я" value="Шон">
                 </div>
 
-                <hr class="sidebar-divider">
+                <input type="email" placeholder="Email" value="ShoneTheSheep@mail.com">
+                <input type="tel" placeholder="Телефон" value="+380123456789">
 
+                <div class="form-row">
+                    <input type="text" placeholder="Місто" value="Львів">
+                    <input type="date" placeholder="Дата народження" value="2007-03-09">
+                </div>
 
-                <nav class="profile-menu">
-                    <ul>
-                        <li class="active"><i class="fas fa-user"></i> Особиста інформація</li>
-                        <li><i class="fa-solid fa-money-check"></i> Мої оголошення</li>
-                        <li><i class="fa-solid fa-lock"></i> Логін і пароль</li>
-                        <li><i class="fa-solid fa-arrow-right-from-bracket"></i> Вийти</li>
-                    </ul>
-                </nav>
-            </aside>
+                <div class="form-row">
+                    <select id="habits-select" required>
+                        <option value="" disabled selected>Звички:</option>
+                        <option>Палю</option>
+                        <option>Вегетеріанець</option>
+                        <option>Ранній птах</option>
+                        <option>Сова</option>
+                        <option>Інше</option>
+                    </select>
 
-            <section class="profile-info">
-                <h2>Особиста інформація</h2>
+                    <select id="interests-select" required>
+                        <option value="" disabled selected>Інтереси:</option>
+                        <option>Мистецтво</option>
+                        <option>Подорожі</option>
+                        <option>Кіно</option>
+                        <option>Спорт</option>
+                        <option>Інше</option>
+                    </select>
+                </div>
 
-                <form class="profile-form">
-                    <div class="form-row">
-                        <input type="text" placeholder="Прізвище" value="Баранчик">
-                        <input type="text" placeholder="Ім’я" value="Шон">
-                    </div>
+                <textarea placeholder="Про себе..."></textarea>
 
-                    <input type="email" placeholder="Email" value="ShoneTheSheep@mail.com">
-                    <input type="tel" placeholder="Телефон" value="+380123456789">
+                <button type="submit">Зберегти зміни</button>
+            </form>
+        </section>
+    </div>
 
-                    <div class="form-row">
-                        <input type="text" placeholder="Місто" value="Львів">
-                        <input type="date" placeholder="Дата народження" value="2007-03-09">
-                    </div>
-
-                    <div class="form-row">
-                        <select id="habits-select" required>
-                            <option value="" disabled selected>Звички:</option>
-                            <option>Палю</option>
-                            <option>Вегетеріанець</option>
-                            <option>Ранній птах</option>
-                            <option>Сова</option>
-                            <option>Інше</option>
-                        </select>
-
-                        <select id="interests-select" required>
-                            <option value="" disabled selected>Інтереси:</option>
-                            <option>Мистецтво</option>
-                            <option>Подорожі</option>
-                            <option>Кіно</option>
-                            <option>Спорт</option>
-                            <option>Інше</option>
-                        </select>
-                    </div>
-
-                    <textarea placeholder="Про себе..."></textarea>
-
-                    <button type="submit">Зберегти зміни</button>
-                </form>
-            </section>
-        </div>
-
-    </main>
 </main>
 <script src="app.js"></script>
 </body>
