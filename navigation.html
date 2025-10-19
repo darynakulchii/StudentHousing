@@ -1,30 +1,67 @@
-<header class="header-nav">
-    <div class="container">
-        <button class="mobile-menu-toggle">...</button>
-        <a href="index.html" class="logo">
-        </a>
-        <nav class="desktop-nav">
-            <ul>
-                <li><a href="index.html" class="active">Головна</a></li>
-                <li><a href="pages/favorites.html">Вибрані</a></li>
-                <li><a href="pages/chat.html">Чат</a></li>
-                <li>
-                    <button class="notification-icon-container">
-                    </button>
-                </li>
-                <li><a href="pages/profile.html">
-                </a></li>
-            </ul>
-        </nav>
+<header class="main-header">
+    <div class="logo">UniHome</div>
+
+    <nav class="desktop-nav">
+        <a href="index.html" class="nav-link" data-path="index.html">Головна</a>
+        <a href="favorites.html" class="nav-link" data-path="pages/favorites.html">Вибрані</a>
+        <a href="chat.html" class="nav-link" data-path="pages/chat.html">Чат</a>
+    </nav>
+
+    <div class="header-icons">
+        <div class="notification-icon-container">
+            <i class="fas fa-bell notification-icon"></i>
+            <span class="notification-badge" id="notificationBadge"></span>
+        </div>
+        <a href="profile.html" class="user-avatar"></a>
+        <i class="fas fa-bars mobile-menu-toggle"></i>
     </div>
 </header>
 
-<div class="mobile-nav-bar">
-    <ul>
-        <li><a href="index.html" class="active"><i class="icon-home"></i></a></li>
-        <li><a href="pages/favorites.html"><i class="icon-favorites"></i></a></li>
-        <li><a href="pages/chat.html"><i class="icon-chat"></i></a></li>
-        <li><a href="pages/add_listing.html"><i class="icon-plus"></i></a></li>
-        <li><a href="pages/profile.html"><i class="icon-profile"></i></a></li>
-    </ul>
+<nav class="mobile-nav-bar">
+    <a href="index.html" class="nav-item" data-path="index.html"><i class="fas fa-home"></i> <span>Головна</span></a>
+    <a href="favorites.html" class="nav-item" data-path="pages/favorites.html"><i class="fas fa-heart"></i> <span>Вибрані</span></a>
+    <a href="chat.html" class="nav-item" data-path="pages/chat.html"><i class="fas fa-comment-dots"></i> <span>Чат</span></a>
+</nav>
+
+<div id="mobileMenuWindow" class="menu-sidebar">
+    <div class="sidebar-header">
+        <i class="fas fa-times" id="btnCloseMenu"></i>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="register.html">Зареєструватись</a>
+        <a href="add_listing.html">Додати оголошення</a>
+        <a href="settings.html">Налаштування</a>
+        <a href="report_bug.html">Повідомити про помилку</a>
+    </nav>
+</div>
+
+<div id="overlay"></div>
+
+<div id="notificationSidebar" class="notification-sidebar">
+    <div class="sidebar-header">
+        <h2>Сповіщення</h2>
+        <i class="fas fa-times" id="btnCloseNotifications"></i>
+    </div>
+
+    <div class="notification-list">
+        <div class="notification-item unread">
+            <i class="fas fa-comment-dots"></i>
+            <p>Нове повідомлення від **Іван Орендатор**.</p>
+            <span class="notification-time">5 хв тому</span>
+        </div>
+
+        <div class="notification-item unread">
+            <i class="fas fa-heart"></i>
+            <p>**Анна Власниця** додала ваше оголошення у вибрані.</p>
+            <span class="notification-time">2 год тому</span>
+        </div>
+
+        <div class="notification-item">
+            <i class="fas fa-home"></i>
+            <p>Ваше оголошення про житло було опубліковано.</p>
+            <span class="notification-time">Вчора</span>
+        </div>
+    </div>
+
+    <a href="chat.html" class="view-all-btn">Перейти до чату та сповіщень</a>
 </div>
