@@ -13,13 +13,12 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
-
 // 2. НАЛАШТУВАННЯ ПІДКЛЮЧЕННЯ ДО БАЗИ ДАНИХ (PostgreSQL)
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
-    database: 'unihome_db',
-    password: 'ВАШ_ПАРОЛЬ_DB',
+    database: 'postgres',
+    password: '25122005',
     port: 5432,
 });
 
@@ -86,7 +85,7 @@ app.post('/api/listings', async (req, res) => {
         const listingResult = await client.query(listingQuery, [
             user_id, listing_type, title, description, price, city, main_photo_url
         ]);
-        const listingId = listingResult.rows[0].listing_id; // Виправлено: listingId тут визначений
+        const listingId = listingResult.rows[0].listing_id;
 
         // 3. ВСТАВКА ХАРАКТЕРИСТИК (Якщо вони були обрані)
         if (characteristics && characteristics.length > 0) {
