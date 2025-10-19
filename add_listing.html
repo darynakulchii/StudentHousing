@@ -63,19 +63,33 @@
         </div>
 
         <div class="form-group">
-            <label>Характеристики житла/сусіда:</label>
+            <label>Характеристики житла:</label>
             <div class="checkbox-options">
-                <input type="checkbox" id="char_quiet" name="characteristics" value="quiet">
-                <label for="char_quiet">Тихий/Тиша</label>
+                <input type="checkbox" id="char_quiet_room" name="characteristics" value="quiet">
+                <label for="char_quiet_room">Тихий район</label>
 
-                <input type="checkbox" id="char_pet" name="characteristics" value="pet_friendly">
-                <label for="char_pet">З тваринами OK</label>
+                <input type="checkbox" id="char_pet_room" name="characteristics" value="pet_friendly">
+                <label for="char_pet_room">Можна з тваринами</label>
 
-                <input type="checkbox" id="char_smoker" name="characteristics" value="non_smoker">
-                <label for="char_smoker">Не палить</label>
+                <input type="checkbox" id="char_wifi_room" name="characteristics" value="has_wifi">
+                <label for="char_wifi_room">Wi-Fi</label>
+            </div>
+        </div>
 
-                <input type="checkbox" id="char_wifi" name="characteristics" value="has_wifi">
-                <label for="char_wifi">Wi-Fi</label>
+        <div class="form-group">
+            <label>Характеристики сусіда:</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="char_quiet_neighbor" name="characteristics" value="quiet">
+                <label for="char_quiet_neighbor">Тихий/Тиша</label>
+
+                <input type="checkbox" id="char_pet_neighbor" name="characteristics" value="pet_friendly">
+                <label for="char_pet_neighbor">Не проти жити з тваринами</label>
+
+                <input type="checkbox" id="char_no_smoker_neighbor" name="characteristics" value="non_smoker">
+                <label for="char_no_smoker_neighbor">Не палить</label>
+
+                <input type="checkbox" id="student_neighbor" name="characteristics" value="has_wifi">
+                <label for="student_neighbor">Студент</label>
             </div>
         </div>
 
