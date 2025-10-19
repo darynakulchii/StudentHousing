@@ -99,7 +99,7 @@ h2 {
 .user-avatar {
     width: 35px;
     height: 35px;
-    background-image: url('https://i.pravatar.cc/35?img=6'); /* Приклад аватара */
+    background-image: url('https://i.pravatar.cc/35?img=5'); /* Приклад аватара */
     background-size: cover;
     border-radius: 50%;
     border: 2px solid var(--primary-color);
