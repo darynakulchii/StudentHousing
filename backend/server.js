@@ -33,32 +33,6 @@ app.get('/api/listings', async (req, res) => {
     }
 });
 
-// 3.5. НОВИЙ МАРШРУТ: ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ ЗА ID
-app.get('/api/listings/:id', async (req, res) => {
-    const { id } = req.params; // Отримуємо ID з URL
-
-    try {
-        const queryText = `
-            SELECT l.*, u.first_name, u.last_name 
-            FROM listings l
-            JOIN users u ON l.user_id = u.user_id
-            WHERE l.listing_id = $1
-        `;
-
-        const result = await pool.query(queryText, [id]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Оголошення не знайдено' });
-        }
-
-        res.json(result.rows[0]); // Повертаємо перше (і єдине) знайдене оголошення
-
-    } catch (err) {
-        console.error('Помилка виконання запиту до БД', err);
-        res.status(500).json({ error: 'Помилка сервера при отриманні оголошення' });
-    }
-});
-
 // ===============================================
 // НОВИЙ МАРШРУТ: ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ (З ДЕТАЛЯМИ)
 // ===============================================
