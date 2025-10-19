@@ -33,6 +33,93 @@ app.get('/api/listings', async (req, res) => {
     }
 });
 
+// 3.5. НОВИЙ МАРШРУТ: ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ ЗА ID
+app.get('/api/listings/:id', async (req, res) => {
+    const { id } = req.params; // Отримуємо ID з URL
+
+    try {
+        const queryText = `
+            SELECT l.*, u.first_name, u.last_name 
+            FROM listings l
+            JOIN users u ON l.user_id = u.user_id
+            WHERE l.listing_id = $1
+        `;
+
+        const result = await pool.query(queryText, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Оголошення не знайдено' });
+        }
+
+        res.json(result.rows[0]); // Повертаємо перше (і єдине) знайдене оголошення
+
+    } catch (err) {
+        console.error('Помилка виконання запиту до БД', err);
+        res.status(500).json({ error: 'Помилка сервера при отриманні оголошення' });
+    }
+});
+
+// ===============================================
+// НОВИЙ МАРШРУТ: ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ (З ДЕТАЛЯМИ)
+// ===============================================
+app.get('/api/listings/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const client = await pool.connect();
+
+        // 1. Отримуємо основну інформацію (оголошення + автор)
+        const listingQuery = `
+            SELECT l.*, u.first_name, u.last_name, u.email 
+            FROM listings l
+            JOIN users u ON l.user_id = u.user_id
+            WHERE l.listing_id = $1;
+        `;
+        const listingPromise = client.query(listingQuery, [id]);
+
+        // 2. Отримуємо всі фото для цього оголошення
+        const photosQuery = `
+            SELECT photo_id, image_url, is_main 
+            FROM listing_photos 
+            WHERE listing_id = $1 
+            ORDER BY photo_order;
+        `;
+        const photosPromise = client.query(photosQuery, [id]);
+
+        // 3. Отримуємо всі характеристики
+        const charsQuery = `
+            SELECT c.name_ukr, c.system_key 
+            FROM listing_characteristics lc
+            JOIN characteristics c ON lc.char_id = c.char_id
+            WHERE lc.listing_id = $1;
+        `;
+        const charsPromise = client.query(charsQuery, [id]);
+
+        // Виконуємо всі запити паралельно
+        const [listingResult, photosResult, charsResult] = await Promise.all([
+            listingPromise,
+            photosPromise,
+            charsPromise
+        ]);
+
+        client.release();
+
+        if (listingResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Оголошення не знайдено' });
+        }
+
+        // 4. Збираємо все в один об'єкт
+        const listing = listingResult.rows[0];
+        listing.photos = photosResult.rows;
+        listing.characteristics = charsResult.rows;
+
+        res.json(listing);
+
+    } catch (err) {
+        console.error('Помилка отримання деталей оголошення:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
 
 // 4. ПРИКЛАД МАРШРУТУ: РЕЄСТРАЦІЯ КОРИСТУВАЧА
 app.post('/api/register', async (req, res) => {
