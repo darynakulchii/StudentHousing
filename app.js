@@ -214,6 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Завантажує список для головної сторінки
         await fetchAndDisplayListings();
 
+        await handleRegistration();
+
         // Завантажує деталі для сторінки оголошення
         await fetchAndDisplayListingDetail();
 
@@ -600,3 +602,177 @@ const handleRegistration = async () => {
         }
     });
 };
+
+// =================================================================================
+// 9. ЛОГІКА ЧАТУ
+// =================================================================================
+
+// ТИМЧАСОВО: ID поточного користувача
+const MY_USER_ID = 1;
+let currentOpenConversationId = null;
+let currentOpenReceiverId = null;
+
+// Функція для завантаження списку розмов
+const loadConversations = async () => {
+    const container = document.getElementById('conversationsList');
+    if (!container) return; // Ми не на сторінці чату
+
+    try {
+        const response = await fetch('http://localhost:3000/api/my-conversations');
+        const conversations = await response.json();
+
+        container.innerHTML = ''; // Очищуємо "Завантаження..."
+        if (conversations.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);">У вас ще немає розмов.</p>';
+            return;
+        }
+
+        conversations.forEach(convo => {
+            const item = document.createElement('div');
+            item.className = 'conversation-item';
+            // Зберігаємо дані в data-атрибутах
+            item.dataset.conversationId = convo.conversation_id;
+            item.dataset.receiverId = convo.other_user_id;
+            item.dataset.receiverName = `${convo.first_name} ${convo.last_name}`;
+
+            item.innerHTML = `
+                <span class="avatar-placeholder"><i class="fas fa-user-circle"></i></span>
+                <span>${convo.first_name} ${convo.last_name}</span>
+            `;
+            // Додаємо обробник кліку для відкриття чату
+            item.addEventListener('click', () => {
+                loadMessages(convo.conversation_id, convo.other_user_id, `${convo.first_name} ${convo.last_name}`);
+
+                // Підсвічуємо активний
+                document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+            });
+            container.appendChild(item);
+        });
+
+    } catch (error) {
+        console.error('Помилка завантаження розмов:', error);
+        container.innerHTML = '<p style="color: red; padding: 10px;">Помилка завантаження.</p>';
+    }
+};
+
+// Функція для завантаження повідомлень конкретного чату
+const loadMessages = async (conversationId, receiverId, receiverName) => {
+    const messagesArea = document.getElementById('messagesArea');
+    const chatHeader = document.getElementById('chatHeader');
+    const messageForm = document.getElementById('messageForm');
+    if (!messagesArea || !chatHeader || !messageForm) return;
+
+    // Зберігаємо ID поточної розмови
+    currentOpenConversationId = conversationId;
+    currentOpenReceiverId = receiverId;
+
+    chatHeader.textContent = receiverName; // Встановлюємо ім'я в хедері
+    messageForm.style.display = 'flex'; // Показуємо форму вводу
+    messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light; margin: auto;">Завантаження...</p>';
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`);
+        const messages = await response.json();
+
+        messagesArea.innerHTML = ''; // Очищуємо "Завантаження..."
+        if (messages.length === 0) {
+            messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light; margin: auto;">Повідомлень ще немає.</p>';
+            return;
+        }
+
+        messages.forEach(msg => {
+            appendMessage(msg);
+        });
+
+        // Прокручуємо до останнього повідомлення
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+
+    } catch (error) {
+        console.error('Помилка завантаження повідомлень:', error);
+        messagesArea.innerHTML = '<p style="color: red; margin: auto;">Помилка завантаження.</p>';
+    }
+};
+
+// Допоміжна функція для додавання 1 повідомлення у вікно
+const appendMessage = (msg) => {
+    const messagesArea = document.getElementById('messagesArea');
+
+    // Очищуємо "Повідомлень ще немає", якщо це перше повідомлення
+    if(messagesArea.querySelector('p')) {
+        messagesArea.innerHTML = '';
+    }
+
+    const messageEl = document.createElement('div');
+    messageEl.className = 'message';
+    // Визначаємо, наше чи чуже
+    if (msg.sender_id === MY_USER_ID) {
+        messageEl.classList.add('sent');
+    } else {
+        messageEl.classList.add('received');
+    }
+    messageEl.textContent = msg.message_body;
+    messagesArea.appendChild(messageEl);
+};
+
+// Обробка відправки нового повідомлення
+const handleMessageSend = () => {
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    if (!messageForm || !messageInput) return;
+
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const messageBody = messageInput.value.trim();
+
+        // Потрібен ID отримувача, якого ми зберегли при відкритті чату
+        if (messageBody === '' || !currentOpenReceiverId) return;
+
+        try {
+            const response = await fetch('http://localhost:3000/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    receiver_id: currentOpenReceiverId,
+                    message_body: messageBody
+                })
+            });
+
+            if (response.ok) {
+                const newMessage = await response.json();
+                appendMessage(newMessage); // Додаємо наше нове повідомлення
+                messageInput.value = ''; // Очищуємо поле вводу
+
+                // Прокручуємо вниз
+                const messagesArea = document.getElementById('messagesArea');
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            } else {
+                alert('Помилка відправки повідомлення.');
+            }
+        } catch (error) {
+            console.error('Помилка відправки:', error);
+            alert('Помилка мережі.');
+        }
+    });
+};
+
+// Запускаємо логіку чату, коли DOM завантажено
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.endsWith('chat.html') || window.location.pathname.endsWith('chat')) {
+        loadConversations();
+        handleMessageSend();
+
+        // (Опціонально) Перевіряємо, чи ми прийшли зі сторінки оголошення
+        const urlParams = new URLSearchParams(window.location.search);
+        const contactUserId = urlParams.get('user_id');
+        if (contactUserId) {
+            // TODO: Це складніша логіка.
+            // Нам треба знайти/створити розмову і потім викликати loadMessages().
+            // Поки що це просто завантажить список.
+            console.log('Хочемо почати чат з user_id:', contactUserId);
+
+            // Можна одразу надіслати "порожнє" повідомлення, щоб створити чат,
+            // але краще мати окремий endpoint POST /api/conversations
+        }
+    }
+});

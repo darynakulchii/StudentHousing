@@ -14,7 +14,8 @@
   "private": true,
   "dependencies": {
     "cors": "^2.8.5",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/pg": "^8.15.5",

@@ -13,9 +13,27 @@
 
 <main class="chat-page">
     <h1>Повідомлення</h1>
-    <p style="text-align: center; margin-top: 50px; color: var(--text-light);">
-        Тут буде список ваших розмов.
-    </p>
+
+    <div class="chat-container">
+        <aside class="conversations-list" id="conversationsList">
+            <p style="text-align: center; padding: 10px; color: var(--text-light);">Завантаження...</p>
+        </aside>
+
+        <section class="chat-window">
+            <div class="chat-header" id="chatHeader">
+                Оберіть розмову
+            </div>
+
+            <div class="messages-area" id="messagesArea">
+                <p style="text-align: center; color: var(--text-light); margin: auto;">Тут буде ваша розмова.</p>
+            </div>
+
+            <form class="chat-input-area" id="messageForm" style="display: none;">
+                <input type="text" id="messageInput" placeholder="Напишіть повідомлення..." required>
+                <button type="submit"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </section>
+    </div>
 </main>
 
 <script src="app.js"></script>

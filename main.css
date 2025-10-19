@@ -1258,3 +1258,117 @@ h2 {
         grid-template-columns: 2fr 3fr 1.5fr;
     }
 }
+
+/* ==================================== */
+/* 10. СТИЛІ СТОРІНКИ ЧАТУ */
+/* ==================================== */
+
+.chat-container {
+    display: flex;
+    height: calc(100vh - 120px); /* Висота мінус хедер */
+    border: 1px solid #C7D9E5;
+    background: #FCFCFC;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.conversations-list {
+    width: 30%;
+    border-right: 1px solid #C7D9E5;
+    overflow-y: auto;
+}
+.conversation-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.conversation-item:hover {
+    background: #f0f7ff;
+}
+.conversation-item.active {
+    background: #e0ecf7;
+    font-weight: 600;
+}
+.conversation-item .avatar-placeholder {
+    font-size: 1.5rem; color: var(--primary-color);
+}
+
+.chat-window {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+}
+.chat-header {
+    padding: 15px;
+    border-bottom: 1px solid #C7D9E5;
+    font-weight: 600;
+}
+.messages-area {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.message {
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 70%;
+    line-height: 1.4;
+}
+.message.sent {
+    background: var(--primary-color);
+    color: white;
+    align-self: flex-end; /* Наші повідомлення */
+    border-bottom-right-radius: 4px;
+}
+.message.received {
+    background: #e5e5ea;
+    color: black;
+    align-self: flex-start; /* Чужі повідомлення */
+    border-bottom-left-radius: 4px;
+}
+
+.chat-input-area {
+    display: flex;
+    padding: 15px;
+    border-top: 1px solid #C7D9E5;
+    gap: 10px;
+}
+.chat-input-area input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #C7D9E5;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+.chat-input-area button {
+    padding: 0 15px;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* Адаптація чату для мобільних */
+@media (max-width: 768px) {
+    .chat-container {
+        flex-direction: column;
+        height: calc(100vh - 100px);
+    }
+    .conversations-list {
+        width: 100%;
+        height: 30%; /* Список розмов займає 30% висоти */
+        border-right: none;
+        border-bottom: 1px solid #C7D9E5;
+    }
+    .chat-window {
+        width: 100%;
+        height: 70%; /* Вікно чату займає 70% висоти */
+    }
+}
