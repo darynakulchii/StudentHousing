@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darynakulchii/StudentHousing.git"
+  },
+  "private": true,
+  "dependencies": {
+    "cors": "^2.8.5",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "express": "^5.1.0"
+  }
+}

@@ -208,8 +208,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // ВІДКРИТТЯ АСИНХРОННОЇ IIFE
     (async () => {
 
-        // 1. ЗАВАНТАЖЕННЯ НАВІГАЦІЇ (ЧЕКАЄМО ЇЇ ВСТАВКИ)
+        // 0. ЗАВАНТАЖЕННЯ НАВІГАЦІЇ (ЧЕКАЄМО ЇЇ ВСТАВКИ)
         await loadNavigation();
+
+        // 1. ВИКЛИК НОВОЇ ФУНКЦІЇ ЛОГІКИ ФОРМИ
+        if (window.location.pathname.endsWith('add_listing.html') || window.location.pathname.endsWith('add_listing')) {
+            await handleListingSubmission();
+        }
 
         // 2. ПОШУК (заглушка)
         const searchInput = document.querySelector('.search-input');
@@ -285,7 +290,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         }
+    })();
+});
 
-    })(); // ЗАКРИТТЯ ASYNC IIFE
+// =================================================================================
+// 5. ЛОГІКА ДОДАВАННЯ ОГОЛОШЕННЯ
+// =================================================================================
 
-}); // ЗАКРИТТЯ DOMContentLoaded
+const handleListingSubmission = async () => {
+    const form = document.getElementById('addListingForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        const data = {
+            characteristics: [],
+        };
+
+        // Збір даних з форми
+        formData.forEach((value, key) => {
+            // Характеристики збираємо як масив
+            if (key === 'characteristics') {
+                data.characteristics.push(value);
+            } else {
+                data[key] = value;
+            }
+        });
+
+        // Відправка даних на бекенд
+        try {
+            const response = await fetch('http://localhost:3000/api/listings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Успіх! ${result.message} (ID: ${result.listingId})`);
+                form.reset();
+                window.location.href = 'index.html'; // Перенаправлення на головну
+            } else {
+                const errorData = await response.json();
+                alert(`Помилка публікації: ${errorData.error || 'Невідома помилка'}`);
+            }
+
+        } catch (error) {
+            console.error('Помилка мережі/сервера:', error);
+            alert('Не вдалося з’єднатися з сервером. Перевірте, чи запущено бекенд (http://localhost:3000).');
+        }
+    });
+};
