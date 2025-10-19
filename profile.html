@@ -16,20 +16,20 @@
     <div class="profile-container">
         <aside class="profile-sidebar">
             <div class="profile-avatar">
-                <img src="https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg" alt="Avatar">
+                <img src="https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg" alt="Avatar" id="profileAvatarImg">
                 <label for="avatar-upload" class="edit-icon">✎</label>
                 <input type="file" id="avatar-upload" style="display: none;">
-                <p>Баранчик Шон</p>
+                <p id="profileAvatarName">Завантаження...</p>
             </div>
 
             <hr class="sidebar-divider">
 
             <nav class="profile-menu">
                 <ul>
-                    <li class="active"><i class="fas fa-user"></i> Особиста інформація</li>
-                    <li><i class="fa-solid fa-money-check"></i> Мої оголошення</li>
-                    <li><i class="fa-solid fa-lock"></i> Логін і пароль</li>
-                    <li><i class="fa-solid fa-arrow-right-from-bracket"></i> Вийти</li>
+                    <li class="active" id="btnInfo"><i class="fas fa-user"></i> Особиста інформація</li>
+                    <li id="btnMyListings"><i class="fa-solid fa-money-check"></i> Мої оголошення</li>
+                    <li id="btnLoginPassword"><i class="fa-solid fa-lock"></i> Логін і пароль</li>
+                    <li id="btnLogout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Вийти</li>
                 </ul>
             </nav>
         </aside>
@@ -37,41 +37,41 @@
         <section class="profile-info">
             <h2>Особиста інформація</h2>
 
-            <form class="profile-form">
+            <form class="profile-form" id="profileForm">
                 <div class="form-row">
-                    <input type="text" placeholder="Прізвище" value="Баранчик">
-                    <input type="text" placeholder="Ім’я" value="Шон">
+                    <input type="text" placeholder="Прізвище" name="last_name" id="profile_last_name">
+                    <input type="text" placeholder="Ім’я" name="first_name" id="profile_first_name">
                 </div>
 
-                <input type="email" placeholder="Email" value="ShoneTheSheep@mail.com">
-                <input type="tel" placeholder="Телефон" value="+380123456789">
+                <input type="email" placeholder="Email" name="email" id="profile_email">
+                <input type="tel" placeholder="Телефон" name="phone" id="profile_phone">
 
                 <div class="form-row">
-                    <input type="text" placeholder="Місто" value="Львів">
-                    <input type="date" placeholder="Дата народження" value="2007-03-09">
+                    <input type="text" placeholder="Місто" name="city" id="profile_city">
+                    <input type="date" placeholder="Дата народження" name="date_of_birth" id="profile_date">
                 </div>
 
                 <div class="form-row">
-                    <select id="habits-select" required>
+                    <select id="habits-select" name="habits">
                         <option value="" disabled selected>Звички:</option>
-                        <option>Палю</option>
-                        <option>Вегетеріанець</option>
-                        <option>Ранній птах</option>
-                        <option>Сова</option>
-                        <option>Інше</option>
+                        <option value="Палю">Палю</option>
+                        <option value="Вегетаріанець">Вегетаріанець</option>
+                        <option value="Ранній птах">Ранній птах</option>
+                        <option value="Сова">Сова</option>
+                        <option value="Інше">Інше</option>
                     </select>
 
-                    <select id="interests-select" required>
+                    <select id="interests-select" name="interests">
                         <option value="" disabled selected>Інтереси:</option>
-                        <option>Мистецтво</option>
-                        <option>Подорожі</option>
-                        <option>Кіно</option>
-                        <option>Спорт</option>
-                        <option>Інше</option>
+                        <option value="Мистецтво">Мистецтво</option>
+                        <option value="Подорожі">Подорожі</option>
+                        <option value="Кіно">Кіно</option>
+                        <option value="Спорт">Спорт</option>
+                        <option value="Інше">Інше</option>
                     </select>
                 </div>
 
-                <textarea placeholder="Про себе..."></textarea>
+                <textarea placeholder="Про себе..." name="bio" id="profile_bio"></textarea>
 
                 <button type="submit">Зберегти зміни</button>
             </form>

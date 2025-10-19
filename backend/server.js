@@ -395,7 +395,80 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
 });
 
 // ===============================================
-// 8. ЗАПУСК СЕРВЕРА
+// 8. МАРШРУТИ ДЛЯ ПРОФІЛЮ (НОВІ)
+// ===============================================
+
+// 8.1 ОТРИМАННЯ ДАНИХ ПРОФІЛЮ
+app.get('/api/profile', authenticateToken, async (req, res) => {
+    const userId = req.user.userId; // Отримуємо ID з токена
+
+    try {
+        const query = `
+            SELECT email, first_name, last_name, city, date_of_birth, habits, bio, avatar_url 
+            FROM users 
+            WHERE user_id = $1
+        `;
+        const result = await pool.query(query, [userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Помилка отримання профілю:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 8.2 ОНОВЛЕННЯ ДАНИХ ПРОФІЛЮ
+app.put('/api/profile', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const {
+        first_name, last_name, email, city,
+        date_of_birth, habits, bio
+    } = req.body;
+
+    // Валідація дати (якщо вона не null)
+    const dobValue = date_of_birth || null;
+
+    try {
+        const query = `
+            UPDATE users 
+            SET 
+                first_name = $1, 
+                last_name = $2, 
+                email = $3, 
+                city = $4, 
+                date_of_birth = $5, 
+                habits = $6, 
+                bio = $7
+            WHERE user_id = $8
+            RETURNING user_id, email, first_name, last_name;
+        `;
+
+        const result = await pool.query(query, [
+            first_name, last_name, email, city,
+            dobValue, habits, bio, userId
+        ]);
+
+        res.json({
+            message: 'Профіль успішно оновлено',
+            user: result.rows[0]
+        });
+
+    } catch (err) {
+        if (err.code === '23505') { // Помилка унікальності (наприклад, email)
+            res.status(409).json({ error: 'Користувач з таким email вже існує.' });
+        } else {
+            console.error('Помилка оновлення профілю:', err);
+            res.status(500).json({ error: 'Помилка сервера' });
+        }
+    }
+});
+
+// ===============================================
+// 9. ЗАПУСК СЕРВЕРА
 // ===============================================
 httpServer.listen(port, () => {
     console.log(`Сервер бекенду (з Socket.io) запущено на http://localhost:${port}`);
