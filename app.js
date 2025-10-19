@@ -211,18 +211,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // 0. ЗАВАНТАЖЕННЯ НАВІГАЦІЇ (ЧЕКАЄМО ЇЇ ВСТАВКИ)
         await loadNavigation();
 
-        // ------------------------------------------------------------------
-        // --- ЗМІНА: Запускаємо ОБИДВІ функції. ---
-        // Вони самі перевірять, чи на потрібній вони сторінці.
-        // ------------------------------------------------------------------
-
-        // Завантажує список для головної
+        // Завантажує список для головної сторінки
         await fetchAndDisplayListings();
 
         // Завантажує деталі для сторінки оголошення
         await fetchAndDisplayListingDetail();
-        // ------------------------------------------------------------------
 
+        // Виклик ф-ї для реєстрації
+        if (window.location.pathname.endsWith('register.html') || window.location.pathname.endsWith('register')) {
+            await handleRegistration();
+        }
 
         // 1. ВИКЛИК НОВОЇ ФУНКЦІЇ ЛОГІКИ ФОРМИ
         if (window.location.pathname.endsWith('add_listing.html') || window.location.pathname.endsWith('add_listing')) {
@@ -538,4 +536,67 @@ const fetchAndDisplayListingDetail = async () => {
         console.error('Помилка завантаження деталей оголошення:', error);
         container.innerHTML = '<h1 style="text-align: center;">Помилка завантаження</h1><p style="text-align: center;">Не вдалося отримати деталі. Перевірте консоль та чи запущено бекенд.</p>';
     }
+};
+
+// =================================================================================
+// 8. ЛОГІКА РЕЄСТРАЦІЇ КОРИСТУВАЧА
+// =================================================================================
+
+const handleRegistration = async () => {
+    // 1. Знаходимо форму на сторінці register.html
+    const form = document.getElementById('registerForm');
+    if (!form) return; // Якщо форми немає, виходимо
+
+    // 2. Додаємо слухача події "submit"
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Забороняємо стандартну відправку форми
+
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // 3. Проста валідація на фронтенді
+        if (data.password !== data.confirm_password) {
+            alert('Помилка: Паролі не співпадають.');
+            return; // Зупиняємо виконання
+        }
+
+        // 4. Готуємо дані для відправки (без confirm_password)
+        const registrationData = {
+            first_name: data.first_name,
+            last_name: data.last_name,
+            email: data.email,
+            password: data.password // Ваш бекенд очікує 'password', а не 'password_hash'
+        };
+
+        // 5. Відправляємо дані на бекенд
+        try {
+            const response = await fetch('http://localhost:3000/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(registrationData),
+            });
+
+            if (response.status === 201) {
+                // Успішна реєстрація
+                const result = await response.json();
+                alert(`Успіх! ${result.message}. Тепер ви можете увійти.`);
+                form.reset();
+                // Перенаправляємо на головну (або на майбутню сторінку логіну)
+                window.location.href = 'index.html';
+            } else {
+                // Обробка помилок (наприклад, 409 - email зайнятий)
+                const errorData = await response.json();
+                alert(`Помилка реєстрації: ${errorData.error || 'Невідома помилка'}`);
+            }
+
+        } catch (error) {
+            console.error('Помилка мережі/сервера при реєстрації:', error);
+            alert('Не вдалося з’єднатися з сервером. Перевірте консоль.');
+        }
+    });
 };
