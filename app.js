@@ -211,8 +211,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // 0. ЗАВАНТАЖЕННЯ НАВІГАЦІЇ (ЧЕКАЄМО ЇЇ ВСТАВКИ)
         await loadNavigation();
 
-        // ВИКЛИК НОВОЇ ФУНКЦІЇ ВІДОБРАЖЕННЯ ОГОЛОШЕНЬ НА ГОЛОВНІЙ СТОРІНЦІ
+        // ------------------------------------------------------------------
+        // --- ЗМІНА: Запускаємо ОБИДВІ функції. ---
+        // Вони самі перевірять, чи на потрібній вони сторінці.
+        // ------------------------------------------------------------------
+
+        // Завантажує список для головної
         await fetchAndDisplayListings();
+
+        // Завантажує деталі для сторінки оголошення
+        await fetchAndDisplayListingDetail();
+        // ------------------------------------------------------------------
+
 
         // 1. ВИКЛИК НОВОЇ ФУНКЦІЇ ЛОГІКИ ФОРМИ
         if (window.location.pathname.endsWith('add_listing.html') || window.location.pathname.endsWith('add_listing')) {
@@ -384,17 +394,20 @@ const fetchAndDisplayListings = async () => {
             // Встановлюємо фото-заглушку, якщо URL не вказано
             const imageUrl = listing.main_photo_url || 'https://picsum.photos/400/300?random=' + listing.listing_id;
 
+            // --- ЗМІНА: Вся картка тепер є посиланням ---
             const listingCard = `
-                <div class="listing-card large-card">
-                    <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
-                    <div class="info-overlay">
-                        <span class="price-tag">₴${listing.price} / міс</span>
+                <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
+                    <div class="listing-card large-card">
+                        <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
+                        <div class="info-overlay">
+                            <span class="price-tag">₴${listing.price} / міс</span>
+                        </div>
+                        <div class="listing-content">
+                            <h3>${listing.title}</h3>
+                            <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
+                        </div>
                     </div>
-                    <div class="listing-content">
-                        <h3>${listing.title}</h3>
-                        <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
-                    </div>
-                </div>
+                </a>
             `;
             // Додаємо картку в контейнер
             container.innerHTML += listingCard;
@@ -403,5 +416,126 @@ const fetchAndDisplayListings = async () => {
     } catch (error) {
         console.error('Не вдалося завантажити оголошення:', error);
         container.innerHTML = '<p style="color: #e74c3c; font-weight: 600;">Помилка: Не вдалося з’єднатися з сервером для завантаження оголошень.</p>';
+    }
+};
+
+
+// =================================================================================
+// 7. --- НОВА ФУНКЦІЯ: ЛОГІКА ЗАВАНТАЖЕННЯ ДЕТАЛЕЙ ОГОЛОШЕННЯ ---
+// =================================================================================
+
+const fetchAndDisplayListingDetail = async () => {
+    // Шукаємо контейнер зі сторінки listing_detail.html
+    const container = document.getElementById('listingDetailContainer');
+
+    // Якщо контейнера немає (ми не на тій сторінці), виходимо
+    if (!container) return;
+
+    try {
+        // 1. Отримуємо ID оголошення з URL (?id=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const listingId = urlParams.get('id');
+
+        if (!listingId) {
+            container.innerHTML = '<h1 style="text-align: center;">Помилка: ID оголошення не вказано.</h1>';
+            return;
+        }
+
+        // 2. Робимо запит до нашого нового API endpoint
+        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
+
+        if (response.status === 404) {
+            container.innerHTML = '<h1 style="text-align: center;">Помилка 404: Оголошення не знайдено.</h1>';
+            return;
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const listing = await response.json(); // Отримуємо об'єкт з (listing, photos, characteristics)
+
+        // 3. Встановлюємо заголовок сторінки у браузері
+        document.title = `UniHome | ${listing.title}`;
+
+        // 4. Генеруємо HTML
+
+        // Визначаємо головне фото
+        const mainImage = listing.photos.find(p => p.is_main) || listing.photos[0] || { image_url: 'https://picsum.photos/800/600?random=' + listing.listing_id };
+
+        // Створюємо HTML для галереї (якщо є інші фото)
+        let photoGalleryHTML = '';
+        if (listing.photos.length > 1) {
+            photoGalleryHTML = listing.photos
+                .filter(p => !p.is_main) // Беремо всі, окрім головного
+                .map(photo => `<img src="${photo.image_url}" alt="Фото ${listing.title}" class="gallery-thumbnail">`)
+                .join('');
+        }
+
+        // Створюємо HTML для списку характеристик
+        let characteristicsHTML = '';
+        if (listing.characteristics.length > 0) {
+            characteristicsHTML = listing.characteristics
+                .map(char => `<span class="char-tag">${char.name_ukr}</span>`)
+                .join('');
+        } else {
+            characteristicsHTML = '<p>Характеристики не вказані.</p>';
+        }
+
+        // 5. Збираємо все до купи і вставляємо на сторінку
+        const detailHTML = `
+            <div class="listing-detail-layout">
+                <div class="listing-detail-gallery">
+                    <div class="main-image-container">
+                        <img src="${mainImage.image_url}" alt="${listing.title}" id="mainDetailImage">
+                    </div>
+                    ${photoGalleryHTML ? `
+                    <div class="thumbnail-gallery">
+                        ${photoGalleryHTML}
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="listing-detail-info">
+                    <h1>${listing.title}</h1>
+                    <span class="detail-price">₴${listing.price} / міс</span>
+                    
+                    <div class="detail-meta">
+                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
+                        <p><i class="fas fa-university"></i> ${listing.university || 'Університет не вказано'}</p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h2>Опис</h2>
+                        <p>${listing.description.replace(/\\n/g, '<br>')}</p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h2>Характеристики</h2>
+                        <div class="characteristics-list">
+                            ${characteristicsHTML}
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="listing-detail-author">
+                    <h3>Автор оголошення</h3>
+                    <div class="author-card">
+                        <div class="author-avatar">
+                             <i class="fas fa-user-circle"></i>
+                        </div>
+                        <p class="author-name">${listing.first_name} ${listing.last_name}</p>
+                        <a href="chat.html?user_id=${listing.user_id}" class="contact-btn">
+                            <i class="fas fa-comment-dots"></i> Зв'язатись з автором
+                        </a>
+                    </div>
+                </aside>
+            </div>
+        `;
+
+        container.innerHTML = detailHTML;
+
+    } catch (error) {
+        console.error('Помилка завантаження деталей оголошення:', error);
+        container.innerHTML = '<h1 style="text-align: center;">Помилка завантаження</h1><p style="text-align: center;">Не вдалося отримати деталі. Перевірте консоль та чи запущено бекенд.</p>';
     }
 };
