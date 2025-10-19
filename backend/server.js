@@ -4,14 +4,18 @@
 
 const http = require('http');
 const { Server } = require('socket.io');
-
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const httpServer = http.createServer(app);
 const port = 3000;
+
+// СЕКРЕТНИЙ КЛЮЧ ДЛЯ JWT (в реальному проєкті має бути в .env)
+const JWT_SECRET = 'my_super_secret_key_12345';
 
 // 1. НАЛАШТУВАННЯ MIDDLEWARE
 app.use(cors());
@@ -37,22 +41,44 @@ const io = new Server(httpServer, {
 // ===============================================
 // ЛОГІКА SOCKET.IO (REAL-TIME)
 // ===============================================
-io.on('connection', (socket) => { // <-- ПРАВИЛЬНО
+io.on('connection', (socket) => {
     console.log(`Клієнт підключився: ${socket.id}`);
 
-    // 1. Користувач приєднується до "кімнати" розмови
     socket.on('join_conversation', (conversationId) => {
         socket.join(conversationId.toString());
         console.log(`Клієнт ${socket.id} приєднався до кімнати ${conversationId}`);
     });
 
-    // 2. Користувач від'єднується
     socket.on('disconnect', () => {
         console.log(`Клієнт від'єднався: ${socket.id}`);
     });
 });
 
-// 3. ПРИКЛАД МАРШРУТУ (Endpoint): ОТРИМАННЯ ВСІХ ОГОЛОШЕНЬ
+// ===============================================
+// 3. MIDDLEWARE ДЛЯ АВТЕНТИФІКАЦІЇ (НОВЕ)
+// ===============================================
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (token == null) {
+        return res.status(401).json({ error: 'Необхідна автентифікація (немає токена)' });
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: 'Токен недійсний або протермінований' });
+        }
+        // Додаємо дані користувача (userId) до об'єкта req
+        req.user = user;
+        next();
+    });
+};
+
+
+// 4. МАРШРУТИ ДЛЯ ОГОЛОШЕНЬ (Публічні)
+
+// 4.1 ОТРИМАННЯ ВСІХ ОГОЛОШЕНЬ
 app.get('/api/listings', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM listings WHERE is_active = TRUE ORDER BY created_at DESC');
@@ -63,16 +89,13 @@ app.get('/api/listings', async (req, res) => {
     }
 });
 
-// ===============================================
-// НОВИЙ МАРШРУТ: ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ (З ДЕТАЛЯМИ)
-// ===============================================
+// 4.2 ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ (З ДЕТАЛЯМИ)
 app.get('/api/listings/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
         const client = await pool.connect();
 
-        // 1. Отримуємо основну інформацію (оголошення + автор)
         const listingQuery = `
             SELECT l.*, u.first_name, u.last_name, u.email
             FROM listings l
@@ -81,16 +104,9 @@ app.get('/api/listings/:id', async (req, res) => {
         `;
         const listingPromise = client.query(listingQuery, [id]);
 
-        // 2. Отримуємо всі фото для цього оголошення
-        const photosQuery = `
-            SELECT photo_id, image_url, is_main
-            FROM listing_photos
-            WHERE listing_id = $1
-            ORDER BY photo_order;
-        `;
+        const photosQuery = `SELECT photo_id, image_url, is_main FROM listing_photos WHERE listing_id = $1 ORDER BY photo_order;`;
         const photosPromise = client.query(photosQuery, [id]);
 
-        // 3. Отримуємо всі характеристики
         const charsQuery = `
             SELECT c.name_ukr, c.system_key
             FROM listing_characteristics lc
@@ -99,7 +115,6 @@ app.get('/api/listings/:id', async (req, res) => {
         `;
         const charsPromise = client.query(charsQuery, [id]);
 
-        // Виконуємо всі запити паралельно
         const [listingResult, photosResult, charsResult] = await Promise.all([
             listingPromise,
             photosPromise,
@@ -112,7 +127,6 @@ app.get('/api/listings/:id', async (req, res) => {
             return res.status(404).json({ error: 'Оголошення не знайдено' });
         }
 
-        // 4. Збираємо все в один об'єкт
         const listing = listingResult.rows[0];
         listing.photos = photosResult.rows;
         listing.characteristics = charsResult.rows;
@@ -125,17 +139,25 @@ app.get('/api/listings/:id', async (req, res) => {
     }
 });
 
-// 4. ПРИКЛАД МАРШРУТУ: РЕЄСТРАЦІЯ КОРИСТУВАЧА
+// ===============================================
+// 5. МАРШРУТИ АВТЕНТИФІКАЦІЇ (Публічні)
+// ===============================================
+
+// 5.1 РЕЄСТРАЦІЯ КОРИСТУВАЧА (ОНОВЛЕНО З BCRYPT)
 app.post('/api/register', async (req, res) => {
     const { email, password, first_name, last_name } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Необхідно вказати email та пароль' });
+    if (!email || !password || !first_name || !last_name) {
+        return res.status(400).json({ error: 'Всі поля є обов\'язковими' });
     }
 
     try {
+        // ХЕШУЄМО ПАРОЛЬ
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         const queryText = 'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING user_id';
-        const result = await pool.query(queryText, [email, password, first_name, last_name]);
+        const result = await pool.query(queryText, [email, hashedPassword, first_name, last_name]);
 
         res.status(201).json({
             message: 'Користувач успішно зареєстрований',
@@ -151,23 +173,68 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// 5.2 ЛОГІН КОРИСТУВАЧА (НОВИЙ МАРШРУТ)
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
 
-// 5. НОВИЙ МАРШРУТ: ДОДАВАННЯ ОГОЛОШЕННЯ
-app.post('/api/listings', async (req, res) => {
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Необхідно вказати email та пароль' });
+    }
+
+    try {
+        // 1. Знайти користувача
+        const userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (userQuery.rows.length === 0) {
+            return res.status(401).json({ error: 'Неправильний email або пароль' });
+        }
+        const user = userQuery.rows[0];
+
+        // 2. Перевірити пароль
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Неправильний email або пароль' });
+        }
+
+        // 3. Створити JWT токен
+        const payload = {
+            userId: user.user_id,
+            email: user.email,
+            first_name: user.first_name
+        };
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' }); // Токен дійсний 1 день
+
+        res.json({
+            message: 'Вхід успішний!',
+            token: token,
+            user: payload
+        });
+
+    } catch (err) {
+        console.error('Помилка логіну:', err);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+
+// ===============================================
+// 6. ЗАХИЩЕНІ МАРШРУТИ (Потребують токен)
+// ===============================================
+
+// 6.1 ДОДАВАННЯ ОГОЛОШЕННЯ (ОНОВЛЕНО: +authenticateToken)
+app.post('/api/listings', authenticateToken, async (req, res) => {
     const {
         title, description, city, price, listing_type,
         main_photo_url, characteristics
     } = req.body;
 
-    // ТИМЧАСОВО: user_id користувача, який створює оголошення
-    const user_id = 1;
+    // ВИДАЛЯЄМО "ТИМЧАСОВО", БЕРЕМО ID З ТОКЕНА
+    const user_id = req.user.userId;
 
     const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
-        // 2. ВСТАВКА В LISTINGS
         const listingQuery = `
             INSERT INTO listings (user_id, listing_type, title, description, price, city, main_photo_url)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -178,11 +245,8 @@ app.post('/api/listings', async (req, res) => {
         ]);
         const listingId = listingResult.rows[0].listing_id;
 
-        // 3. ВСТАВКА ХАРАКТЕРИСТИК (Якщо вони були обрані)
         if (characteristics && characteristics.length > 0) {
             const charKeys = characteristics.map(key => `'${key}'`).join(',');
-
-            // Отримуємо ID характеристик за їхнім системним ключем (system_key)
             const charIdQuery = `SELECT char_id FROM characteristics WHERE system_key IN (${charKeys})`;
             const charIdResult = await client.query(charIdQuery);
 
@@ -190,11 +254,7 @@ app.post('/api/listings', async (req, res) => {
                 const insertChars = charIdResult.rows.map(row =>
                     `(${listingId}, ${row.char_id})`
                 ).join(',');
-
-                const insertCharQuery = `
-                    INSERT INTO listing_characteristics (listing_id, char_id)
-                    VALUES ${insertChars};
-                `;
+                const insertCharQuery = `INSERT INTO listing_characteristics (listing_id, char_id) VALUES ${insertChars};`;
                 await client.query(insertCharQuery);
             }
         }
@@ -212,19 +272,17 @@ app.post('/api/listings', async (req, res) => {
 });
 
 // ===============================================
-// МАРШРУТИ ДЛЯ ЧАТУ
+// 7. МАРШРУТИ ДЛЯ ЧАТУ (ОНОВЛЕНО: +authenticateToken)
 // ===============================================
 
-// ТИМЧАСОВО: ID поточного користувача (замість справжньої аутентифікації)
-const CURRENT_USER_ID = 1;
+// 7.1 Отримати всі "розмови" поточного користувача
+app.get('/api/my-conversations', authenticateToken, async (req, res) => {
+    const CURRENT_USER_ID = req.user.userId; // Беремо ID з токена
 
-// 1. Отримати всі "розмови" поточного користувача
-app.get('/api/my-conversations', async (req, res) => {
     try {
         const query = `
             SELECT
                 c.conversation_id,
-                -- Отримуємо ID, ім'я та прізвище "співрозмовника"
                 CASE
                     WHEN c.user_one_id = $1 THEN c.user_two_id
                     ELSE c.user_one_id
@@ -247,12 +305,23 @@ app.get('/api/my-conversations', async (req, res) => {
 });
 
 
-// 2. Отримати повідомлення для конкретної розмови
-app.get('/api/conversations/:id/messages', async (req, res) => {
+// 7.2 Отримати повідомлення для конкретної розмови
+app.get('/api/conversations/:id/messages', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    try {
-        // TODO: Тут варто додати перевірку, чи CURRENT_USER_ID є учасником цієї розмови
+    const CURRENT_USER_ID = req.user.userId;
 
+    try {
+        // ДОДАНО ПЕРЕВІРКУ: чи користувач є учасником цієї розмови
+        const checkQuery = await pool.query(
+            'SELECT 1 FROM conversations WHERE conversation_id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
+            [id, CURRENT_USER_ID]
+        );
+
+        if (checkQuery.rows.length === 0) {
+            return res.status(403).json({ error: 'Ви не є учасником цієї розмови' });
+        }
+
+        // Якщо перевірка пройшла, отримуємо повідомлення
         const query = `
             SELECT message_id, sender_id, message_body, created_at
             FROM messages
@@ -267,16 +336,19 @@ app.get('/api/conversations/:id/messages', async (req, res) => {
     }
 });
 
-// 3. Надіслати повідомлення (або почати нову розмову)
-app.post('/api/messages', async (req, res) => {
+// 7.3 Надіслати повідомлення
+app.post('/api/messages', authenticateToken, async (req, res) => {
     const { receiver_id, message_body } = req.body;
-    const sender_id = CURRENT_USER_ID;
+    const sender_id = req.user.userId; // Беремо ID з токена
 
     if (!receiver_id || !message_body) {
         return res.status(400).json({ error: 'Missing receiver_id or message_body' });
     }
 
-    // --- Логіка сортування ID для відповідності SQL CHECK ---
+    if (receiver_id === sender_id) {
+        return res.status(400).json({ error: 'Не можна надіслати повідомлення самому собі' });
+    }
+
     const user_one = Math.min(sender_id, receiver_id);
     const user_two = Math.max(sender_id, receiver_id);
 
@@ -284,27 +356,23 @@ app.post('/api/messages', async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // 1. Знайти або створити розмову
-        // --- Шукаємо лише у впорядкованому вигляді ---
         let conversationResult = await client.query(`
             SELECT conversation_id FROM conversations
             WHERE user_one_id = $1 AND user_two_id = $2
-        `, [user_one, user_two]); // <-- Використовуємо впорядковані ID
+        `, [user_one, user_two]);
 
         let conversationId;
         if (conversationResult.rows.length > 0) {
             conversationId = conversationResult.rows[0].conversation_id;
         } else {
-            // --- Створюємо у впорядкованому вигляді ---
             conversationResult = await client.query(`
                 INSERT INTO conversations (user_one_id, user_two_id)
                 VALUES ($1, $2)
                 RETURNING conversation_id
-            `, [user_one, user_two]); // <-- Використовуємо впорядковані ID
+            `, [user_one, user_two]);
             conversationId = conversationResult.rows[0].conversation_id;
         }
 
-        // 2. Вставити повідомлення
         const messageResult = await client.query(`
             INSERT INTO messages (conversation_id, sender_id, message_body)
             VALUES ($1, $2, $3)
@@ -312,10 +380,8 @@ app.post('/api/messages', async (req, res) => {
         `, [conversationId, sender_id, message_body]);
 
         await client.query('COMMIT');
-
         const newMessage = messageResult.rows[0];
 
-        // Надсилаємо повідомлення всім, хто в кімнаті цієї розмови
         io.to(conversationId.toString()).emit('receive_message', newMessage);
         res.status(201).json(newMessage);
 
@@ -328,8 +394,9 @@ app.post('/api/messages', async (req, res) => {
     }
 });
 
-// 6. ЗАПУСК СЕРВЕРА
-// --- Запускаємо httpServer, а не app ---
+// ===============================================
+// 8. ЗАПУСК СЕРВЕРА
+// ===============================================
 httpServer.listen(port, () => {
     console.log(`Сервер бекенду (з Socket.io) запущено на http://localhost:${port}`);
     console.log('Готовий приймати запити від фронтенду.');
