@@ -599,7 +599,285 @@ h2 {
 }
 
 /* ==================================== */
-/* 6. МЕДІА-ЗАПИТИ (ADAPTATION TO DESKTOP) */
+/* 6. СТИЛІ СТОРІНКИ ПРОФІЛЮ (ПЕРЕНЕСЕНО З PROFILE.HTML) */
+/* ==================================== */
+
+/* ==== PROFILE PAGE ==== */
+.profile-page {
+    display: flex;
+    justify-content: center;
+    border-radius: 12px;
+    padding: 40px;
+    background: #FCFCFC;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.profile-container {
+    display: flex;
+    gap: 30px;
+    max-width: 1000px;
+    width: 100%;
+}
+
+.profile-sidebar {
+    width: 250px;
+    background: #FCFCFC;
+    border-radius: 12px; /* ==== скруглення країв ==== */
+    border: 1px solid #C7D9E5;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 20px;
+
+}
+
+.sidebar-divider {
+    border: none;              /* прибираємо стандартну лінію */
+    height: 1px;               /* товщина лінії */
+    background-color: #C7D9E5; /* 👉 колір (той самий, що в рамок) */
+    margin: 15px 0;            /* відступи зверху та знизу */
+}
+
+
+.profile-avatar {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.profile-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 5px solid #C7D9E5;
+}
+
+.edit-icon {
+    position: absolute;
+    bottom: 20px;
+    right: 85px;
+    background: #FCFCFC;
+    border-radius: 50%;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.profile-avatar p {
+    margin-top: 10px;
+    font-weight: 600;
+}
+
+.profile-menu ul {
+    list-style: none;
+    padding: 0;
+}
+
+.profile-menu li {
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.profile-menu li:hover,
+.profile-menu .active {
+    background: #FCFCFC;
+    color: #AE525F;
+    font-weight: 600;
+}
+
+/* ==== RIGHT SIDE ==== */
+.profile-info {
+    flex: 1;
+    background: #FCFCFC;
+    border: 1px solid #C7D9E5;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 30px;
+}
+
+.profile-info h2 {
+    margin-bottom: 20px;
+    color: #2F4157;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.profile-form input,
+.profile-form select,
+.profile-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #C7D9E5;
+    border-radius: 8px;
+    background: #f0f7ff;
+    font-size: 15px;
+
+}
+
+.profile-form textarea {
+    height: 80px;
+    resize: none;
+    color: #577C8E;
+}
+
+.profile-form input:focus,
+.profile-form select:focus,
+.profile-form textarea:focus {
+    outline: none;
+    border-color: #C7D9E5;
+    background: #FCFCFC;
+}
+
+
+/* Стрілка для multiple select (там вона не потрібна) */
+#interests-select[multiple] {
+    background-image: none;
+    padding-right: 10px;
+    height: 120px; /* Збільшуємо висоту для кращого вигляду множинного вибору */
+}
+
+/* ==== СТИЛІЗАЦІЯ ПЛЕЙСХОЛДЕРА SELECT (ОБОВ'ЯЗКОВО) ==== */
+#habits-select:invalid,
+#interests-select:invalid {
+    color: #577C8E; /* Сірий колір тексту для плейсхолдера */
+}
+
+/* СТИЛІЗАЦІЯ КОЛЬОРУ ПЛЕЙСХОЛДЕРА */
+
+/* Для всіх сучасних браузерів, крім Edge/IE */
+.profile-form input::placeholder,
+.profile-form textarea::placeholder {
+    color: #577C8E; /* Бажаний колір, наприклад, світло-сірий */
+    opacity: 1; /* Обов'язково, оскільки деякі браузери за замовчуванням зменшують прозорість */
+}
+
+/* Для Firefox (необхідний окремий селектор) */
+.profile-form input::-moz-placeholder,
+.profile-form textarea::-moz-placeholder {
+    color: #577C8E;
+    opacity: 1;
+}
+
+/* Для Edge та Internet Explorer (застарілі, але для повної сумісності) */
+.profile-form input:-ms-input-placeholder,
+.profile-form textarea:-ms-input-placeholder {
+    color: #577C8E;
+}
+
+.profile-form input::-ms-input-placeholder,
+.profile-form textarea::-ms-input-placeholder {
+    color: #577C8E;
+}
+
+#habits-select:valid,
+#interests-select:valid {
+    color: black; /* Звичайний колір тексту після вибору опції */
+}
+
+/* Приховуємо disabled/selected опцію з випадаючого списку (за бажанням) */
+.profile-form select option[disabled] {
+    display: none;
+}
+
+/* кнопка "Зберегти зміни" */
+.profile-form button {
+    width: fit-content;
+    align-self: flex-end;
+    padding: 10px 20px;
+    border: none;
+    background: #2F4157;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+    margin-top: 5px; /* Невеликий відступ */
+}
+
+.profile-form button:hover {
+    background: #2F4157;
+
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .profile-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .profile-sidebar {
+        width: 100%;
+        text-align: center;
+    }
+}
+/* ==== SIDEBAR STRUCTURE ==== */
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* верх і низ */
+    height: 100%;
+}
+
+/* верхня частина (аватар + меню) */
+.sidebar-top {
+    flex: 1;
+}
+
+/* нижня частина (кнопка "вийти") */
+.sidebar-bottom {
+    border-top: 1px solid #C7D9E5;
+    padding-top: 15px;
+    text-align: center;
+}
+
+/* кнопка внизу */
+.logout-btn {
+    background: #2F4157;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.logout-btn:hover {
+    background: #2F4157;
+
+}
+
+/* кнопка "Зберегти зміни" */
+.profile-form button {
+    width: fit-content;
+    align-self: flex-end;
+    padding: 10px 20px;
+    border: none;
+    background: #2F4157;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.profile-form button:hover {
+    background: #2F4157;
+}
+
+/* ==================================== */
+/* 7. МЕДІА-ЗАПИТИ (ADAPTATION TO DESKTOP) */
 /* ==================================== */
 
 @media (min-width: 768px) {
