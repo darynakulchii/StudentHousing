@@ -211,6 +211,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 0. ЗАВАНТАЖЕННЯ НАВІГАЦІЇ (ЧЕКАЄМО ЇЇ ВСТАВКИ)
         await loadNavigation();
 
+        // ВИКЛИК НОВОЇ ФУНКЦІЇ ВІДОБРАЖЕННЯ ОГОЛОШЕНЬ НА ГОЛОВНІЙ СТОРІНЦІ
+        await fetchAndDisplayListings();
+
         // 1. ВИКЛИК НОВОЇ ФУНКЦІЇ ЛОГІКИ ФОРМИ
         if (window.location.pathname.endsWith('add_listing.html') || window.location.pathname.endsWith('add_listing')) {
             await handleListingSubmission();
@@ -344,4 +347,61 @@ const handleListingSubmission = async () => {
             alert('Не вдалося з’єднатися з сервером. Перевірте, чи запущено бекенд (http://localhost:3000).');
         }
     });
+};
+
+// =================================================================================
+// 6. ЛОГІКА ЗАВАНТАЖЕННЯ ОГОЛОШЕНЬ (ДЛЯ index.html)
+// =================================================================================
+
+const fetchAndDisplayListings = async () => {
+    // 1. Знаходимо контейнер на сторінці
+    const container = document.querySelector('.listings-container');
+
+    // Якщо контейнера на поточній сторінці немає, нічого не робимо
+    if (!container) return;
+
+    try {
+        // 2. Робимо запит до вашого локального сервера
+        const response = await fetch('http://localhost:3000/api/listings');
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const listings = await response.json();
+
+        // 3. Очищуємо контейнер (про всяк випадок)
+        container.innerHTML = '';
+
+        // 4. Перевіряємо, чи є оголошення
+        if (listings.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-light);">Наразі активних оголошень немає.</p>';
+            return;
+        }
+
+        // 5. Створюємо HTML для кожного оголошення
+        listings.forEach(listing => {
+            // Встановлюємо фото-заглушку, якщо URL не вказано
+            const imageUrl = listing.main_photo_url || 'https://picsum.photos/400/300?random=' + listing.listing_id;
+
+            const listingCard = `
+                <div class="listing-card large-card">
+                    <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
+                    <div class="info-overlay">
+                        <span class="price-tag">₴${listing.price} / міс</span>
+                    </div>
+                    <div class="listing-content">
+                        <h3>${listing.title}</h3>
+                        <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
+                    </div>
+                </div>
+            `;
+            // Додаємо картку в контейнер
+            container.innerHTML += listingCard;
+        });
+
+    } catch (error) {
+        console.error('Не вдалося завантажити оголошення:', error);
+        container.innerHTML = '<p style="color: #e74c3c; font-weight: 600;">Помилка: Не вдалося з’єднатися з сервером для завантаження оголошень.</p>';
+    }
 };
