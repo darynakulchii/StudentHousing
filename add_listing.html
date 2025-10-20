@@ -6,7 +6,7 @@
     <title>UniHome | Додати оголошення</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="main.css">
-</head>
+
 <body>
 
 <div id="navigation-placeholder"></div>
@@ -31,18 +31,18 @@
         </div>
 
         <div class="form-group">
-            <label for="title">Заголовок оголошення</label>
+            <label for="title">Заголовок оголошення *</label>
             <input type="text" id="title" name="title" placeholder="Наприклад, 'Затишна кімната біля КПІ'" required>
         </div>
 
         <div class="form-group">
-            <label for="description">Детальний опис</label>
+            <label for="description">Детальний опис *</label>
             <textarea id="description" name="description" rows="5" placeholder="Опишіть умови, район, транспорт, вимоги до сусіда..." required></textarea>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label for="city">Місто</label>
+                <label for="city">Місто *</label>
                 <select id="city" name="city" required>
                     <option value="" disabled selected>Виберіть місто</option>
                     <option value="Київ">Київ</option>
@@ -52,44 +52,324 @@
             </div>
 
             <div class="form-group">
-                <label for="price">Ціна (₴/міс)</label>
+                <label for="price">Ціна (₴/міс) *</label>
                 <input type="number" id="price" name="price" placeholder="Наприклад, 10000" min="1000" required>
             </div>
         </div>
 
         <div class="form-group">
-            <label for="main_photo_url">Головне фото (URL)</label>
-            <input type="text" id="main_photo_url" name="main_photo_url" placeholder="URL зображення">
+            <label>Фото</label>
+            <p class="form-description">Перше фото буде на обкладинці оголошення. Перетягніть, щоб змінити порядок фото.</p>
+            <div class="photo-upload-grid">
+                <div class="photo-upload-placeholder add-photo-btn">Додати фото</div>
+                <div class="photo-upload-placeholder"></div>
+                <div class="photo-upload-placeholder"></div>
+                <div class="photo-upload-placeholder"></div>
+                <div class="photo-upload-placeholder"></div>
+                <div class="photo-upload-placeholder"></div>
+                <div class="photo-upload-placeholder"></div>
+                <div class="photo-upload-placeholder"></div>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Характеристики житла:</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="char_quiet_room" name="characteristics" value="quiet">
-                <label for="char_quiet_room">Тихий район</label>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="building_type">Тип будинку</label>
+                <select id="building_type" name="building_type">
+                    <option value="new_building">Новобудова</option>
+                    <option value="tsar_building">Царський будинок</option>
+                    <option value="stalinka">Сталінка</option>
+                    <option value="hrushchovka">Хрущовка</option>
+                    <option value="cheshka">Чешка</option>
+                    <option value="gostinka">Гостинка</option>
+                    <option value="sovmin">Совмін</option>
+                    <option value="gurtogitok">Гуртожиток</option>
+                    <option value="housing_80_90">Житловий фонд 80-90-і</option>
+                    <option value="housing_91_2000">Житловий фонд 91-2000-і</option>
+                    <option value="housing_2001_2010">Житловий фонд 2001-2010-і</option>
+                    <option value="housing_since_2011">Житловий фонд від 2011 р.</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="rooms">Кількість кімнат *</label>
+                <select id="rooms" name="rooms" required>
+                    <option value="" disabled selected>Обрати</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
+        </div>
 
-                <input type="checkbox" id="char_pet_room" name="characteristics" value="pet_friendly">
-                <label for="char_pet_room">Можна з тваринами</label>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="floor">Поверх *</label>
+                <input type="number" id="floor" name="floor" placeholder="5" required>
+            </div>
+            <div class="form-group">
+                <label for="total_floors">Поверховість *</label>
+                <input type="number" id="total_floors" name="total_floors" placeholder="9" required>
+            </div>
+        </div>
 
-                <input type="checkbox" id="char_wifi_room" name="characteristics" value="has_wifi">
-                <label for="char_wifi_room">Wi-Fi</label>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="total_area">Загальна площа (м²) *</label>
+                <input type="number" id="total_area" name="total_area" placeholder="42" required>
+            </div>
+            <div class="form-group">
+                <label for="kitchen_area">Площа кухні (м²) *</label>
+                <input type="number" id="kitchen_area" name="kitchen_area" placeholder="9" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="wall_type">Тип стін</label>
+                <select id="wall_type" name="wall_type">
+                    <option value="" disabled selected>Обрати</option>
+                    <option value="brick">Цегляний</option>
+                    <option value="panel">Панельний</option>
+                    <option value="monolithic">Монолітний</option>
+                    <option value="slag_block">Шлакоблочний</option>
+                    <option value="wooden">Дерев'яний</option>
+                    <option value="gas_block">Газоблок</option>
+                    <option value="sip_panel">СІП панель</option>
+                    <option value="other">Інше</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="planning">Планування</label>
+                <select id="planning" name="planning">
+                    <option value="" disabled selected>Обрати</option>
+                    <option value="separate">Роздільна</option>
+                    <option value="adjacent_walkthrough">Суміжна, прохідна</option>
+                    <option value="studio">Студія</option>
+                    <option value="penthouse">Пентхаус</option>
+                    <option value="multi_level">Багаторівнева</option>
+                    <option value="small_family_hostel">Малосімейка, гостинка</option>
+                    <option value="smart_apartment">Смарт-квартира</option>
+                    <option value="free_planning">Вільне планування</option>
+                    <option value="two_sided">Двостороння</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="bathroom_type">Санвузол</label>
+                <select id="bathroom_type" name="bathroom_type">
+                    <option value="" disabled selected>Обрати</option>
+                    <option value="separate">Роздільний</option>
+                    <option value="combined">Суміжний</option>
+                    <option value="two_or_more">2 і більше</option>
+                    <option value="none">Санвузол відсутній</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="heating_type">Опалення</label>
+                <select id="heating_type" name="heating_type">
+                    <option value="" disabled selected>Обрати</option>
+                    <option value="central">Централізоване</option>
+                    <option value="own_boiler">Власна котельня</option>
+                    <option value="individual_gas">Індивідуальне газове</option>
+                    <option value="individual_electric">Індивідуальне електро</option>
+                    <option value="solid_fuel">Твердопаливне</option>
+                    <option value="heat_pump">Тепловий насос</option>
+                    <option value="combined">Комбіноване</option>
+                </select>
             </div>
         </div>
 
         <div class="form-group">
-            <label>Характеристики сусіда:</label>
+            <label for="renovation_type">Ремонт</label>
+            <select id="renovation_type" name="renovation_type">
+                <option value="" disabled selected>Обрати</option>
+                <option value="design">Авторський проект</option>
+                <option value="good">Євроремонт</option>
+                <option value="cosmetic">Косметичний</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Меблювання</label>
+            <div class="radio-options">
+                <input type="radio" id="furnishing_yes" name="furnishing" value="yes" required>
+                <label for="furnishing_yes">З меблями</label>
+                <input type="radio" id="furnishing_no" name="furnishing" value="no" required>
+                <label for="furnishing_no">Без меблів</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Побутова техніка</label>
             <div class="checkbox-options">
-                <input type="checkbox" id="char_quiet_neighbor" name="characteristics" value="quiet">
-                <label for="char_quiet_neighbor">Тихий/Тиша</label>
+                <input type="checkbox" id="tech_kettle" name="characteristics" value="kettle"><label for="tech_kettle">Електрочайник</label>
+                <input type="checkbox" id="tech_fridge" name="characteristics" value="fridge"><label for="tech_fridge">Холодильник</label>
+                <input type="checkbox" id="tech_coffee" name="characteristics" value="coffee_machine"><label for="tech_coffee">Кавомашина</label>
+                <input type="checkbox" id="tech_dishwasher" name="characteristics" value="dishwasher"><label for="tech_dishwasher">Посудомийна машина</label>
+                <input type="checkbox" id="tech_dryer" name="characteristics" value="hair_dryer"><label for="tech_dryer">Фен</label>
+                <input type="checkbox" id="tech_washer" name="characteristics" value="washing_machine"><label for="tech_washer">Пральна машина</label>
+                <input type="checkbox" id="tech_stove" name="characteristics" value="stove"><label for="tech_stove">Плита</label>
+                <input type="checkbox" id="tech_drying_machine" name="characteristics" value="drying_machine"><label for="tech_drying_machine">Сушильна машина</label>
+                <input type="checkbox" id="tech_hob" name="characteristics" value="hob"><label for="tech_hob">Варильна панель</label>
+                <input type="checkbox" id="tech_iron" name="characteristics" value="iron"><label for="tech_iron">Праска</label>
+                <input type="checkbox" id="tech_oven" name="characteristics" value="oven"><label for="tech_oven">Духова шафа</label>
+                <input type="checkbox" id="tech_vacuum" name="characteristics" value="vacuum"><label for="tech_vacuum">Пилосос</label>
+                <input type="checkbox" id="tech_microwave" name="characteristics" value="microwave"><label for="tech_microwave">Мікрохвильова піч</label>
+                <input type="checkbox" id="tech_no" name="characteristics" value="no_appliances"><label for="tech_no">Без побутової техніки</label>
+                <input type="checkbox" id="tech_multi" name="characteristics" value="multicooker"><label for="tech_multi">Мультиварка</label>
+            </div>
+        </div>
 
-                <input type="checkbox" id="char_pet_neighbor" name="characteristics" value="pet_friendly">
-                <label for="char_pet_neighbor">Не проти жити з тваринами</label>
+        <div class="form-group">
+            <label>Мультимедіа</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="media_wifi" name="characteristics" value="wifi"><label for="media_wifi">Wi-Fi</label>
+                <input type="checkbox" id="media_cable_tv" name="characteristics" value="cable_tv"><label for="media_cable_tv">Кабельне, цифрове ТБ</label>
+                <input type="checkbox" id="media_fast_inet" name="characteristics" value="fast_internet"><label for="media_fast_inet">Швидкісний інтернет</label>
+                <input type="checkbox" id="media_satellite" name="characteristics" value="satellite_tv"><label for="media_satellite">Супутникове ТБ</label>
+                <input type="checkbox" id="media_tv" name="characteristics" value="tv"><label for="media_tv">Телевізор</label>
+                <input type="checkbox" id="media_no" name="characteristics" value="no_media"><label for="media_no">Без мультимедіа</label>
+            </div>
+        </div>
 
-                <input type="checkbox" id="char_no_smoker_neighbor" name="characteristics" value="non_smoker">
-                <label for="char_no_smoker_neighbor">Не палить</label>
+        <div class="form-group">
+            <label>Комфорт</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="comfort_ac" name="characteristics" value="ac"><label for="comfort_ac">Кондиціонер</label>
+                <input type="checkbox" id="comfort_cctv" name="characteristics" value="cctv"><label for="comfort_cctv">Відеоспостереження</label>
+                <input type="checkbox" id="comfort_floor_heating" name="characteristics" value="floor_heating"><label for="comfort_floor_heating">Підігрів підлоги</label>
+                <input type="checkbox" id="comfort_concierge" name="characteristics" value="concierge"><label for="comfort_concierge">Консьєрж</label>
+                <input type="checkbox" id="comfort_bath" name="characteristics" value="bath"><label for="comfort_bath">Ванна</label>
+                <input type="checkbox" id="comfort_security" name="characteristics" value="security"><label for="comfort_security">Охорона території</label>
+                <input type="checkbox" id="comfort_shower" name="characteristics" value="shower"><label for="comfort_shower">Душова кабіна</label>
+                <input type="checkbox" id="comfort_parking" name="characteristics" value="parking"><label for="comfort_parking">Паркувальне місце</label>
+                <input type="checkbox" id="comfort_kitchen_furniture" name="characteristics" value="kitchen_furniture"><label for="comfort_kitchen_furniture">Меблі на кухні</label>
+                <input type="checkbox" id="comfort_guest_parking" name="characteristics" value="guest_parking"><label for="comfort_guest_parking">Гостьовий паркінг</label>
+                <input type="checkbox" id="comfort_wardrobe" name="characteristics" value="wardrobe"><label for="comfort_wardrobe">Гардероб</label>
+                <input type="checkbox" id="comfort_underground_parking" name="characteristics" value="underground_parking"><label for="comfort_underground_parking">Підземний паркінг</label>
+                <input type="checkbox" id="comfort_balcony" name="characteristics" value="balcony"><label for="comfort_balcony">Балкон, лоджія</label>
+                <input type="checkbox" id="comfort_garage" name="characteristics" value="garage"><label for="comfort_garage">Гараж</label>
+                <input type="checkbox" id="comfort_terrace" name="characteristics" value="terrace"><label for="comfort_terrace">Тераса</label>
+                <input type="checkbox" id="comfort_elevator" name="characteristics" value="elevator"><label for="comfort_elevator">Ліфт</label>
+                <input type="checkbox" id="comfort_panoramic" name="characteristics" value="panoramic_windows"><label for="comfort_panoramic">Панорамні вікна</label>
+                <input type="checkbox" id="comfort_cargo_elevator" name="characteristics" value="cargo_elevator"><label for="comfort_cargo_elevator">Грузовий ліфт</label>
+                <input type="checkbox" id="comfort_bars" name="characteristics" value="window_bars"><label for="comfort_bars">Грати на вікнах</label>
+                <input type="checkbox" id="comfort_storage" name="characteristics" value="storage_room"><label for="comfort_storage">Госп. приміщення, комора</label>
+                <input type="checkbox" id="comfort_alarm" name="characteristics" value="alarm"><label for="comfort_alarm">Сигналізація</label>
+                <input type="checkbox" id="comfort_smart_home" name="characteristics" value="smart_home"><label for="comfort_smart_home">Технологія "розумний будинок"</label>
+                <input type="checkbox" id="comfort_fire_alarm" name="characteristics" value="fire_alarm"><label for="comfort_fire_alarm">Пожежна сигналізація</label>
+                <input type="checkbox" id="comfort_generator" name="characteristics" value="generator"><label for="comfort_generator">Автономний електрогенератор</label>
+            </div>
+        </div>
 
-                <input type="checkbox" id="student_neighbor" name="characteristics" value="has_wifi">
-                <label for="student_neighbor">Студент</label>
+        <div class="form-group">
+            <label>Домашні улюбленці</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="pet_no" name="characteristics" value="pet_no"><label for="pet_no">Ні</label>
+                <input type="checkbox" id="pet_mid_dog" name="characteristics" value="pet_mid_dog"><label for="pet_mid_dog">Так, середній песик(до 25 кг)</label>
+                <input type="checkbox" id="pet_cat" name="characteristics" value="pet_cat"><label for="pet_cat">Так, котик</label>
+                <input type="checkbox" id="pet_big_dog" name="characteristics" value="pet_big_dog"><label for="pet_big_dog">Так, великий песик</label>
+                <input type="checkbox" id="pet_small_dog" name="characteristics" value="pet_small_dog"><label for="pet_small_dog">Так, маленький песик(до 10 кг)</label>
+                <input type="checkbox" id="pet_other" name="characteristics" value="pet_other"><label for="pet_other">Так, інша тваринка</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Автономність при блекауті</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="blackout_internet" name="characteristics" value="blackout_internet"><label for="blackout_internet">Працює інтернет</label>
+                <input type="checkbox" id="blackout_heating" name="characteristics" value="blackout_heating"><label for="blackout_heating">Працює опалення</label>
+                <input type="checkbox" id="blackout_elevator" name="characteristics" value="blackout_elevator"><label for="blackout_elevator">Працює ліфт</label>
+                <input type="checkbox" id="blackout_backup_power" name="characteristics" value="blackout_backup_power"><label for="blackout_backup_power">Підключене резервне живлення</label>
+                <input type="checkbox" id="blackout_water" name="characteristics" value="blackout_water"><label for="blackout_water">Працює водопостачання</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Додатково</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="rules_families" name="characteristics" value="rules_families"><label for="rules_families">Тільки сім'ям</label>
+                <input type="checkbox" id="rules_foreigners" name="characteristics" value="rules_foreigners"><label for="rules_foreigners">Можна іноземцям</label>
+                <input type="checkbox" id="rules_with_owners" name="characteristics" value="rules_with_owners"><label for="rules_with_owners">З господарями</label>
+                <input type="checkbox" id="rules_kids" name="characteristics" value="rules_kids"><label for="rules_kids">Можна з дітьми</label>
+                <input type="checkbox" id="rules_students" name="characteristics" value="rules_students"><label for="rules_students">Можна студентам</label>
+                <input type="checkbox" id="rules_smoking" name="characteristics" value="rules_smoking"><label for="rules_smoking">Можна курити</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Комунікації</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="comm_gas" name="characteristics" value="comm_gas"><label for="comm_gas">Газ</label>
+                <input type="checkbox" id="comm_septic" name="characteristics" value="comm_septic"><label for="comm_septic">Каналізація септик</label>
+                <input type="checkbox" id="comm_central_water" name="characteristics" value="comm_central_water"><label for="comm_central_water">Центральний водопровід</label>
+                <input type="checkbox" id="comm_waste" name="characteristics" value="comm_waste"><label for="comm_waste">Вивіз відходів</label>
+                <input type="checkbox" id="comm_well" name="characteristics" value="comm_well"><label for="comm_well">Скважина</label>
+                <input type="checkbox" id="comm_asphalt" name="characteristics" value="comm_asphalt"><label for="comm_asphalt">Асфальтована дорога</label>
+                <input type="checkbox" id="comm_electricity" name="characteristics" value="comm_electricity"><label for="comm_electricity">Електрика</label>
+                <input type="checkbox" id="comm_no" name="characteristics" value="comm_no"><label for="comm_no">Без комунікацій</label>
+                <input type="checkbox" id="comm_central_sewer" name="characteristics" value="comm_central_sewer"><label for="comm_central_sewer">Центральна каналізація</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Інфраструктура (до 500 метрів)</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="infra_kindergarten" name="characteristics" value="infra_kindergarten"><label for="infra_kindergarten">Дитячий садок</label>
+                <input type="checkbox" id="infra_pharmacy" name="characteristics" value="infra_pharmacy"><label for="infra_pharmacy">Аптека</label>
+                <input type="checkbox" id="infra_school" name="characteristics" value="infra_school"><label for="infra_school">Школа</label>
+                <input type="checkbox" id="infra_hospital" name="characteristics" value="infra_hospital"><label for="infra_hospital">Лікарня, поліклініка</label>
+                <input type="checkbox" id="infra_well_room" name="characteristics" value="infra_well_room"><label for="infra_well_room">Бювет</label>
+                <input type="checkbox" id="infra_center" name="characteristics" value="infra_center"><label for="infra_center">Центр міста</label>
+                <input type="checkbox" id="infra_bus_stop" name="characteristics" value="infra_bus_stop"><label for="infra_bus_stop">Зупинка транспорту</label>
+                <input type="checkbox" id="infra_restaurant" name="characteristics" value="infra_restaurant"><label for="infra_restaurant">Ресторан, кафе</label>
+                <input type="checkbox" id="infra_metro" name="characteristics" value="infra_metro"><label for="infra_metro">Метро</label>
+                <input type="checkbox" id="infra_cinema" name="characteristics" value="infra_cinema"><label for="infra_cinema">Кінотеатр, театр</label>
+                <input type="checkbox" id="infra_market" name="characteristics" value="infra_market"><label for="infra_market">Ринок</label>
+                <input type="checkbox" id="infra_post" name="characteristics" value="infra_post"><label for="infra_post">Відділення пошти</label>
+                <input type="checkbox" id="infra_shop" name="characteristics" value="infra_shop"><label for="infra_shop">Магазин, кіоск</label>
+                <input type="checkbox" id="infra_bank" name="characteristics" value="infra_bank"><label for="infra_bank">Відділення банку, банкомат</label>
+                <input type="checkbox" id="infra_mall" name="characteristics" value="infra_mall"><label for="infra_mall">Супермаркет, ТРЦ</label>
+                <input type="checkbox" id="infra_bus_station" name="characteristics" value="infra_bus_station"><label for="infra_bus_station">Автовокзал</label>
+                <input type="checkbox" id="infra_park" name="characteristics" value="infra_park"><label for="infra_park">Парк, зелена зона</label>
+                <input type="checkbox" id="infra_train_station" name="characteristics" value="infra_train_station"><label for="infra_train_station">Залізнична станція</label>
+                <input type="checkbox" id="infra_playground" name="characteristics" value="infra_playground"><label for="infra_playground">Дитячий майданчик</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Ландшафт (до 1 км.)</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="land_river" name="characteristics" value="land_river"><label for="land_river">Річка</label>
+                <input type="checkbox" id="land_hills" name="characteristics" value="land_hills"><label for="land_hills">Пагорби</label>
+                <input type="checkbox" id="land_reservoir" name="characteristics" value="land_reservoir"><label for="land_reservoir">Водосховище</label>
+                <input type="checkbox" id="land_mountains" name="characteristics" value="land_mountains"><label for="land_mountains">Гори</label>
+                <input type="checkbox" id="land_lake" name="characteristics" value="land_lake"><label for="land_lake">Озеро</label>
+                <input type="checkbox" id="land_park" name="characteristics" value="land_park"><label for="land_park">Парк</label>
+                <input type="checkbox" id="land_sea" name="characteristics" value="land_sea"><label for="land_sea">Море</label>
+                <input type="checkbox" id="land_forest" name="characteristics" value="land_forest"><label for="land_forest">Ліс</label>
+                <input type="checkbox" id="land_islands" name="characteristics" value="land_islands"><label for="land_islands">Острови</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Інклюзивність</label>
+            <div class="checkbox-options">
+                <input type="checkbox" id="incl_ramp_short" name="characteristics" value="incl_ramp_short"><label for="incl_ramp_short">Пандус довжиною до 2,4 м.</label>
+                <input type="checkbox" id="incl_wide_doors_entry" name="characteristics" value="incl_wide_doors_entry"><label for="incl_wide_doors_entry">Широкі двері в під'їзді (від 0,9 м.)</label>
+                <input type="checkbox" id="incl_ramp_long" name="characteristics" value="incl_ramp_long"><label for="incl_ramp_long">Пандус довжиною понад 2,4 м.</label>
+                <input type="checkbox" id="incl_wide_doors_elevator" name="characteristics" value="incl_wide_doors_elevator"><label for="incl_wide_doors_elevator">Двері ліфту шириною від 0,9 м.</label>
+                <input type="checkbox" id="incl_ramp_platform" name="characteristics" value="incl_ramp_platform"><label for="incl_ramp_platform">Пандус має майданчик для відпочинку</label>
+                <input type="checkbox" id="incl_elevator_size" name="characteristics" value="incl_elevator_size"><label for="incl_elevator_size">Ліфт розміром не менше 1,1х1,4 м.</label>
+                <input type="checkbox" id="incl_ramp_handrails" name="characteristics" value="incl_ramp_handrails"><label for="incl_ramp_handrails">Поручні на пандусі</label>
+                <input type="checkbox" id="incl_contrast_marks" name="characteristics" value="incl_contrast_marks"><label for="incl_contrast_marks">Наявність контрастних маркувань</label>
+                <input type="checkbox" id="incl_stairs_handrails" name="characteristics" value="incl_stairs_handrails"><label for="incl_stairs_handrails">Поручні на сходах</label>
+                <input type="checkbox" id="incl_tactile_strips" name="characteristics" value="incl_tactile_strips"><label for="incl_tactile_strips">Тактильні смуги на підлозі</label>
+                <input type="checkbox" id="incl_street_entry" name="characteristics" value="incl_street_entry"><label for="incl_street_entry">Вхід в рівень з вулицею</label>
+                <input type="checkbox" id="incl_voice_alerts" name="characteristics" value="incl_voice_alerts"><label for="incl_voice_alerts">Голосові сповіщення у ліфті</label>
             </div>
         </div>
 
