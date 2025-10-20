@@ -23,10 +23,10 @@ app.use(express.json());
 
 // 2. НАЛАШТУВАННЯ ПІДКЛЮЧЕННЯ ДО БАЗИ ДАНИХ (PostgreSQL)
 const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'postgres',
-    password: '25122005',
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_DATABASE || 'postgres',
+    password: process.env.DB_PASSWORD || '25122005',
     port: 5432,
 });
 
