@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Наш бекенд-сервіс
+  backend:
+    build: ./backend  # Кажемо йоwму шукати Dockerfile у папці 'backend'
+    ports:
+      - "3000:3000"  # Прокидаємо порт 3000 на твій комп'ютер
+    environment:
+      # Це ті самі змінні, які читає твій оновлений server.js
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: mysecretpassword # Можеш змінити на будь-який пароль
+      DB_DATABASE: postgres
+    depends_on:
+      - db  # Чекати, поки запуститься база даних
+
+  # Наш сервіс бази даних
+  db:
+    image: postgres:15-alpine # Використовуємо готовий образ PostgreSQL
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword # Пароль має бути ТАКИЙ САМИЙ, як і вище
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432" # Прокидаємо порт, щоб ти могла підключитись з IDE
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # Зберігає дані
+      - ./db_init:/docker-entrypoint-initdb.d  # Папка для авто-створення таблиць
+
+volumes:
+  postgres-data: # Створюємо "сховище" для даних БД
