@@ -8,14 +8,31 @@
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <div id="navigation-placeholder"></div>
+<div id="navigation-placeholder"></div>
 
-    <main>
-        <h1>Налаштування облікового запису</h1>
-        <p style="text-align: center; margin-top: 50px; color: var(--text-light);">
-            Тут будуть опції для зміни пароля, сповіщень та приватності.
-        </p>
-    </main>
+<main class="profile-page"> <h1>Налаштування</h1>
+
+    <div class="profile-container" style="justify-content: center;">
+        <section class="profile-info" style="flex: 0 1 600px;">
+            <h2>Керування акаунтом</h2>
+            <p style="color: var(--text-light); margin-bottom: 20px;">
+                Тут будуть опції для зміни пароля та приватності.
+            </p>
+
+            <hr style="margin-bottom: 20px;">
+
+            <h3>Видалення акаунту</h3>
+            <p style="color: var(--text-light); margin-bottom: 20px;">
+                Ця дія назавжди видалить ваш профіль, оголошення та всі повідомлення.
+                Цю дію неможливо скасувати.
+            </p>
+
+            <button type="button" class="delete-btn" id="btnDeleteAccount">
+                <i class="fas fa-trash-alt"></i> Видалити мій акаунт
+            </button>
+        </section>
+    </div>
+</main>
 
 <script src="app.js"></script>
 </body>
