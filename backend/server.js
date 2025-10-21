@@ -221,41 +221,91 @@ app.post('/api/login', async (req, res) => {
 // ===============================================
 
 // 6.1 ДОДАВАННЯ ОГОЛОШЕННЯ (ОНОВЛЕНО: +authenticateToken)
-app.post('/api/listings', authenticateToken, async (req, res) => {
-    const {
-        title, description, city, price, listing_type,
-        main_photo_url, characteristics
-    } = req.body;
+// ===============================================
+// 6. ЗАХИЩЕНІ МАРШРУТИ (Потребують токен)
+// ===============================================
 
-    // ВИДАЛЯЄМО "ТИМЧАСОВО", БЕРЕМО ID З ТОКЕНА
+// 6.1 ДОДАВАННЯ ОГОЛОШЕННЯ (ОНОВЛЕНО: +authenticateToken)
+app.post('/api/listings', authenticateToken, async (req, res) => {
+    // 1. Отримуємо ID користувача з токена
     const user_id = req.user.userId;
+
+    // 2. Отримуємо ВСІ дані з тіла запиту (з app.js)
+    // 'characteristics' - це масив, решта - звичайні поля
+    const { characteristics, ...listingData } = req.body;
+
+    // 3. Визначаємо, які поля є в таблиці 'listings'
+    // Ми беремо всі ключі, які надіслав фронтенд, і які є в нашій схемі
+    const allowedKeys = [
+        'listing_type', 'title', 'description', 'city', 'main_photo_url', 'price',
+        'building_type', 'rooms', 'floor', 'total_floors', 'total_area', 'kitchen_area',
+        'wall_type', 'planning', 'bathroom_type', 'heating_type', 'renovation_type', 'furnishing',
+        'max_occupants', 'current_occupants', 'seeking_roommates', 'target_price_min',
+        'target_price_max', 'housing_type_search', 'target_rooms', 'target_roommates_max',
+        'is_student', 'target_university', 'target_uni_distance', 'ready_to_share',
+        'my_gender', 'my_age', 'my_group_size', 'my_group_count', 'my_smoking',
+        'my_drinking', 'my_guests', 'about_me_description', 'roommate_gender',
+        'roommate_age_min', 'roommate_age_max', 'roommate_smoking', 'roommate_drinking',
+        'roommate_guests', 'roommate_description'
+    ];
+
+    // 4. Готуємо дані для SQL-запиту
+    const columns = ['user_id'];
+    const values = [user_id];
+    const valuePlaceholders = ['$1']; // $1 - це user_id
+
+    let counter = 2; // Починаємо з $2
+    for (const key of allowedKeys) {
+        // Додаємо поле в запит, ТІЛЬКИ ЯКЩО воно прийшло з фронтенду
+        // і не є порожнім рядком (порожні рядки спричинять помилку для INT/DATE колонок)
+        if (listingData[key] !== undefined && listingData[key] !== null && listingData[key] !== '') {
+            columns.push(key);
+            values.push(listingData[key]);
+            valuePlaceholders.push(`$${counter}`);
+            counter++;
+        }
+    }
+
+    // 5. Створюємо динамічний SQL-запит
+    const listingQuery = `
+        INSERT INTO listings (${columns.join(', ')})
+        VALUES (${valuePlaceholders.join(', ')})
+        RETURNING listing_id;
+    `;
 
     const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
-        const listingQuery = `
-            INSERT INTO listings (user_id, listing_type, title, description, price, city, main_photo_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING listing_id;
-        `;
-        const listingResult = await client.query(listingQuery, [
-            user_id, listing_type, title, description, price, city, main_photo_url
-        ]);
+        // 6. Виконуємо запит на вставку оголошення
+        const listingResult = await client.query(listingQuery, values);
         const listingId = listingResult.rows[0].listing_id;
 
+        // 7. Обробляємо 'characteristics' (цей блок у вас вже є і він має працювати)
         if (characteristics && characteristics.length > 0) {
-            const charKeys = characteristics.map(key => `'${key}'`).join(',');
-            const charIdQuery = `SELECT char_id FROM characteristics WHERE system_key IN (${charKeys})`;
-            const charIdResult = await client.query(charIdQuery);
 
-            if (charIdResult.rows.length > 0) {
-                const insertChars = charIdResult.rows.map(row =>
-                    `(${listingId}, ${row.char_id})`
-                ).join(',');
-                const insertCharQuery = `INSERT INTO listing_characteristics (listing_id, char_id) VALUES ${insertChars};`;
-                await client.query(insertCharQuery);
+            // Видаляємо дублікати
+            const uniqueChars = [...new Set(characteristics)];
+
+            // Фільтруємо будь-які пусті значення, які могли випадково потрапити
+            const validChars = uniqueChars.filter(key => key && key.trim() !== '');
+
+            if (validChars.length > 0) {
+                const charKeys = validChars.map(key => `'${key}'`).join(',');
+                const charIdQuery = `SELECT char_id FROM characteristics WHERE system_key IN (${charKeys})`;
+                const charIdResult = await client.query(charIdQuery);
+
+                if (charIdResult.rows.length > 0) {
+                    const insertChars = charIdResult.rows.map(row =>
+                        `(${listingId}, ${row.char_id})`
+                    ).join(',');
+                    const insertCharQuery = `INSERT INTO listing_characteristics (listing_id, char_id) VALUES ${insertChars};`;
+                    await client.query(insertCharQuery);
+                } else {
+                    // Це не помилка, але корисне попередження для розробки
+                    console.warn(`Для оголошення ${listingId} не знайдено ID для характеристик: ${charKeys}`);
+                }
             }
         }
 
@@ -265,6 +315,9 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Помилка додавання оголошення:', err);
+        // Додаємо логування, щоб бачити, який запит спричинив помилку
+        console.error('SQL Query:', listingQuery);
+        console.error('Values:', values);
         res.status(500).json({ error: 'Помилка сервера при публікації оголошення.' });
     } finally {
         client.release();
