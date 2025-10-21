@@ -2,22 +2,18 @@
 // 0. ДОПОМІЖНІ ФУНКЦІЇ ДЛЯ АВТЕНТИФІКАЦІЇ
 // =================================================================================
 
-// Отримує токен з localStorage
 const getToken = () => {
     return localStorage.getItem('authToken');
 };
 
-// Зберігає токен в localStorage
 const setToken = (token) => {
     localStorage.setItem('authToken', token);
 };
 
-// Видаляє токен (для виходу)
 const removeToken = () => {
     localStorage.removeItem('authToken');
 };
 
-// Створює заголовки для захищених запитів
 const getAuthHeaders = () => {
     const token = getToken();
     if (token) {
@@ -29,7 +25,6 @@ const getAuthHeaders = () => {
     return { 'Content-Type': 'application/json' };
 };
 
-// Розшифровує JWT токен (без верифікації, лише для отримання ID)
 const parseJwt = (token) => {
     if (!token) { return null; }
     try {
@@ -46,19 +41,35 @@ const parseJwt = (token) => {
     }
 };
 
-// Отримуємо ID поточного користувача з токена
+/**
+ * Отримує ID користувача з токена, ЯКЩО токен існує І ВІН ДІЙСНИЙ.
+ * Якщо токен протермінований, він видаляється.
+ */
 const getMyUserId = () => {
     const token = getToken();
+    if (!token) {
+        return null;
+    }
     const payload = parseJwt(token);
-    return payload ? payload.userId : null;
+    if (!payload) {
+        removeToken(); // Токен пошкоджений, видаляємо
+        return null;
+    }
+    // 'exp' (expiry) в JWT – це секунди, а Date.now() – мілісекунди
+    if (payload.exp && (payload.exp * 1000 < Date.now())) {
+        console.log("JWT токен протермінований. Видаляємо.");
+        removeToken(); // Токен протермінований, видаляємо
+        return null; // Вважаємо користувача неавторизованим
+    }
+    // Якщо токен валідний, повертаємо ID
+    return payload.userId;
 };
 
-// ОНОВЛЕНА ГЛОБАЛЬНА ЗМІННА
+// Глобальна константа, що визначає стан авторизації
 const MY_USER_ID = getMyUserId();
 
-
 // =================================================================================
-// 1. ГЛОБАЛЬНІ ЗМІННІ ТА ФУНКЦІЇ
+// 1. ГЛОБАЛЬНІ ЗМІННІ ТА ФУНКЦІЇ ІНТЕРФЕЙСУ
 // =================================================================================
 
 let mobileMenuWindow;
@@ -66,7 +77,7 @@ let filterSidebar;
 let notificationSidebar;
 let overlay;
 let notificationBadge;
-let currentNotificationCount = 0;
+let currentNotificationCount = 0; // Приклад
 
 const updateNotificationCount = (count) => {
     if (notificationBadge) {
@@ -79,7 +90,6 @@ const updateNotificationCount = (count) => {
     }
 };
 
-// Функція для відкриття/закриття меню
 const toggleMenu = (action) => {
     if (!mobileMenuWindow || !overlay) return;
     if (action === 'open') {
@@ -97,7 +107,6 @@ const toggleMenu = (action) => {
     }
 };
 
-// Функція для відкриття/закриття фільтрів
 const toggleFilters = (action) => {
     if (!filterSidebar || !overlay) return;
     if (action === 'open') {
@@ -115,13 +124,13 @@ const toggleFilters = (action) => {
     }
 };
 
-// Функція для відкриття/закриття сповіщень
 const toggleNotifications = (action) => {
     if (!notificationSidebar || !overlay) return;
     if (action === 'open') {
         notificationSidebar.classList.add('open');
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        // Приклад скидання лічильника при відкритті
         if (currentNotificationCount > 0) {
             updateNotificationCount(0);
             currentNotificationCount = 0;
@@ -137,9 +146,8 @@ const toggleNotifications = (action) => {
     }
 };
 
-
 // =================================================================================
-// 2. ФУНКЦІЇ ДЛЯ ДИНАМІЧНОГО ЗАВАНТАЖЕННЯ НАВІГАЦІЇ
+// 2. ЛОГІКА ЗАВАНТАЖЕННЯ НАВІГАЦІЇ
 // =================================================================================
 
 const highlightActiveLink = (isPage) => {
@@ -163,65 +171,49 @@ const highlightActiveLink = (isPage) => {
     });
 };
 
-// Керує посиланнями "Вхід" / "Вихід" та Аватаром
+/**
+ * Налаштовує посилання в навігації (avatar, login, register) залежно від стану авторизації.
+ */
 const setupNavLinks = () => {
-    const isLoggedIn = !!getToken(); // Перевіряємо, чи є токен
+    const isLoggedIn = !!MY_USER_ID;
 
     const navLoginLink = document.getElementById('navLoginLink');
-    const navRegisterLink = document.getElementById('navRegisterLink');
-    const navProfileLink = document.getElementById('navProfileLink');
-    const navLogoutLink = document.getElementById('navLogoutLink');
+    // УВАГА: у вашому navigation.html відсутній ID "navRegisterLink".
+    // Я знаходжу його за посиланням, але краще додати ID.
+    const navRegisterLink = document.querySelector('a[href="register.html"]');
     const userAvatar = document.querySelector('.user-avatar');
 
     if (userAvatar) {
-        userAvatar.style.display = 'block';
         userAvatar.href = isLoggedIn ? 'profile.html' : 'login.html';
     }
 
-    // *** ЗМІНА ТУТ ***
-    // 1. Кнопка "Увійти" тепер ЗАВЖДИ видима
-    if (navLoginLink) navLoginLink.style.display = 'block';
-
     if (isLoggedIn) {
-        // --- Користувач ЗАЛОГІНЕНИЙ ---
-        // (Кнопка "Увійти" вже видима)
+        // Користувач авторизований
+        if (navLoginLink) navLoginLink.style.display = 'none';
         if (navRegisterLink) navRegisterLink.style.display = 'none';
-        if (navProfileLink) navProfileLink.style.display = 'block';
-        if (navLogoutLink) navLogoutLink.style.display = 'block';
-
-        if (navLogoutLink) {
-            if (!navLogoutLink.hasAttribute('data-listener-added')) {
-                navLogoutLink.setAttribute('data-listener-added', 'true');
-                navLogoutLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    removeToken(); // Видаляємо токен
-                    alert('Ви вийшли з системи.');
-                    window.location.href = 'index.html'; // Перенаправляємо на головну
-                });
-            }
-        }
     } else {
-        // --- Користувач НЕ ЗАЛОГІНЕНИЙ ---
-        // (Кнопка "Увійти" вже видима)
+        // Користувач НЕ авторизований
+        if (navLoginLink) navLoginLink.style.display = 'block';
         if (navRegisterLink) navRegisterLink.style.display = 'block';
-        if (navProfileLink) navProfileLink.style.display = 'none';
-        if (navLogoutLink) navLogoutLink.style.display = 'none';
     }
 };
 
+/**
+ * Асинхронно завантажує navigation.html у placeholder
+ */
 const loadNavigation = async () => {
     const placeholder = document.getElementById('navigation-placeholder');
     if (!placeholder) return;
 
     const pathSegments = window.location.pathname.split('/');
-    const isPage = pathSegments.includes('pages');
+    const isPage = pathSegments.includes('pages'); // Перевірка, чи ми не в корені
     const navPath = isPage ? '../navigation.html' : 'navigation.html';
 
     try {
         const response = await fetch(navPath);
         placeholder.innerHTML = await response.text();
 
-        // ІНІЦІАЛІЗАЦІЯ ЕЛЕМЕНТІВ (після завантаження)
+        // Ініціалізація глобальних змінних (після завантаження)
         mobileMenuWindow = document.getElementById('mobileMenuWindow');
         filterSidebar = document.getElementById('filterSidebar');
         notificationSidebar = document.getElementById('notificationSidebar');
@@ -230,10 +222,10 @@ const loadNavigation = async () => {
 
         // Налаштування посилань
         highlightActiveLink(isPage);
-        setupNavLinks(); // ВИКЛИК ОНОВЛЕНОЇ ФУНКЦІЇ
+        setupNavLinks(); // <--- Виклик виправленої функції
 
-        // Налаштування сповіщень
-        currentNotificationCount = 2;
+        // Приклад сповіщень
+        currentNotificationCount = 2; // (Це можна замінити на fetch)
         updateNotificationCount(currentNotificationCount);
 
         // Налаштування слухачів подій
@@ -258,136 +250,10 @@ const loadNavigation = async () => {
 };
 
 // =================================================================================
-// 4. ОСНОВНИЙ БЛОК DOMContentLoaded (ЄДИНИЙ!)
+// 3. ЛОГІКА КОНКРЕТНИХ СТОРІНОК
 // =================================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-    (async () => {
-        // 0. ЗАВЖДИ ЗАВАНТАЖУЄМО НАВІГАЦІЮ СПОЧАТКУ
-        await loadNavigation();
-
-        // 1. Визначаємо поточну сторінку
-        const path = window.location.pathname;
-
-        // 2. ЗАПУСКАЄМО ЛОГІКУ ДЛЯ КОНКРЕТНИХ СТОРІНОК
-
-        if (path.endsWith('index.html') || path.endsWith('/')) {
-            await fetchAndDisplayListings();
-            setupActionButtons(); // Налаштування кнопок "Всі оголошення", "Шукаю житло"
-            setupSearchAndFilters(); // Налаштування логіки фільтрів
-        }
-
-        if (path.endsWith('register.html')) {
-            await handleRegistration();
-        }
-
-        if (path.endsWith('login.html')) {
-            await handleLogin();
-        }
-
-        if (path.endsWith('add_listing.html')) {
-            await handleListingSubmission();
-        }
-
-        if (path.endsWith('listing_detail.html')) {
-            await fetchAndDisplayListingDetail();
-        }
-
-        // ЛОГІКА ДЛЯ PROFILE.HTML
-        if (path.endsWith('profile.html')) {
-            if (!MY_USER_ID) {
-                alert('Будь ласка, увійдіть, щоб переглянути свій профіль.');
-                window.location.href = 'login.html';
-                return; // Важливо зупинити виконання
-            }
-            await loadProfileData();
-            setupProfileEventListeners();
-        }
-
-        // ЛОГІКА ДЛЯ CHAT.HTML
-        if (path.endsWith('chat.html')) {
-            if (!MY_USER_ID) {
-                alert('Будь ласка, увійдіть, щоб переглянути повідомлення.');
-                window.location.href = 'login.html';
-                return; // Важливо зупинити виконання
-            }
-            await loadConversations();
-            handleMessageSend();
-
-            // 3. ЗАПУСКАЄМО SOCKET.IO (тільки на сторінці чату)
-            setupSocketIO();
-        }
-
-    })();
-});
-
-// =================================================================================
-// 5. ЛОГІКА ДОДАВАННЯ ОГОЛОШЕННЯ
-// =================================================================================
-
-const handleListingSubmission = async () => {
-    const form = document.getElementById('addListingForm');
-    if (!form) return;
-
-    if (!MY_USER_ID) {
-        alert('Будь ласка, увійдіть, щоб додати оголошення.');
-        window.location.href = 'login.html';
-        return;
-    }
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-
-        // 1. Використовуємо Object.fromEntries для більшості полів
-        // Це автоматично збереже пари ключ/значення для title, price, my_age тощо.
-        const data = Object.fromEntries(formData.entries());
-
-        // 2. Отримуємо ВСІ значення для обох типів характеристик
-        const characteristics = formData.getAll('characteristics');
-        const searchCharacteristics = formData.getAll('search_characteristics');
-
-        // 3. Об'єднуємо їх в один масив 'characteristics', як очікує бекенд
-        // (також фільтруємо "my_pet_no" та "mate_no_pet", якщо вони не потрібні в БД)
-        const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => {
-            return key !== 'my_pet_no' && key !== 'mate_no_pet';
-        });
-
-        data.characteristics = allCharacteristics;
-
-        // 4. Видаляємо 'search_characteristics', щоб не плутати бекенд
-        delete data.search_characteristics;
-
-        try {
-            const response = await fetch('http://localhost:3000/api/listings', {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(data),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                alert(`Успіх! ${result.message} (ID: ${result.listingId})`);
-                form.reset();
-                window.location.href = 'index.html';
-            } else if (response.status === 401 || response.status === 403) {
-                alert('Помилка автентифікації. Будь ласка, увійдіть знову.');
-                window.location.href = 'login.html';
-            } else {
-                const errorData = await response.json();
-                alert(`Помилка публікації: ${errorData.error || 'Невідома помилка'}`);
-            }
-
-        } catch (error) {
-            console.error('Помилка мережі/сервера:', error);
-            alert('Не вдалося з’єднатися з сервером. Перевірте, чи запущено бекенд (http://localhost:3000).');
-        }
-    });
-};
-
-// =================================================================================
-// 6. ЛОГІКА ЗАВАНТАЖЕННЯ ОГОЛОШЕНЬ (ДЛЯ index.html)
-// =================================================================================
+// --- Логіка index.html ---
 
 const fetchAndDisplayListings = async () => {
     const container = document.querySelector('.listings-container');
@@ -412,7 +278,7 @@ const fetchAndDisplayListings = async () => {
                     <div class="listing-card large-card">
                         <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
                         <div class="info-overlay">
-                            <span class="price-tag">₴${listing.price} / міс</span>
+                            <span class="price-tag">₴${listing.price || 0} / міс</span>
                         </div>
                         <div class="listing-content">
                             <h3>${listing.title}</h3>
@@ -430,111 +296,57 @@ const fetchAndDisplayListings = async () => {
     }
 };
 
+const setupSearchAndFilters = () => {
+    const searchInput = document.querySelector('.search-input');
+    searchInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') console.log('Пошук за запитом:', searchInput.value);
+    });
 
-// =================================================================================
-// 7. ЛОГІКА ЗАВАНТАЖЕННЯ ДЕТАЛЕЙ ОГОЛОШЕННЯ
-// =================================================================================
+    const filtersForm = document.querySelector('.filters-form');
+    if (!filtersForm) return;
 
-const fetchAndDisplayListingDetail = async () => {
-    const container = document.getElementById('listingDetailContainer');
-    if (!container) return;
+    const priceInput = document.getElementById('price');
+    const priceValueSpan = document.getElementById('priceValue');
 
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const listingId = urlParams.get('id');
-
-        if (!listingId) {
-            container.innerHTML = '<h1 style="text-align: center;">Помилка: ID оголошення не вказано.</h1>';
-            return;
-        }
-
-        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
-
-        if (response.status === 404) {
-            container.innerHTML = '<h1 style="text-align: center;">Помилка 404: Оголошення не знайдено.</h1>';
-            return;
-        }
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const listing = await response.json();
-        document.title = `UniHome | ${listing.title}`;
-
-        const mainImage = listing.photos.find(p => p.is_main) || listing.photos[0] || { image_url: 'https://picsum.photos/800/600?random=' + listing.listing_id };
-
-        let photoGalleryHTML = '';
-        if (listing.photos.length > 1) {
-            photoGalleryHTML = listing.photos
-                .filter(p => !p.is_main)
-                .map(photo => `<img src="${photo.image_url}" alt="Фото ${listing.title}" class="gallery-thumbnail">`)
-                .join('');
-        }
-
-        let characteristicsHTML = '';
-        if (listing.characteristics.length > 0) {
-            characteristicsHTML = listing.characteristics
-                .map(char => `<span class="char-tag">${char.name_ukr}</span>`)
-                .join('');
-        } else {
-            characteristicsHTML = '<p>Характеристики не вказані.</p>';
-        }
-
-        const contactButtonHTML = (MY_USER_ID === listing.user_id)
-            ? `<a href="profile.html" class="contact-btn" style="background: #7f8c8d;">
-                 <i class="fas fa-user-edit"></i> Це ваше оголошення
-               </a>`
-            : `<a href="chat.html?user_id=${listing.user_id}" class="contact-btn">
-                 <i class="fas fa-comment-dots"></i> Зв'язатись з автором
-               </a>`;
-
-        const detailHTML = `
-            <div class="listing-detail-layout">
-                <div class="listing-detail-gallery">
-                    <div class="main-image-container">
-                        <img src="${mainImage.image_url}" alt="${listing.title}" id="mainDetailImage">
-                    </div>
-                    ${photoGalleryHTML ? `<div class="thumbnail-gallery">${photoGalleryHTML}</div>` : ''}
-                </div>
-
-                <div class="listing-detail-info">
-                    <h1>${listing.title}</h1>
-                    <span class="detail-price">₴${listing.price} / міс</span>
-                    <div class="detail-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
-                        <p><i class="fas fa-university"></i> ${listing.university || 'Університет не вказано'}</p>
-                    </div>
-                    <div class="detail-section">
-                        <h2>Опис</h2>
-                        <p>${listing.description.replace(/\\n/g, '<br>')}</p>
-                    </div>
-                    <div class="detail-section">
-                        <h2>Характеристики</h2>
-                        <div class="characteristics-list">
-                            ${characteristicsHTML}
-                        </div>
-                    </div>
-                </div>
-
-                <aside class="listing-detail-author">
-                    <h3>Автор оголошення</h3>
-                    <div class="author-card">
-                        <div class="author-avatar"><i class="fas fa-user-circle"></i></div>
-                        <p class="author-name">${listing.first_name} ${listing.last_name}</p>
-                        ${contactButtonHTML}
-                    </div>
-                </aside>
-            </div>
-        `;
-        container.innerHTML = detailHTML;
-
-    } catch (error) {
-        console.error('Помилка завантаження деталей оголошення:', error);
-        container.innerHTML = '<h1 style="text-align: center;">Помилка завантаження</h1><p style="text-align: center;">Не вдалося отримати деталі. Перевірте консоль та чи запущено бекенд.</p>';
+    if (priceInput && priceValueSpan) {
+        priceValueSpan.innerText = priceInput.value;
+        priceInput.addEventListener('input', () => {
+            priceValueSpan.innerText = priceInput.value;
+        });
     }
+
+    filtersForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // ... Логіка фільтрації ...
+        console.log('Фільтри застосовано');
+        alert('Фільтри застосовано! (заглушка)');
+        toggleFilters('close');
+    });
+
+    filtersForm.querySelector('.reset-filters-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        filtersForm.reset();
+        if (priceInput && priceValueSpan) {
+            priceValueSpan.innerText = priceInput.max; // Скидання повзунка
+        }
+        console.log('Фільтри скинуто');
+    });
 };
 
-// =================================================================================
-// 8. ЛОГІКА РЕЄСТРАЦІЇ КОРИСТУВАЧА
-// =================================================================================
+const setupActionButtons = () => {
+    const actionButtons = document.querySelectorAll('.main-actions-menu .action-btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            actionButtons.forEach(btn => btn.classList.remove('active-action'));
+            button.classList.add('active-action');
+            const actionType = button.getAttribute('data-type');
+            console.log('Обрана дія:', actionType);
+            // Тут можна додати логіку для фільтрації оголошень (fetchAndDisplayListings)
+        });
+    });
+};
+
+// --- Логіка register.html ---
 
 const handleRegistration = async () => {
     const form = document.getElementById('registerForm');
@@ -543,8 +355,7 @@ const handleRegistration = async () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const data = {};
-        formData.forEach((value, key) => { data[key] = value; });
+        const data = Object.fromEntries(formData.entries());
 
         if (data.password !== data.confirm_password) {
             alert('Помилка: Паролі не співпадають.');
@@ -581,17 +392,13 @@ const handleRegistration = async () => {
     });
 };
 
-// =================================================================================
-// 9. ЛОГІКА ЛОГІНУ
-// =================================================================================
+// --- Логіка login.html ---
 
 const handleLogin = async () => {
     const form = document.getElementById('loginForm');
     if (!form) return;
 
-    // Ця перевірка тепер необов'язкова, оскільки кнопка "Увійти"
-    // буде видима, але якщо користувач зайде на login.html напряму,
-    // його варто перенаправити в профіль.
+    // Якщо користувач вже увійшов (має дійсний токен), перекидаємо в профіль
     if (MY_USER_ID) {
         window.location.href = 'profile.html';
         return;
@@ -600,8 +407,7 @@ const handleLogin = async () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const data = {};
-        formData.forEach((value, key) => { data[key] = value; });
+        const data = Object.fromEntries(formData.entries());
 
         try {
             const response = await fetch('http://localhost:3000/api/login', {
@@ -612,9 +418,9 @@ const handleLogin = async () => {
 
             if (response.ok) {
                 const result = await response.json();
-                setToken(result.token);
+                setToken(result.token); // Зберігаємо токен
                 alert(`Вітаємо, ${result.user.first_name}!`);
-                window.location.href = 'index.html';
+                window.location.href = 'index.html'; // Перенаправляємо на головну
             } else {
                 const errorData = await response.json();
                 alert(`Помилка входу: ${errorData.error || 'Невідома помилка'}`);
@@ -626,10 +432,482 @@ const handleLogin = async () => {
     });
 };
 
+// --- Логіка profile.html ---
 
-// =================================================================================
-// 10. ЛОГІКА ЧАТУ
-// =================================================================================
+const loadProfileData = async () => {
+    // Перевірка MY_USER_ID вже є в роутері, але ми можемо перевірити ще раз
+    if (!MY_USER_ID) {
+        alert('Будь ласка, увійдіть, щоб переглянути свій профіль.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/profile', {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            // Це спрацює, якщо токен недійсний (наприклад, видалений на сервері)
+            throw new Error('Не вдалося завантажити дані профілю. Спробуйте увійти знову.');
+        }
+
+        const user = await response.json();
+
+        const setInputValue = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.value = value || '';
+        };
+
+        setInputValue('profile_first_name', user.first_name);
+        setInputValue('profile_last_name', user.last_name);
+        setInputValue('profile_email', user.email);
+        setInputValue('profile_city', user.city);
+        setInputValue('profile_phone', user.phone_number); // Додано (хоча у формі id="profile_phone", а name="phone_number")
+        setInputValue('habits-select', user.habits);
+        setInputValue('profile_bio', user.bio);
+
+        if (user.date_of_birth) {
+            setInputValue('profile_date', user.date_of_birth.split('T')[0]);
+        }
+
+        const avatarImg = document.getElementById('profileAvatarImg');
+        const avatarName = document.getElementById('profileAvatarName');
+
+        if (avatarImg) avatarImg.src = user.avatar_url || 'https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg';
+        if (avatarName) avatarName.textContent = `${user.first_name || ''} ${user.last_name || ''}`;
+
+    } catch (error) {
+        console.error('Помилка завантаження профілю:', error);
+        alert(error.message);
+        removeToken(); // Видаляємо недійсний токен
+        window.location.href = 'login.html';
+    }
+};
+
+const setupProfileEventListeners = () => {
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(profileForm);
+            const data = Object.fromEntries(formData.entries());
+
+            // Видаляємо поля, яких немає в БД (згідно server.js)
+            // 'phone' та 'interests' відсутні в server.js PUT /api/profile
+            delete data.phone_number;
+            delete data.interests;
+
+            try {
+                const response = await fetch('http://localhost:3000/api/profile', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Не вдалося оновити профіль');
+                }
+
+                const result = await response.json();
+                alert(result.message);
+
+                const avatarName = document.getElementById('profileAvatarName');
+                if (avatarName) {
+                    avatarName.textContent = `${result.user.first_name || ''} ${result.user.last_name || ''}`;
+                }
+
+            } catch (error) {
+                console.error('Помилка оновлення профілю:', error);
+                alert(`Помилка: ${error.message}`);
+            }
+        });
+    }
+
+    // Кнопка "Вийти" на сторінці профілю
+    const logoutButton = document.getElementById('btnLogout');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            removeToken();
+            alert('Ви вийшли з системи.');
+            window.location.href = 'index.html';
+        });
+    }
+
+    // Інші кнопки (заглушки)
+    document.getElementById('btnMyListings')?.addEventListener('click', () => {
+        alert('Сторінка "Мої оголошення" в розробці.');
+    });
+    document.getElementById('btnLoginPassword')?.addEventListener('click', () => {
+        alert('Розділ "Зміна логіну та пароля" в розробці.');
+    });
+    document.getElementById('btnSettings')?.addEventListener('click', () => {
+        window.location.href = 'settings.html'; // Перехід на налаштування
+    });
+};
+
+// --- Логіка listing_detail.html ---
+
+const fetchAndDisplayListingDetail = async () => {
+    const container = document.getElementById('listingDetailContainer');
+    if (!container) return;
+
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const listingId = urlParams.get('id');
+
+        if (!listingId) {
+            container.innerHTML = '<h1 style="text-align: center;">Помилка: ID оголошення не вказано.</h1>';
+            return;
+        }
+
+        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
+        if (response.status === 404) {
+            container.innerHTML = '<h1 style="text-align: center;">Помилка 404: Оголошення не знайдено.</h1>';
+            return;
+        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const listing = await response.json();
+        document.title = `UniHome | ${listing.title}`;
+
+        const mainImage = listing.photos.find(p => p.is_main) || listing.photos[0] || { image_url: 'https://picsum.photos/800/600?random=' + listing.listing_id };
+
+        let photoGalleryHTML = '';
+        if (listing.photos.length > 1) {
+            photoGalleryHTML = listing.photos
+                .filter(p => !p.is_main)
+                .map(photo => `<img src="${photo.image_url}" alt="Фото ${listing.title}" class="gallery-thumbnail">`)
+                .join('');
+        }
+
+        // --- НОВА ЛОГІКА РОЗПОДІЛУ ХАРАКТЕРИСТИК ---
+
+        // Допоміжна функція для фільтрації
+        const filterChars = (categories) => {
+            if (!listing.characteristics) return '';
+            return listing.characteristics
+                .filter(char => categories.includes(char.category))
+                .map(char => `<span class="char-tag">${char.name_ukr}</span>`)
+                .join('');
+        };
+
+        // Категорії з schema.sql
+        const myCategories = ['my_personality', 'my_lifestyle', 'my_interests', 'my_pets'];
+        const mateCategories = ['mate_personality', 'mate_lifestyle', 'mate_interests', 'mate_pets'];
+        const apartmentCategories = [
+            'tech', 'media', 'comfort', 'pets_allowed', 'blackout',
+            'rules', 'communications', 'infra', 'inclusive'
+        ];
+
+        const myCharsHTML = filterChars(myCategories);
+        const mateCharsHTML = filterChars(mateCategories);
+        const apartmentCharsHTML = filterChars(apartmentCategories);
+
+        // --- КІНЕЦЬ НОВОЇ ЛОГІКИ ---
+
+
+        const contactButtonHTML = (MY_USER_ID === listing.user_id)
+            ? `<a href="profile.html" class="contact-btn" style="background: #7f8c8d;">
+                 <i class="fas fa-user-edit"></i> Це ваше оголошення
+               </a>`
+            : `<a href="chat.html?user_id=${listing.user_id}" class="contact-btn">
+                 <i class="fas fa-comment-dots"></i> Зв'язатись з автором
+               </a>`;
+
+        const detailHTML = `
+            <div class="listing-detail-layout">
+                <div class="listing-detail-gallery">
+                    <div class="main-image-container">
+                        <img src="${mainImage.image_url}" alt="${listing.title}" id="mainDetailImage">
+                    </div>
+                    ${photoGalleryHTML ? `<div class="thumbnail-gallery">${photoGalleryHTML}</div>` : ''}
+                </div>
+
+                <div class="listing-detail-info">
+                    <h1>${listing.title}</h1>
+                    <span class="detail-price">₴${listing.price || 0} / міс</span>
+                    
+                    <div class="detail-meta">
+                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
+                        ${listing.target_university ? `<p><i class="fas fa-university"></i> ${listing.target_university}</p>` : ''}
+                        ${listing.rooms ? `<p><i class="fas fa-door-open"></i> Кімнат: ${listing.rooms}</p>` : ''}
+                        ${listing.total_area ? `<p><i class="fas fa-ruler-combined"></i> ${listing.total_area} м² (Загальна)</p>` : ''}
+                        ${listing.kitchen_area ? `<p><i class="fas fa-utensils"></i> ${listing.kitchen_area} м² (Кухня)</p>` : ''}
+                        ${listing.floor && listing.total_floors ? `<p><i class="fas fa-building"></i> ${listing.floor} / ${listing.total_floors} поверх</p>` : ''}
+                    </div>
+
+                    <div class="detail-section">
+                        <h2>Опис</h2>
+                        <p>${listing.description ? listing.description.replace(/\\n/g, '<br>') : 'Опис відсутній.'}</p>
+                    </div>
+
+                    ${(listing.my_age || listing.my_gender || myCharsHTML) ? `
+                    <div class="detail-section">
+                        <h2>Про автора</h2>
+                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                            ${listing.my_age ? `<span class="char-tag">Вік: ${listing.my_age}</span>` : ''}
+                            ${listing.my_gender === 'female' ? `<span class="char-tag">Стать: Жіноча</span>` : ''}
+                            ${listing.my_gender === 'male' ? `<span class="char-tag">Стать: Чоловіча</span>` : ''}
+                            ${listing.my_smoking ? `<span class="char-tag">Паління: ${listing.my_smoking}</span>` : ''}
+                            ${listing.my_drinking ? `<span class="char-tag">Алкоголь: ${listing.my_drinking}</span>` : ''}
+                        </div>
+                        ${myCharsHTML ? `<div class="characteristics-list" style="margin-top: 10px;">${myCharsHTML}</div>` : ''}
+                    </div>
+                    ` : ''}
+
+                    ${(listing.roommate_gender || mateCharsHTML) ? `
+                    <div class="detail-section">
+                        <h2>Вимоги до сусіда</h2>
+                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                            ${listing.roommate_gender ? `<span class="char-tag">Стать: ${listing.roommate_gender}</span>` : ''}
+                            ${listing.roommate_age_min && listing.roommate_age_max ? `<span class="char-tag">Вік: ${listing.roommate_age_min} - ${listing.roommate_age_max}</span>` : ''}
+                            ${listing.roommate_smoking ? `<span class="char-tag">Паління (сусід): ${listing.roommate_smoking}</span>` : ''}
+                        </div>
+                        ${mateCharsHTML ? `<div class="characteristics-list" style="margin-top: 10px;">${mateCharsHTML}</div>` : ''}
+                    </div>
+                    ` : ''}
+
+                    <div class="detail-section">
+                        <h2>Характеристики житла</h2>
+                        <div class="characteristics-list">
+                            ${apartmentCharsHTML || '<p>Характеристики не вказані.</p>'}
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="listing-detail-author">
+                    <h3>Автор оголошення</h3>
+                    <div class="author-card">
+                        <div class="author-avatar"><i class="fas fa-user-circle"></i></div>
+                        <p class="author-name">${listing.first_name} ${listing.last_name}</p>
+                        ${contactButtonHTML}
+                    </div>
+                </aside>
+            </div>
+        `;
+        container.innerHTML = detailHTML;
+
+    } catch (error) {
+        console.error('Помилка завантаження деталей оголошення:', error);
+        container.innerHTML = '<h1 style="text-align: center;">Помилка завантаження</h1><p style="text-align: center;">Не вдалося отримати деталі. Перевірте консоль та чи запущено бекенд.</p>';
+    }
+};
+
+// --- Логіка add_listing.html ---
+
+/**
+ * Динамічно керує видимістю полів ТА атрибутами 'required'
+ */
+const setupAddListingFormLogic = () => {
+    const form = document.getElementById('addListingForm');
+    if (!form) return;
+
+    // Секції
+    const roommatePrefs = document.getElementById('roommatePreferences');
+    const housingFilters = document.getElementById('housingFilters');
+    const listingDetails = document.getElementById('listingDetails');
+    const aboutMe = document.getElementById('aboutMe');
+    const priceGroup = document.getElementById('priceGroup');
+    const photoGroup = document.getElementById('photoGroup');
+    const maxOccupantsGroup = document.getElementById('maxOccupantsGroup');
+    const findMateGroups = document.getElementById('findMateGroups');
+    const myGroupSizeGroup = document.getElementById('myGroupSizeGroup');
+    const myGroupCount = document.getElementById('my_group_count');
+    const targetRoommatesTotalGroup = document.getElementById('targetRoommatesTotalGroup');
+    const studentParams = document.getElementById('studentParams');
+
+    // Поля, що валідуються
+    const targetPriceMaxInput = document.getElementById('target_price_max');
+    const myGenderRadios = document.querySelectorAll('input[name="my_gender"]');
+    const myAgeInput = document.getElementById('my_age');
+    const maxOccupantsSelect = document.getElementById('max_occupants');
+    const currentOccupantsSelect = document.getElementById('current_occupants');
+    const seekingRoommatesSelect = document.getElementById('seeking_roommates');
+    const roomsSelect = document.getElementById('rooms');
+    const floorInput = document.getElementById('floor');
+    const totalFloorsInput = document.getElementById('total_floors');
+    const totalAreaInput = document.getElementById('total_area');
+    const kitchenAreaInput = document.getElementById('kitchen_area');
+    const furnishingRadios = document.querySelectorAll('input[name="furnishing"]');
+
+    // Слухачі
+    const listingTypeRadios = document.querySelectorAll('input[name="listing_type"]');
+    const readyToShareRadios = document.querySelectorAll('input[name="ready_to_share"]');
+    const isStudentRadios = document.querySelectorAll('input[name="is_student"]');
+    const myGroupSizeRadios = document.querySelectorAll('input[name="my_group_size"]');
+
+    function updateVisibility() {
+        const selectedType = document.querySelector('input[name="listing_type"]:checked')?.value;
+        const isSharing = document.querySelector('input[name="ready_to_share"]:checked')?.value;
+
+        // 1. Скидаємо видимість
+        roommatePrefs.style.display = 'none';
+        housingFilters.style.display = 'none';
+        listingDetails.style.display = 'none';
+        aboutMe.style.display = 'none';
+        photoGroup.style.display = 'none';
+        priceGroup.style.display = 'none';
+        maxOccupantsGroup.style.display = 'none';
+        findMateGroups.style.display = 'none';
+        myGroupSizeGroup.style.display = 'none';
+        targetRoommatesTotalGroup.style.display = 'none';
+
+        // 2. Скидаємо 'required' АБСОЛЮТНО ДЛЯ ВСІХ
+        targetPriceMaxInput.required = false;
+        myAgeInput.required = false;
+        myGenderRadios.forEach(radio => radio.required = false);
+        maxOccupantsSelect.required = false;
+        currentOccupantsSelect.required = false;
+        seekingRoommatesSelect.required = false;
+        roomsSelect.required = false;
+        floorInput.required = false;
+        totalFloorsInput.required = false;
+        totalAreaInput.required = false;
+        kitchenAreaInput.required = false;
+        furnishingRadios.forEach(radio => radio.required = false);
+
+        // 3. Налаштовуємо видимість і 'required' на основі типу
+        if (selectedType === 'find_home') {
+            housingFilters.style.display = 'block';
+            aboutMe.style.display = 'block';
+            myGroupSizeGroup.style.display = 'block';
+            targetRoommatesTotalGroup.style.display = 'block';
+
+            // Встановлюємо required
+            targetPriceMaxInput.required = true;
+            myAgeInput.required = true;
+            myGenderRadios.forEach(radio => radio.required = true);
+
+            if (isSharing !== 'no') {
+                roommatePrefs.style.display = 'block';
+            }
+
+        } else if (selectedType === 'rent_out') {
+            listingDetails.style.display = 'block';
+            photoGroup.style.display = 'block';
+            priceGroup.style.display = 'block';
+            maxOccupantsGroup.style.display = 'block';
+
+            // Встановлюємо required
+            maxOccupantsSelect.required = true;
+            roomsSelect.required = true;
+            floorInput.required = true;
+            totalFloorsInput.required = true;
+            totalAreaInput.required = true;
+            kitchenAreaInput.required = true;
+            furnishingRadios.forEach(radio => radio.required = true);
+
+        } else if (selectedType === 'find_mate') {
+            listingDetails.style.display = 'block';
+            roommatePrefs.style.display = 'block';
+            aboutMe.style.display = 'block';
+            photoGroup.style.display = 'block';
+            priceGroup.style.display = 'block';
+            findMateGroups.style.display = 'block';
+
+            // Встановлюємо required
+            myAgeInput.required = true;
+            myGenderRadios.forEach(radio => radio.required = true);
+            currentOccupantsSelect.required = true;
+            seekingRoommatesSelect.required = true;
+            roomsSelect.required = true;
+            floorInput.required = true;
+            totalFloorsInput.required = true;
+            totalAreaInput.required = true;
+            kitchenAreaInput.required = true;
+            furnishingRadios.forEach(radio => radio.required = true);
+        }
+
+        const isStudent = document.querySelector('input[name="is_student"]:checked')?.value;
+        studentParams.style.display = (isStudent === 'yes' && selectedType === 'find_home') ? 'block' : 'none';
+    }
+
+    // --- ЛОГІКА ПОДІЙ ---
+    listingTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('listingTypeHint').style.display = 'none';
+            updateVisibility();
+        });
+    });
+
+    readyToShareRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+    isStudentRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+
+    form.addEventListener('submit', function(event) {
+        const selectedType = document.querySelector('input[name="listing_type"]:checked');
+        if (!selectedType) {
+            event.preventDefault();
+            const listingTypeHint = document.getElementById('listingTypeHint');
+            listingTypeHint.style.display = 'block';
+            listingTypeHint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    myGroupSizeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('my_group_count').style.display = (this.value === 'more') ? 'block' : 'none';
+        });
+    });
+
+    updateVisibility();
+};
+
+
+const handleListingSubmission = async () => {
+    const form = document.getElementById('addListingForm');
+    if (!form) return;
+
+    if (!MY_USER_ID) {
+        alert('Будь ласка, увійдіть, щоб додати оголошення.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        const characteristics = formData.getAll('characteristics');
+        const searchCharacteristics = formData.getAll('search_characteristics');
+
+        const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => {
+            return key !== 'my_pet_no' && key !== 'mate_no_pet';
+        });
+
+        data.characteristics = allCharacteristics;
+        delete data.search_characteristics;
+
+        try {
+            const response = await fetch('http://localhost:3000/api/listings', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(`Успіх! ${result.message} (ID: ${result.listingId})`);
+                form.reset();
+                window.location.href = 'index.html';
+            } else if (response.status === 401 || response.status === 403) {
+                alert('Помилка автентифікації. Будь ласка, увійдіть знову.');
+                window.location.href = 'login.html';
+            } else {
+                const errorData = await response.json();
+                alert(`Помилка публікації: ${errorData.error || 'Невідома помилка'}`);
+            }
+        } catch (error) {
+            console.error('Помилка мережі/сервера:', error);
+            alert('Не вдалося з’єднатися з сервером. Перевірте, чи запущено бекенд (http://localhost:3000).');
+        }
+    });
+};
+
+// --- Логіка chat.html ---
 
 let currentOpenConversationId = null;
 let currentOpenReceiverId = null;
@@ -688,7 +966,7 @@ const loadMessages = async (conversationId, receiverId, receiverName) => {
 
     chatHeader.textContent = receiverName;
     messageForm.style.display = 'flex';
-    messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light; margin: auto;">Завантаження...</p>';
+    messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;">Завантаження...</p>';
 
     try {
         const response = await fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`, {
@@ -701,12 +979,11 @@ const loadMessages = async (conversationId, receiverId, receiverName) => {
         messagesArea.innerHTML = '';
 
         if (messages.length === 0) {
-            messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light; margin: auto;">Повідомлень ще немає.</p>';
-            return;
+            messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;">Повідомлень ще немає.</p>';
+        } else {
+            messages.forEach(msg => appendMessage(msg));
+            messagesArea.scrollTop = messagesArea.scrollHeight;
         }
-
-        messages.forEach(msg => appendMessage(msg));
-        messagesArea.scrollTop = messagesArea.scrollHeight;
 
     } catch (error) {
         console.error('Помилка завантаження повідомлень:', error);
@@ -718,9 +995,9 @@ const appendMessage = (msg) => {
     const messagesArea = document.getElementById('messagesArea');
     if (!messagesArea) return;
 
-    if(messagesArea.querySelector('p')) {
-        messagesArea.innerHTML = '';
-    }
+    // Видаляємо заглушку "Повідомлень ще немає"
+    const placeholder = messagesArea.querySelector('p');
+    if (placeholder) placeholder.remove();
 
     const messageEl = document.createElement('div');
     messageEl.className = 'message';
@@ -741,6 +1018,7 @@ const handleMessageSend = () => {
         if (messageBody === '' || !currentOpenReceiverId) return;
 
         try {
+            // Оптимістична відправка (поки не чекаємо відповіді socket.io)
             const response = await fetch('http://localhost:3000/api/messages', {
                 method: 'POST',
                 headers: getAuthHeaders(),
@@ -765,206 +1043,9 @@ const handleMessageSend = () => {
     });
 };
 
-// =================================================================================
-// 11. ЛОГІКА СТОРІНКИ ПРОФІЛЮ
-// =================================================================================
-
-const loadProfileData = async () => {
-    try {
-        const response = await fetch('http://localhost:3000/api/profile', {
-            headers: getAuthHeaders()
-        });
-
-        if (!response.ok) {
-            throw new Error('Не вдалося завантажити дані профілю. Спробуйте увійти знову.');
-        }
-
-        const user = await response.json();
-
-        // Допоміжна функція для безпечного встановлення значення
-        const setInputValue = (id, value) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.value = value || '';
-            } else {
-                console.warn(`Елемент з ID '${id}' не знайдено на сторінці профілю.`);
-            }
-        };
-
-        // Заповнюємо поля форми
-        setInputValue('profile_first_name', user.first_name);
-        setInputValue('profile_last_name', user.last_name);
-        setInputValue('profile_email', user.email);
-        setInputValue('profile_city', user.city);
-
-        // Форматування дати
-        if (user.date_of_birth) {
-            setInputValue('profile_date', user.date_of_birth.split('T')[0]);
-        }
-
-        // *** ВИПРАВЛЕННЯ ТУТ ***
-        setInputValue('habits-select', user.habits); // Використовуємо 'habits-select'
-        setInputValue('profile_bio', user.bio);
-
-        // Оновлюємо аватар та ім'я в бічній панелі
-        const avatarImg = document.getElementById('profileAvatarImg');
-        const avatarName = document.getElementById('profileAvatarName');
-
-        if (avatarImg) {
-            avatarImg.src = user.avatar_url || 'https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg';
-        }
-        if (avatarName) {
-            avatarName.textContent = `${user.first_name || ''} ${user.last_name || ''}`;
-        }
-
-    } catch (error) {
-        console.error('Помилка завантаження профілю:', error);
-        alert(error.message);
-        window.location.href = 'login.html'; // Повертаємо на логін, якщо помилка
-    }
-};
-
-const setupProfileEventListeners = () => {
-    // 1. Обробка форми "Зберегти зміни"
-    const profileForm = document.getElementById('profileForm');
-    if (profileForm) {
-        profileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(profileForm);
-            const data = Object.fromEntries(formData.entries());
-
-            // Видаляємо поля, яких немає в БД
-            delete data.phone;
-            delete data.interests;
-
-            try {
-                const response = await fetch('http://localhost:3000/api/profile', {
-                    method: 'PUT',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Не вдалося оновити профіль');
-                }
-
-                const result = await response.json();
-                alert(result.message);
-
-                // Оновлюємо ім'я в бічній панелі
-                const avatarName = document.getElementById('profileAvatarName');
-                if (avatarName) {
-                    avatarName.textContent = `${result.user.first_name || ''} ${result.user.last_name || ''}`;
-                }
-
-            } catch (error) {
-                console.error('Помилка оновлення профілю:', error);
-                alert(`Помилка: ${error.message}`);
-            }
-        });
-    }
-
-    // 2. Обробка кнопки "Вийти" (в бічному меню профілю)
-    const logoutButton = document.getElementById('btnLogout');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            removeToken(); // Видаляємо токен з localStorage
-            alert('Ви вийшли з системи.');
-            window.location.href = 'index.html'; // Перенаправляємо на головну
-        });
-    }
-
-    // 3. Обробка інших кнопок (заглушки)
-    const myListingsBtn = document.getElementById('btnMyListings');
-    if (myListingsBtn) {
-        myListingsBtn.addEventListener('click', () => {
-            alert('Сторінка "Мої оголошення" в розробці.');
-            // TODO: window.location.href = 'my_listings.html';
-        });
-    }
-
-    const loginPasswordBtn = document.getElementById('btnLoginPassword');
-    if (loginPasswordBtn) {
-        loginPasswordBtn.addEventListener('click', () => {
-            alert('Розділ "Зміна логіну та пароля" в розробці.');
-            // TODO: Показати модальне вікно або нову форму
-        });
-    }
-};
-
-// =================================================================================
-// 12. ЛОГІКА ДЛЯ ІНШИХ СТОРІНОК (наприклад, index.html)
-// =================================================================================
-
-// Налаштування пошуку та фільтрів
-const setupSearchAndFilters = () => {
-    const searchInput = document.querySelector('.search-input');
-    searchInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') console.log('Пошук за запитом:', searchInput.value);
-    });
-
-    const filtersForm = document.querySelector('.filters-form');
-    if (!filtersForm) return;
-
-    const priceInput = document.getElementById('price');
-    const priceValueSpan = document.getElementById('priceValue');
-
-    if (priceInput && priceValueSpan) {
-        priceValueSpan.innerText = priceInput.value;
-        priceInput.addEventListener('input', () => {
-            priceValueSpan.innerText = priceInput.value;
-        });
-    }
-
-    filtersForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(filtersForm);
-        const filters = {};
-        formData.getAll('characteristics').forEach(value => {
-            filters['characteristics'] = filters['characteristics'] || [];
-            filters['characteristics'].push(value);
-        });
-        for (const [key, value] of formData.entries()) {
-            if (key !== 'characteristics') filters[key] = value;
-        }
-        console.log('Застосовано фільтри:', filters);
-        alert('Фільтри застосовано! Результати у консолі.');
-        toggleFilters('close');
-    });
-
-    filtersForm.querySelector('.reset-filters-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        filtersForm.reset();
-        if (priceInput && priceValueSpan) {
-            priceValueSpan.innerText = priceInput.max;
-        }
-        console.log('Фільтри скинуто');
-    });
-};
-
-// Налаштування кнопок дій
-const setupActionButtons = () => {
-    const actionButtons = document.querySelectorAll('.main-actions-menu .action-btn');
-    actionButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            actionButtons.forEach(btn => btn.classList.remove('active-action'));
-            button.classList.add('active-action');
-            const actionType = button.getAttribute('data-type');
-            console.log('Обрана дія:', actionType);
-        });
-    });
-};
-
-// =================================================================================
-// 13. ЛОГІКА SOCKET.IO КЛІЄНТА
-// =================================================================================
+// --- Логіка Socket.IO (для chat.html) ---
 
 const setupSocketIO = () => {
-    // Ця функція викликається з DOMContentLoaded,
-    // тому нам не потрібна перевірка pathname або MY_USER_ID тут
-
     if (typeof io === 'undefined') {
         console.error('Socket.io клієнт не завантажено! Додайте скрипт у chat.html');
         return;
@@ -978,37 +1059,34 @@ const setupSocketIO = () => {
         // Приєднатись до кімнат (розмов)
         const list = document.getElementById('conversationsList');
         if (list) {
-            const observer = new MutationObserver((mutationsList, observer) => {
-                for(const mutation of mutationsList) {
-                    if (mutation.type === 'childList') {
-                        const conversationItems = document.querySelectorAll('.conversation-item');
-                        if (conversationItems.length > 0) {
-                            console.log('Приєднуємось до кімнат socket.io...');
-                            conversationItems.forEach(item => {
-                                const convoId = item.dataset.conversationId;
-                                if(convoId) {
-                                    socket.emit('join_conversation', convoId);
-                                }
-                            });
-                            observer.disconnect(); // Зупиняємо спостереження
+            // Використовуємо MutationObserver, щоб дочекатись завантаження розмов
+            const observer = new MutationObserver(() => {
+                const conversationItems = document.querySelectorAll('.conversation-item');
+                if (conversationItems.length > 0) {
+                    console.log('Приєднуємось до кімнат socket.io...');
+                    conversationItems.forEach(item => {
+                        const convoId = item.dataset.conversationId;
+                        if (convoId) {
+                            socket.emit('join_conversation', convoId);
                         }
-                    }
+                    });
+                    observer.disconnect(); // Зупиняємо спостереження
                 }
             });
             observer.observe(list, { childList: true, subtree: true });
         }
     });
 
-    // Слухати нові повідомлення
     socket.on('receive_message', (newMessage) => {
         console.log('Отримано нове повідомлення:', newMessage);
 
         if (newMessage.conversation_id.toString() === currentOpenConversationId) {
+            // Якщо чат відкритий, додаємо повідомлення
             appendMessage(newMessage);
             const messagesArea = document.getElementById('messagesArea');
             if (messagesArea) messagesArea.scrollTop = messagesArea.scrollHeight;
         } else {
-            // Показати сповіщення
+            // Якщо чат закритий, показуємо сповіщення
             console.log("Нове повідомлення в іншому чаті!");
             currentNotificationCount++;
             updateNotificationCount(currentNotificationCount);
@@ -1019,3 +1097,60 @@ const setupSocketIO = () => {
         console.log('Socket.io відключено');
     });
 };
+
+
+// =================================================================================
+// 4. ГОЛОВНИЙ ВИКОНАВЧИЙ БЛОК (РОУТЕР)
+// =================================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    (async () => {
+        // 1. ЗАВЖДИ ЗАВАНТАЖУЄМО НАВІГАЦІЮ СПОЧАТКУ
+        await loadNavigation();
+
+        // 2. Визначаємо поточну сторінку
+        const path = window.location.pathname;
+
+        // 3. ЗАПУСКАЄМО ЛОГІКУ ДЛЯ КОНКРЕТНИХ СТОРІНОК
+        if (path.endsWith('index.html') || path.endsWith('/')) {
+            await fetchAndDisplayListings();
+            setupActionButtons();
+            setupSearchAndFilters();
+        }
+
+        if (path.endsWith('register.html')) {
+            await handleRegistration();
+        }
+
+        if (path.endsWith('login.html')) {
+            await handleLogin();
+        }
+
+        if (path.endsWith('add_listing.html')) {
+            setupAddListingFormLogic();
+            await handleListingSubmission();
+        }
+
+        if (path.endsWith('listing_detail.html')) {
+            await fetchAndDisplayListingDetail();
+        }
+
+        if (path.endsWith('profile.html')) {
+            // Перевірка авторизації відбувається всередині loadProfileData
+            await loadProfileData();
+            setupProfileEventListeners();
+        }
+
+        if (path.endsWith('chat.html')) {
+            if (!MY_USER_ID) {
+                alert('Будь ласка, увійдіть, щоб переглянути повідомлення.');
+                window.location.href = 'login.html';
+            } else {
+                await loadConversations();
+                handleMessageSend();
+                setupSocketIO(); // Запускаємо сокети
+            }
+        }
+
+    })();
+});
