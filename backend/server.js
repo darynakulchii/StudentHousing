@@ -108,7 +108,7 @@ app.get('/api/listings/:id', async (req, res) => {
         const photosPromise = client.query(photosQuery, [id]);
 
         const charsQuery = `
-            SELECT c.name_ukr, c.system_key
+            SELECT c.name_ukr, c.system_key, c.category
             FROM listing_characteristics lc
                      JOIN characteristics c ON lc.char_id = c.char_id
             WHERE lc.listing_id = $1;
