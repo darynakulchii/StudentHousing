@@ -235,6 +235,7 @@ const loadNavigation = async () => {
         document.querySelector('.notification-icon-container')?.addEventListener('click', () => toggleNotifications('open'));
         document.getElementById('btnCloseNotifications')?.addEventListener('click', () => toggleNotifications('close'));
 
+        // ОНОВЛЕНО: Слухач для кнопки фільтрів тепер тут
         document.querySelector('.filter-btn')?.addEventListener('click', () => toggleFilters('open'));
         document.getElementById('btnCloseFilters')?.addEventListener('click', () => toggleFilters('close'));
 
@@ -255,30 +256,52 @@ const loadNavigation = async () => {
 
 // --- Логіка index.html ---
 
-const fetchAndDisplayListings = async () => {
+// ОНОВЛЕНО: Функція тепер приймає query string для фільтрації
+const fetchAndDisplayListings = async (filterQuery = '') => {
     const container = document.querySelector('.listings-container');
     if (!container) return;
 
+    // Показуємо індикатор завантаження
+    container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження оголошень...</p>';
+
     try {
-        const response = await fetch('http://localhost:3000/api/listings');
+        // ОНОВЛЕНО: Додаємо query string до запиту
+        // За замовчуванням (якщо filterQuery порожній) не показуємо "шукаю житло"
+        const defaultQuery = 'listing_type!=find_home';
+        const finalQuery = filterQuery || defaultQuery;
+
+        const response = await fetch(`http://localhost:3000/api/listings?${finalQuery}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const listings = await response.json();
         container.innerHTML = '';
 
         if (listings.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-light);">Наразі активних оголошень немає.</p>';
+            // ОНОВЛЕНО: Повідомлення про відсутність результатів
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">За вашими фільтрами оголошень не знайдено.</p>';
             return;
         }
 
         listings.forEach(listing => {
             const imageUrl = listing.main_photo_url || 'https://picsum.photos/400/300?random=' + listing.listing_id;
+
+            // Визначення типу оголошення для тегу
+            let typeTag = '';
+            if(listing.listing_type === 'rent_out') {
+                typeTag = '<span class="type-tag rent">Здають</span>';
+            } else if (listing.listing_type === 'find_mate') {
+                typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
+            } else if (listing.listing_type === 'find_home') {
+                typeTag = '<span class="type-tag home">Шукають житло</span>';
+            }
+
             const listingCard = `
                 <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
                     <div class="listing-card large-card">
                         <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
                         <div class="info-overlay">
-                            <span class="price-tag">₴${listing.price || 0} / міс</span>
+                            <span class="price-tag">₴${listing.price || '...'} / міс</span>
+                            ${typeTag} 
                         </div>
                         <div class="listing-content">
                             <h3>${listing.title}</h3>
@@ -292,59 +315,188 @@ const fetchAndDisplayListings = async () => {
 
     } catch (error) {
         console.error('Не вдалося завантажити оголошення:', error);
-        container.innerHTML = '<p style="color: #e74c3c; font-weight: 600;">Помилка: Не вдалося з’єднатися з сервером для завантаження оголошень.</p>';
+        container.innerHTML = '<p style="color: #e74c3c; font-weight: 600; text-align: center; padding: 20px;">Помилка: Не вдалося з’єднатися з сервером для завантаження оголошень.</p>';
     }
 };
 
-const setupSearchAndFilters = () => {
-    const searchInput = document.querySelector('.search-input');
-    searchInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') console.log('Пошук за запитом:', searchInput.value);
-    });
-
-    const filtersForm = document.querySelector('.filters-form');
-    if (!filtersForm) return;
-
-    const priceInput = document.getElementById('price');
-    const priceValueSpan = document.getElementById('priceValue');
-
-    if (priceInput && priceValueSpan) {
-        priceValueSpan.innerText = priceInput.value;
-        priceInput.addEventListener('input', () => {
-            priceValueSpan.innerText = priceInput.value;
-        });
-    }
-
-    filtersForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        // ... Логіка фільтрації ...
-        console.log('Фільтри застосовано');
-        alert('Фільтри застосовано! (заглушка)');
-        toggleFilters('close');
-    });
-
-    filtersForm.querySelector('.reset-filters-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        filtersForm.reset();
-        if (priceInput && priceValueSpan) {
-            priceValueSpan.innerText = priceInput.max; // Скидання повзунка
-        }
-        console.log('Фільтри скинуто');
-    });
-};
-
-const setupActionButtons = () => {
+/**
+ * =======================================================================
+ * ОНОВЛЕНО: ЦЯ ФУНКЦІЯ КЕРУЄ ВСІЄЮ ЛОГІКОЮ ФІЛЬТРІВ ТА КНОПОК НА index.html
+ * =======================================================================
+ */
+const setupHomepageLogic = () => {
+    const filtersForm = document.getElementById('filtersForm');
     const actionButtons = document.querySelectorAll('.main-actions-menu .action-btn');
+    const searchInput = document.querySelector('.search-input');
+    const searchIcon = document.querySelector('.search-icon'); // НОВЕ
+
+    if (!filtersForm || !actionButtons.length || !searchInput || !searchIcon) return;
+
+    // --- 1. Центральна функція для пошуку та фільтрації ---
+    const triggerSearchAndFilter = () => {
+        const formData = new FormData(filtersForm);
+        const params = new URLSearchParams();
+
+        // 1. Додаємо пошуковий запит
+        const searchTerm = searchInput.value.trim();
+        if (searchTerm) {
+            params.append('search', searchTerm);
+        }
+
+        // 2. Збираємо всі прапорці "characteristics"
+        const characteristics = [];
+        filtersForm.querySelectorAll('input[name="characteristics"]:checked').forEach(checkbox => {
+            characteristics.push(checkbox.value);
+        });
+
+        // 3. Додаємо всі інші поля (city, price_min, rooms...)
+        formData.forEach((value, key) => {
+            // Додаємо, ТІЛЬКИ ЯКЩО поле не 'characteristics' і має значення
+            if (key !== 'characteristics' && value) {
+                params.append(key, value);
+            }
+        });
+
+        // 4. Додаємо характеристики як рядок, розділений комою
+        if (characteristics.length > 0) {
+            params.append('characteristics', characteristics.join(','));
+        }
+
+        const filterQuery = params.toString();
+
+        console.log('Застосування пошуку/фільтрів:', filterQuery);
+
+        // 5. Викликаємо оновлену функцію завантаження
+        fetchAndDisplayListings(filterQuery);
+    };
+
+    // --- 2. Логіка динамічної видимості фільтрів (адаптовано з add_listing) ---
+    const updateFilterVisibility = () => {
+        const form = filtersForm; // Просто для коротшого імені
+
+        // Знаходимо всі динамічні секції
+        const housingFilters = form.querySelector('#housingFilters');
+        const listingDetails = form.querySelector('#listingDetails');
+        const aboutMe = form.querySelector('#aboutMe');
+        const roommatePrefs = form.querySelector('#roommatePreferences');
+
+        // Отримуємо обраний тип
+        const selectedType = form.querySelector('input[name="listing_type"]:checked')?.value;
+
+        // 1. Все ховаємо
+        housingFilters.style.display = 'none';
+        listingDetails.style.display = 'none';
+        aboutMe.style.display = 'none';
+        roommatePrefs.style.display = 'none';
+
+        // 2. Показуємо потрібні секції
+        if (selectedType === 'find_home') {
+            housingFilters.style.display = 'block';
+            aboutMe.style.display = 'block';
+            roommatePrefs.style.display = 'block';
+        } else if (selectedType === 'rent_out') {
+            listingDetails.style.display = 'block';
+        } else if (selectedType === 'find_mate') {
+            listingDetails.style.display = 'block';
+            aboutMe.style.display = 'block';
+            roommatePrefs.style.display = 'block';
+        } else {
+            // "Всі" (selectedType === '') - показуємо всі можливі блоки
+            housingFilters.style.display = 'block';
+            listingDetails.style.display = 'block';
+            aboutMe.style.display = 'block';
+            roommatePrefs.style.display = 'block';
+        }
+    };
+
+    // --- 3. Логіка головних кнопок ---
     actionButtons.forEach(button => {
         button.addEventListener('click', () => {
             actionButtons.forEach(btn => btn.classList.remove('active-action'));
             button.classList.add('active-action');
+
             const actionType = button.getAttribute('data-type');
             console.log('Обрана дія:', actionType);
-            // Тут можна додати логіку для фільтрації оголошень (fetchAndDisplayListings)
+
+            const typeValue = (actionType === 'all_listings') ? '' : actionType;
+
+            // Скидаємо форму І пошук
+            filtersForm.reset();
+            searchInput.value = '';
+
+            // Встановлюємо потрібний тип у сайдбарі
+            const radioInForm = filtersForm.querySelector(`input[name="listing_type"][value="${typeValue}"]`);
+            if (radioInForm) {
+                radioInForm.checked = true;
+            }
+
+            // Оновлюємо видимість фільтрів у сайдбарі
+            updateFilterVisibility();
+
+            // Викликаємо завантаження (пошук) лише з одним цим фільтром
+            const query = typeValue ? `listing_type=${typeValue}` : 'listing_type!=find_home';
+            fetchAndDisplayListings(query);
         });
     });
+
+    // --- 4. Логіка радіо-кнопок УСЕРЕДИНІ сайдбару ---
+    filtersForm.querySelectorAll('input[name="listing_type"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            updateFilterVisibility();
+
+            // Синхронізуємо головні кнопки
+            const typeValue = radio.value || 'all_listings';
+            actionButtons.forEach(btn => btn.classList.remove('active-action'));
+            const matchingButton = document.querySelector(`.action-btn[data-type="${typeValue}"]`);
+            if (matchingButton) {
+                matchingButton.classList.add('active-action');
+            }
+        });
+    });
+
+    // --- 5. Логіка відправки форми (кнопка "Застосувати") ---
+    filtersForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        triggerSearchAndFilter(); // Викликаємо центральну функцію
+        toggleFilters('close'); // Ховаємо сайдбар
+    });
+
+    // --- 6. Логіка кнопки "Скинути" ---
+    filtersForm.querySelector('.reset-filters-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        filtersForm.reset();
+        searchInput.value = ''; // Також чистимо пошук
+
+        actionButtons.forEach(btn => btn.classList.remove('active-action'));
+        document.querySelector('.action-btn[data-type="all_listings"]')?.classList.add('active-action');
+
+        updateFilterVisibility();
+
+        fetchAndDisplayListings('listing_type!=find_home');
+
+        console.log('Фільтри скинуто');
+    });
+
+    // --- 7. Логіка Пошукового рядка (Enter) ---
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Запобігаємо стандартній відправці форми
+            triggerSearchAndFilter(); // Викликаємо центральну функцію
+        }
+    });
+
+    // --- 8. Логіка Пошукової іконки (Click) ---
+    searchIcon.addEventListener('click', () => {
+        triggerSearchAndFilter(); // Викликаємо центральну функцію
+    });
+    // Додамо стиль, щоб іконка виглядала клікабельною
+    searchIcon.style.cursor = 'pointer';
+
+
+    // --- 9. Перший запуск для налаштування видимості ---
+    updateFilterVisibility();
 };
+
 
 // --- Логіка register.html ---
 
@@ -463,9 +615,10 @@ const loadProfileData = async () => {
         setInputValue('profile_last_name', user.last_name);
         setInputValue('profile_email', user.email);
         setInputValue('profile_city', user.city);
-        setInputValue('profile_phone', user.phone_number); // Додано (хоча у формі id="profile_phone", а name="phone_number")
+        setInputValue('profile_phone', user.phone_number); // ОНОВЛЕНО
         setInputValue('habits-select', user.habits);
         setInputValue('profile_bio', user.bio);
+        // setInputValue('interests-select', user.interests); // 'interests' немає в схемі 'users'
 
         if (user.date_of_birth) {
             setInputValue('profile_date', user.date_of_birth.split('T')[0]);
@@ -493,9 +646,7 @@ const setupProfileEventListeners = () => {
             const formData = new FormData(profileForm);
             const data = Object.fromEntries(formData.entries());
 
-            // Видаляємо поля, яких немає в БД (згідно server.js)
-            // 'phone' та 'interests' відсутні в server.js PUT /api/profile
-            delete data.phone_number;
+            // ОНОВЛЕНО: Видаляємо лише 'interests', оскільки 'phone_number' тепер обробляється
             delete data.interests;
 
             try {
@@ -720,6 +871,7 @@ const setupAddListingFormLogic = () => {
     const studentParams = document.getElementById('studentParams');
 
     // Поля, що валідуються
+    const priceInput = document.getElementById('price'); // ОНОВЛЕНО
     const targetPriceMaxInput = document.getElementById('target_price_max');
     const myGenderRadios = document.querySelectorAll('input[name="my_gender"]');
     const myAgeInput = document.getElementById('my_age');
@@ -756,6 +908,7 @@ const setupAddListingFormLogic = () => {
         targetRoommatesTotalGroup.style.display = 'none';
 
         // 2. Скидаємо 'required' АБСОЛЮТНО ДЛЯ ВСІХ
+        priceInput.required = false; // ОНОВЛЕНО
         targetPriceMaxInput.required = false;
         myAgeInput.required = false;
         myGenderRadios.forEach(radio => radio.required = false);
@@ -792,6 +945,7 @@ const setupAddListingFormLogic = () => {
             maxOccupantsGroup.style.display = 'block';
 
             // Встановлюємо required
+            priceInput.required = true; // ОНОВЛЕНО
             maxOccupantsSelect.required = true;
             roomsSelect.required = true;
             floorInput.required = true;
@@ -809,6 +963,7 @@ const setupAddListingFormLogic = () => {
             findMateGroups.style.display = 'block';
 
             // Встановлюємо required
+            priceInput.required = true; // ОНОВЛЕНО
             myAgeInput.required = true;
             myGenderRadios.forEach(radio => radio.required = true);
             currentOccupantsSelect.required = true;
@@ -871,15 +1026,18 @@ const handleListingSubmission = async () => {
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
+        // ОНОВЛЕНО: Збираємо характеристики з обох секцій
         const characteristics = formData.getAll('characteristics');
         const searchCharacteristics = formData.getAll('search_characteristics');
 
+        // Видаляємо "заглушки" і об'єднуємо
         const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => {
-            return key !== 'my_pet_no' && key !== 'mate_no_pet';
+            // 'my_pet_no' та 'mate_no_pet' - це не характеристики, а їх відсутність
+            return key && key !== 'my_pet_no' && key !== 'mate_no_pet';
         });
 
-        data.characteristics = allCharacteristics;
-        delete data.search_characteristics;
+        data.characteristics = [...new Set(allCharacteristics)]; // Зберігаємо тільки унікальні
+        delete data.search_characteristics; // Видаляємо старе поле
 
         try {
             const response = await fetch('http://localhost:3000/api/listings', {
@@ -1113,9 +1271,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. ЗАПУСКАЄМО ЛОГІКУ ДЛЯ КОНКРЕТНИХ СТОРІНОК
         if (path.endsWith('index.html') || path.endsWith('/')) {
-            await fetchAndDisplayListings();
-            setupActionButtons();
-            setupSearchAndFilters();
+            // Запускаємо завантаження (за замовчуванням покаже "Всі", крім 'find_home')
+            fetchAndDisplayListings('listing_type!=find_home');
+            // Запускаємо всю логіку кнопок та фільтрів
+            setupHomepageLogic();
         }
 
         if (path.endsWith('register.html')) {

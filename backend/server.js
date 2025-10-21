@@ -78,16 +78,137 @@ const authenticateToken = (req, res, next) => {
 
 // 4. МАРШРУТИ ДЛЯ ОГОЛОШЕНЬ (Публічні)
 
-// 4.1 ОТРИМАННЯ ВСІХ ОГОЛОШЕНЬ
+// 4.1 ОТРИМАННЯ ВСІХ ОГОЛОШЕНЬ (ОНОВЛЕНО З ФІЛЬТРАЦІЄЮ + ПОШУКОМ)
 app.get('/api/listings', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM listings WHERE is_active = TRUE ORDER BY created_at DESC');
+        let query = `SELECT l.* FROM listings l`;
+        const whereClauses = ['l.is_active = TRUE'];
+        const params = [];
+        let paramIndex = 1;
+
+        // === 1. ПОШУК (НОВА СЕКЦІЯ) ===
+        if (req.query.search) {
+            // Ми шукаємо за заголовком, описом, містом та (якщо є) університетом.
+            // to_tsvector - перетворює текст в індексовані "слова"
+            // websearch_to_tsquery - перетворює запит користувача (напр. "кімната кпі") в пошуковий запит
+            // @@ - оператор "відповідає"
+            whereClauses.push(`
+                to_tsvector('ukrainian', l.title || ' ' || l.description || ' ' || l.city || ' ' || COALESCE(l.target_university, ''))
+                @@ websearch_to_tsquery('ukrainian', $${paramIndex++})
+            `);
+            params.push(req.query.search);
+        }
+
+        // === 2. Прості фільтри (з таблиці listings) ===
+
+        // Тип оголошення (rent_out, find_mate, find_home)
+        if (req.query.listing_type) {
+            whereClauses.push(`l.listing_type = $${paramIndex++}`);
+            params.push(req.query.listing_type);
+        }
+
+        // Місто
+        if (req.query.city) {
+            whereClauses.push(`l.city = $${paramIndex++}`);
+            params.push(req.query.city);
+        }
+
+        // Ціна (min / max)
+        if (req.query.price_min) {
+            whereClauses.push(`(l.price >= $${paramIndex++} OR l.target_price_min >= $${paramIndex++})`);
+            params.push(req.query.price_min, req.query.price_min);
+        }
+        if (req.query.price_max) {
+            whereClauses.push(`(l.price <= $${paramIndex++} OR l.target_price_max <= $${paramIndex++})`);
+            params.push(req.query.price_max, req.query.price_max);
+        }
+
+        // Кімнати
+        if (req.query.rooms) {
+            whereClauses.push(`(l.rooms = $${paramIndex++} OR l.target_rooms = $${paramIndex++})`);
+            params.push(req.query.rooms, req.query.rooms);
+        }
+
+        // Меблювання
+        if (req.query.furnishing) {
+            whereClauses.push(`l.furnishing = $${paramIndex++}`);
+            params.push(req.query.furnishing);
+        }
+
+        // --- Додаткові фільтри з "Параметри пошуку житла" (для типу find_home) ---
+        if (req.query.housing_type_search) {
+            whereClauses.push(`l.housing_type_search = $${paramIndex++}`);
+            params.push(req.query.housing_type_search);
+        }
+
+        // --- Додаткові фільтри з "Про автора" (для типів find_home, find_mate) ---
+        if (req.query.my_gender) {
+            whereClauses.push(`l.my_gender = $${paramIndex++}`);
+            params.push(req.query.my_gender);
+        }
+        if (req.query.my_age_min) {
+            whereClauses.push(`l.my_age >= $${paramIndex++}`);
+            params.push(req.query.my_age_min);
+        }
+        if (req.query.my_age_max) {
+            whereClauses.push(`l.my_age <= $${paramIndex++}`);
+            params.push(req.query.my_age_max);
+        }
+
+        // --- Додаткові фільтри з "Вимоги до сусіда" ---
+        if (req.query.roommate_gender) {
+            whereClauses.push(`l.roommate_gender = $${paramIndex++}`);
+            params.push(req.query.roommate_gender);
+        }
+        if (req.query.roommate_smoking) {
+            whereClauses.push(`l.roommate_smoking = $${paramIndex++}`);
+            params.push(req.query.roommate_smoking);
+        }
+
+
+        // === 3. Складні фільтри (Характеристики) ===
+
+        if (req.query.characteristics) {
+            const charList = req.query.characteristics.split(',');
+            if (charList.length > 0) {
+                // Створюємо плейсхолдери ($5, $6, $7)
+                const charPlaceholders = charList.map(() => `$${paramIndex++}`).join(',');
+
+                // Додаємо підзапит, який перевіряє, що ОГОЛОШЕННЯ (l.listing_id)
+                // МАЄ ВСІ характеристики зі списку
+                whereClauses.push(`
+                    (
+                        SELECT COUNT(DISTINCT c.system_key)
+                        FROM listing_characteristics lc
+                        JOIN characteristics c ON lc.char_id = c.char_id
+                        WHERE lc.listing_id = l.listing_id
+                        AND c.system_key IN (${charPlaceholders})
+                    ) = ${charList.length}
+                `);
+
+                // Додаємо самі характеристики до параметрів
+                params.push(...charList);
+            }
+        }
+
+        // === 4. Збираємо запит ===
+        if (whereClauses.length > 0) {
+            query += ' WHERE ' + whereClauses.join(' AND ');
+        }
+        query += ' ORDER BY l.created_at DESC';
+
+        // console.log('Executing query:', query);
+        // console.log('With params:', params);
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
+
     } catch (err) {
         console.error('Помилка виконання запиту до БД', err);
         res.status(500).json({ error: 'Помилка сервера при отриманні оголошень' });
     }
 });
+
 
 // 4.2 ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ (З ДЕТАЛЯМИ)
 app.get('/api/listings/:id', async (req, res) => {
@@ -457,8 +578,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 
     try {
         const query = `
-            SELECT email, first_name, last_name, city, date_of_birth, habits, bio, avatar_url 
-            FROM users 
+            SELECT email, first_name, last_name, city, date_of_birth, habits, bio, avatar_url, phone_number
+            FROM users
             WHERE user_id = $1
         `;
         const result = await pool.query(query, [userId]);
@@ -479,7 +600,7 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const {
         first_name, last_name, email, city,
-        date_of_birth, habits, bio
+        date_of_birth, habits, bio, phone_number
     } = req.body;
 
     // Валідація дати (якщо вона не null)
@@ -487,22 +608,23 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
 
     try {
         const query = `
-            UPDATE users 
-            SET 
-                first_name = $1, 
-                last_name = $2, 
-                email = $3, 
-                city = $4, 
-                date_of_birth = $5, 
-                habits = $6, 
-                bio = $7
-            WHERE user_id = $8
+            UPDATE users
+            SET
+                first_name = $1,
+                last_name = $2,
+                email = $3,
+                city = $4,
+                date_of_birth = $5,
+                habits = $6,
+                bio = $7,
+                phone_number = $8
+            WHERE user_id = $9
             RETURNING user_id, email, first_name, last_name;
         `;
 
         const result = await pool.query(query, [
             first_name, last_name, email, city,
-            dobValue, habits, bio, userId
+            dobValue, habits, bio, phone_number, userId
         ]);
 
         res.json({
