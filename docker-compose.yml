@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Наш бекенд-сервіс
   backend:
-    build: ./backend  # Кажемо йоwму шукати Dockerfile у папці 'backend'
+    build: ./backend  # Кажемо йому шукати Dockerfile у папці 'backend'
     ports:
       - "3000:3000"  # Прокидаємо порт 3000 на твій комп'ютер
     environment:

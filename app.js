@@ -338,11 +338,25 @@ const handleListingSubmission = async () => {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(form);
-        const data = { characteristics: [] };
-        formData.forEach((value, key) => {
-            if (key === 'characteristics') data.characteristics.push(value);
-            else data[key] = value;
+
+        // 1. Використовуємо Object.fromEntries для більшості полів
+        // Це автоматично збереже пари ключ/значення для title, price, my_age тощо.
+        const data = Object.fromEntries(formData.entries());
+
+        // 2. Отримуємо ВСІ значення для обох типів характеристик
+        const characteristics = formData.getAll('characteristics');
+        const searchCharacteristics = formData.getAll('search_characteristics');
+
+        // 3. Об'єднуємо їх в один масив 'characteristics', як очікує бекенд
+        // (також фільтруємо "my_pet_no" та "mate_no_pet", якщо вони не потрібні в БД)
+        const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => {
+            return key !== 'my_pet_no' && key !== 'mate_no_pet';
         });
+
+        data.characteristics = allCharacteristics;
+
+        // 4. Видаляємо 'search_characteristics', щоб не плутати бекенд
+        delete data.search_characteristics;
 
         try {
             const response = await fetch('http://localhost:3000/api/listings', {
