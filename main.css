@@ -1441,3 +1441,65 @@ h2 {
         height: 70%; /* Вікно чату займає 70% висоти */
     }
 }
+
+.info-overlay {
+    /* ... (існуючі стилі) ... */
+    align-items: flex-start; /* Вирівнюємо теги по верху */
+}
+
+.type-tag {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.type-tag.rent { background: #e74c3c; } /* Червоний */
+.type-tag.mate { background: #3498db; } /* Синій */
+.type-tag.home { background: #2ecc71; } /* Зелений */
+
+/* ==================================== */
+/* 11. СТИЛІ ДЛЯ ДИНАМІЧНИХ ФІЛЬТРІВ */
+/* ==================================== */
+
+/* Стилізуємо групи фільтрів, що ховаються/показуються */
+.filter-sidebar #housingFilters,
+.filter-sidebar #listingDetails,
+.filter-sidebar #aboutMe,
+.filter-sidebar #roommatePreferences {
+    /* Схожі стилі з add_listing.html */
+    border-top: 2px solid #ccc;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+/* Кольорові акценти, як в add_listing.html */
+.filter-sidebar #housingFilters { border-color: #007bff; }
+.filter-sidebar #housingFilters h3 { color: #007bff; }
+
+.filter-sidebar #listingDetails { border-color: var(--primary-color); }
+.filter-sidebar #listingDetails h3 { color: var(--primary-color); }
+
+.filter-sidebar #aboutMe { border-color: #28a745; }
+.filter-sidebar #aboutMe h3 { color: #28a745; }
+
+.filter-sidebar #roommatePreferences { border-color: #fd7e14; }
+.filter-sidebar #roommatePreferences h3 { color: #fd7e14; }
+
+/* Стилі для тегів типу на картках (з минулого кроку) */
+.info-overlay {
+    align-items: flex-start;
+}
+.type-tag {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.type-tag.rent { background: #e74c3c; } /* Червоний */
+.type-tag.mate { background: #3498db; } /* Синій */
+.type-tag.home { background: #2ecc71; } /* Зелений */
