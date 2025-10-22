@@ -647,7 +647,6 @@ const loadProfileData = async () => {
         setInputValue('profile_email', user.email);
         setInputValue('profile_city', user.city);
         setInputValue('profile_phone', user.phone_number); // ОНОВЛЕНО
-        setInputValue('habits-select', user.habits);
         setInputValue('profile_bio', user.bio);
         // setInputValue('interests-select', user.interests); // 'interests' немає в схемі 'users'
 
@@ -718,8 +717,9 @@ const setupProfileEventListeners = () => {
             const formData = new FormData(profileForm);
             const data = Object.fromEntries(formData.entries());
 
-            // ОНОВЛЕНО: Видаляємо лише 'interests', оскільки 'phone_number' тепер обробляється
+            // ОНОВЛЕНО: Видаляємо 'interests' та 'habits'
             delete data.interests;
+            delete data.habits;
 
             try {
                 const response = await fetch('http://localhost:3000/api/profile', {

@@ -8,6 +8,7 @@
     --accent-color-green: #28a745; /* Зелений (акцент для фільтрів) */
     --accent-color-orange: #fd7e14; /* Оранжевий (акцент для фільтрів) */
     --danger-color: #e74c3c; /* Червоний (помилки, видалення) */
+    --success-color: #28a745; /* Зелений (успіх) */
     --background-light: #f5f5f5; /* Світло-сірий фон */
     --background-form: #f0f7ff; /* Фон полів вводу */
     --background-white: #FCFCFC; /* Білий фон блоків */
@@ -830,6 +831,66 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     color: var(--secondary-color);
 }
 
+/* --- ПУНКТ 4: Стилі для верифікації в профілі --- */
+.form-group-with-verify {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.form-group-with-verify input {
+    flex-grow: 1;
+}
+.verify-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.verify-status .status-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+/* Статус "Не підтверджено" */
+.verify-status .status-icon[data-verified="false"]::before {
+    content: '\f057'; /* "times-circle" */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: var(--danger-color);
+    font-size: 1.2rem;
+}
+/* Статус "Підтверджено" */
+.verify-status .status-icon[data-verified="true"]::before {
+    content: '\f058'; /* "check-circle" */
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: var(--success-color);
+    font-size: 1.2rem;
+}
+.verify-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    background: var(--background-white);
+    color: var(--primary-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.verify-btn:hover {
+    background-color: #f0f0f0;
+}
+/* Ховаємо кнопку, якщо вже підтверджено */
+.verify-status .status-icon[data-verified="true"] + .verify-btn {
+    display: none;
+}
+/* Ховаємо кнопку, якщо телефон не введено */
+.verify-status[data-phone-empty="true"] .verify-btn {
+    display: none;
+}
+
+
 /* ==================================== */
 /* 6. ADD LISTING PAGE */
 /* ==================================== */
@@ -1125,6 +1186,16 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     box-shadow: var(--box-shadow-light); /* Легка тінь */
 }
 .author-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; }
+/* --- ПУНКТ 2: Посилання на профіль автора --- */
+.author-name-link {
+    text-decoration: none;
+    color: var(--text-dark);
+}
+.author-name-link:hover .author-name {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
 .contact-btn {
     display: inline-block;
     width: auto; /* Автоматична ширина */
@@ -1261,6 +1332,58 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     text-align: center;
 }
 
+/* --- ПУНКТ 2: Сторінка публічного профілю --- */
+.public-profile-page .profile-container {
+    align-items: flex-start;
+}
+.public-profile-page .profile-sidebar {
+    position: sticky; /* Робимо сайдбар "липким" */
+    top: 20px;
+}
+.public-profile-page .profile-sidebar .contact-btn {
+    width: 100%; /* Кнопка на всю ширину */
+    margin-top: 20px;
+}
+.profile-verification-info {
+    font-size: 0.9rem;
+}
+.profile-verification-info h4 {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+.verify-status-public {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text-light);
+}
+.verify-status-public i {
+    width: 15px;
+    text-align: center;
+}
+.verify-status-public span {
+    font-weight: 600;
+}
+.verify-status-public span.verified {
+    color: var(--success-color);
+}
+.verify-status-public span.not-verified {
+    color: var(--danger-color);
+}
+.profile-details-public p {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+.profile-details-public p strong {
+    color: var(--text-light);
+    font-weight: 600;
+}
+.public-profile-page .listings-container {
+    grid-template-columns: 1fr; /* 1 колонка в профілі */
+}
+
 /* ==================================== */
 /* 10. MEDIA QUERIES (ADAPTATION) */
 /* ==================================== */
@@ -1288,6 +1411,9 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
         width: 140px;
         height: 105px;
     }
+    .public-profile-page .listings-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 колонки в профілі на планшеті */
+    }
 }
 
 /* --- Larger Desktop --- */
@@ -1311,6 +1437,10 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 @media (max-width: 767px) {
     .profile-container { flex-direction: column; }
     .profile-sidebar { width: 100%; max-width: 400px; margin: 0 auto 20px auto; }
+    .public-profile-page .profile-sidebar {
+        position: static; /* Вимикаємо "липкість" на мобілках */
+    }
+
 
     .chat-container { flex-direction: column; height: calc(100vh - 100px); }
     .conversations-list { width: 100%; height: 40%; border-right: none; border-bottom: 1px solid var(--border-color); }
@@ -1477,4 +1607,99 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     .my-listings-container {
         grid-template-columns: repeat(3, 1fr); /* Три колонки */
     }
+}
+
+/* ==================================== */
+/* 12. CUSTOM MODAL (ПУНКТ 3) */
+/* ==================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 200;
+    display: none; /* Приховано за замовчуванням */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.modal-content {
+    background: var(--background-white);
+    padding: 2.0rem 2.5rem;
+    border-radius: 12px;
+    box-shadow: var(--box-shadow-heavy);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 2rem;
+    color: var(--text-light);
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+.modal-icon .success { color: var(--success-color); }
+.modal-icon .error { color: var(--danger-color); }
+.modal-icon .info { color: var(--accent-color-blue); }
+
+.modal-content h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+.modal-content p {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+.modal-confirm-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+/* Кнопка для "success" та "info" */
+.modal-confirm-btn.default {
+    background: var(--secondary-color);
+    color: var(--text-white);
+}
+.modal-confirm-btn.default:hover {
+    background: var(--primary-color);
+}
+/* Кнопка для "error" */
+.modal-confirm-btn.error {
+    background: var(--danger-color);
+    color: var(--text-white);
+}
+.modal-confirm-btn.error:hover {
+    background: #c0392b;
 }

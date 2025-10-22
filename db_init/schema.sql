@@ -28,8 +28,6 @@ CREATE TABLE "users" (
                          "last_name" VARCHAR(100),
                          "city" VARCHAR(100),
                          "date_of_birth" DATE,
-                         "habits" VARCHAR(50), -- З profile.html (це <select>, а не multiple)
-                         "interests" VARCHAR(50), -- З profile.html (це <select>, а не multiple)
                          "bio" TEXT,
                          "avatar_url" VARCHAR(255),
                          "phone_number" VARCHAR(20) -- З profile.html
