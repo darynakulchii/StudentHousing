@@ -15,10 +15,25 @@
     <div class="profile-container" style="justify-content: center;">
         <section class="profile-info" style="flex: 0 1 600px;">
             <h2>Керування акаунтом</h2>
-            <p style="color: var(--text-light); margin-bottom: 20px;">
-                Тут будуть опції для зміни пароля та приватності.
-            </p>
+            <form id="settingsForm" class="profile-form" style="padding: 0; border: none; box-shadow: none;">
+                <div class="form-group">
+                    <label>Приватність</label>
+                    <div class="checkbox-options" style="display: block;">
+                        <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--background-form);">
+                            <input type="checkbox" id="show_phone_publicly" name="show_phone_publicly" value="true" style="width: 20px; height: 20px; flex-shrink: 0;">
+                            <label for="show_phone_publicly" style="margin: 0; font-weight: normal; color: var(--text-dark); cursor: pointer;">
+                                Показувати мій номер телефону на сторінці профілю та в моїх оголошеннях
+                            </label>
+                        </div>
+                    </div>
+                </div>
 
+                <button type="submit" style="width: auto; align-self: flex-start;">
+                    Зберегти налаштування
+                </button>
+            </form>
+
+            <hr style="margin: 20px 0;">
             <hr style="margin-bottom: 20px;">
 
             <h3>Видалення акаунту</h3>

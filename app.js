@@ -709,6 +709,76 @@ const handleAvatarUpload = async (file) => {
     }
 };
 
+// --- Логіка settings.html (НОВА) ---
+const loadSettingsData = async () => {
+    if (!MY_USER_ID) {
+        window.location.href = 'login.html';
+        return;
+    }
+    try {
+        const response = await fetch('http://localhost:3000/api/profile', {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Не вдалося завантажити налаштування');
+        const user = await response.json();
+
+        const showPhoneCheckbox = document.getElementById('show_phone_publicly');
+        if (showPhoneCheckbox) {
+            showPhoneCheckbox.checked = !!user.show_phone_publicly;
+        }
+    } catch (error) {
+        console.error('Помилка завантаження налаштувань:', error);
+        alert(error.message);
+    }
+};
+
+const handleSettingsSubmission = () => {
+    const form = document.getElementById('settingsForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Отримуємо поточні дані профілю, щоб не перезаписати їх
+        let profileData = {};
+        try {
+            const profileResponse = await fetch('http://localhost:3000/api/profile', { headers: getAuthHeaders() });
+            if (!profileResponse.ok) throw new Error('Помилка отримання поточних даних профілю.');
+            profileData = await profileResponse.json();
+        } catch (error) {
+            alert(error.message);
+            return;
+        }
+
+        // Оновлюємо лише ті поля, які є у формі
+        // !!data.show_phone_publicly перетворить 'true' на true, а undefined на false
+        profileData.show_phone_publicly = !!data.show_phone_publicly;
+
+        // Відправляємо повний об'єкт profileData
+        try {
+            const response = await fetch('http://localhost:3000/api/profile', {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(profileData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Не вдалося оновити налаштування');
+            }
+
+            await response.json();
+            alert('Налаштування успішно збережено!');
+
+        } catch (error) {
+            console.error('Помилка збереження налаштувань:', error);
+            alert(`Помилка: ${error.message}`);
+        }
+    });
+};
+
 const setupProfileEventListeners = () => {
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
@@ -956,9 +1026,11 @@ const fetchAndDisplayListingDetail = async () => {
 
         // === ОНОВЛЕНО: HTML для аватара автора ===
         const authorAvatarHTML = `
-             <div class="author-avatar">
-                 <img src="${listing.avatar_url || DEFAULT_AVATAR_URL}" alt="Аватар автора">
-             </div>
+             <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
+                 <div class="author-avatar">
+                     <img src="${listing.avatar_url || DEFAULT_AVATAR_URL}" alt="Аватар автора">
+                 </div>
+            </a>
         `;
 
         const contactButtonHTML = (MY_USER_ID === listing.user_id)
@@ -1006,7 +1078,9 @@ const fetchAndDisplayListingDetail = async () => {
                     <h3>Автор оголошення</h3>
                     <div class="author-card">
                         ${authorAvatarHTML}
-                        <p class="author-name">${listing.first_name} ${listing.last_name}</p>
+                        <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
+                            <p class="author-name">${listing.first_name} ${listing.last_name}</p>
+                        </a>
                         ${contactButtonHTML}
                     </div>
                 </aside>
@@ -1788,6 +1862,138 @@ const setupSocketIO = () => {
     });
 };
 
+// --- Логіка user_profile.html (НОВА ФУНКЦІЯ) ---
+
+const loadPublicProfileData = async () => {
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const profileContainer = document.getElementById('profileContainer'); // Головний контейнер сторінки
+    if (!loadingIndicator || !profileContainer) return;
+
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        if (!userId) {
+            loadingIndicator.innerHTML = '<h1>Помилка: ID користувача не вказано.</h1>';
+            return;
+        }
+
+        // Якщо користувач дивиться свій власний профіль, перенаправляємо
+        if (MY_USER_ID && MY_USER_ID.toString() === userId) {
+            window.location.href = 'profile.html';
+            return;
+        }
+
+        // Запускаємо обидва запити одночасно
+        const profilePromise = fetch(`http://localhost:3000/api/users/${userId}/public-profile`);
+        const listingsPromise = fetch(`http://localhost:3000/api/users/${userId}/listings`);
+
+        const [profileResponse, listingsResponse] = await Promise.all([profilePromise, listingsPromise]);
+
+        // 1. Обробка профілю
+        if (!profileResponse.ok) {
+            throw new Error('Не вдалося завантажити профіль. Можливо, користувача не існує.');
+        }
+        const user = await profileResponse.json();
+
+        // 2. Обробка оголошень
+        if (!listingsResponse.ok) {
+            throw new Error('Не вдалося завантажити оголошення користувача.');
+        }
+        const listings = await listingsResponse.json();
+
+        // --- Заповнення даними ---
+
+        // Встановлення заголовку сторінки
+        document.title = `UniHome | Профіль ${user.first_name}`;
+
+        // Сайдбар
+        document.getElementById('profileAvatarImg').src = user.avatar_url || DEFAULT_AVATAR_URL;
+        document.getElementById('profileAvatarName').textContent = `${user.first_name} ${user.last_name}`;
+
+        // Кнопка "Зв'язатись"
+        const contactBtn = document.getElementById('btnContactUser');
+        if (MY_USER_ID) {
+            contactBtn.href = `chat.html?user_id=${user.user_id}`;
+        } else {
+            // Якщо поточний користувач не залогінений, відправляємо на сторінку логіну
+            contactBtn.href = 'login.html';
+            contactBtn.onclick = (e) => {
+                e.preventDefault();
+                alert('Будь ласка, увійдіть, щоб зв\'язатися з користувачем.');
+                window.location.href = 'login.html';
+            };
+        }
+
+        // Показ телефону
+        const phoneContainer = document.getElementById('publicPhoneContainer');
+        if (user.phone_number) { // `phone_number` буде null, якщо показ приховано
+            const phoneLink = document.getElementById('publicPhoneLink');
+            phoneLink.href = `tel:${user.phone_number}`;
+            phoneLink.textContent = user.phone_number;
+            phoneContainer.style.display = 'flex';
+        }
+
+        // Основна інформація
+        document.getElementById('profileCity').textContent = user.city || 'Не вказано';
+
+        // Розрахунок віку
+        const ageSpan = document.getElementById('profileAge');
+        if (user.date_of_birth) {
+            const birthDate = new Date(user.date_of_birth);
+            const age = new Date(Date.now() - birthDate.getTime()).getUTCFullYear() - 1970;
+            ageSpan.textContent = `${age} років`;
+        } else {
+            ageSpan.textContent = 'Не вказано';
+        }
+
+        document.getElementById('profileBio').textContent = user.bio || 'Користувач ще не додав біографію.';
+
+        // Оголошення
+        document.getElementById('listingsCount').textContent = listings.length;
+        const listingsContainer = document.getElementById('userListingsContainer');
+        listingsContainer.innerHTML = ''; // Очищуємо
+
+        if (listings.length === 0) {
+            listingsContainer.innerHTML = '<p style="color: var(--text-light); padding: 10px;">Користувач не має активних оголошень.</p>';
+        } else {
+            // Використовуємо той самий шаблон картки, що й на index.html
+            listings.forEach(listing => {
+                const imageUrl = listing.main_photo_url || DEFAULT_LISTING_IMAGE[listing.listing_type] || DEFAULT_LISTING_IMAGE['default'];
+
+                let typeTag = '';
+                if (listing.listing_type === 'rent_out') typeTag = '<span class="type-tag rent">Здають</span>';
+                else if (listing.listing_type === 'find_mate') typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
+                else if (listing.listing_type === 'find_home') typeTag = '<span class="type-tag home">Шукають житло</span>';
+
+                listingsContainer.innerHTML += `
+                    <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
+                        <div class="listing-card">
+                            <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
+                            <div class="info-overlay">
+                                <span class="price-tag">₴${listing.price || '...'} / міс</span>
+                                ${typeTag} 
+                            </div>
+                            <div class="listing-content">
+                                <h3>${listing.title}</h3>
+                                <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто'}</p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+        }
+
+        // Показуємо контент
+        loadingIndicator.style.display = 'none';
+        profileContainer.style.display = 'flex'; // 'flex', оскільки .public-profile-container - це flex-контейнер
+
+    } catch (error) {
+        console.error('Помилка завантаження публічного профілю:', error);
+        loadingIndicator.innerHTML = `<h1>Помилка завантаження</h1><p style="text-align: center;">${error.message}</p>`;
+    }
+};
+
 
 // =================================================================================
 // 4. ГОЛОВНИЙ ВИКОНАВЧИЙ БЛОК (РОУТЕР)
@@ -1844,6 +2050,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleMessageSend();
                 setupSocketIO(); // Запускаємо сокети
             }
+        }
+
+        if (path.endsWith('settings.html')) {
+            await loadSettingsData();
+            handleSettingsSubmission();
+
+            // Тут може бути логіка для "Видалити акаунт", якщо вона є
+            document.getElementById('btnDeleteAccount')?.addEventListener('click', () => {
+                alert('Функція видалення акаунту в розробці.');
+            });
+        }
+
+        if (path.endsWith('user_profile.html')) {
+            await loadPublicProfileData();
         }
 
     })();

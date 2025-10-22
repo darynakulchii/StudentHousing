@@ -1222,6 +1222,16 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     background: #7f8c8d;
 }
 
+/* --- Посилання на профіль автора --- */
+.author-name-link {
+    text-decoration: none;
+    color: var(--text-dark);
+}
+.author-name-link:hover .author-name {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
 /* ==================================== */
 /* 8. CHAT PAGE */
 /* ==================================== */
@@ -1382,6 +1392,145 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 }
 .public-profile-page .listings-container {
     grid-template-columns: 1fr; /* 1 колонка в профілі */
+}
+
+.public-profile-page .profile-container {
+    display: flex;
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    align-items: flex-start;
+}
+.public-profile-page .profile-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background: var(--background-white);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow-light);
+    padding: 20px;
+    position: sticky; /* Робимо сайдбар "липким" */
+    top: 20px;
+}
+.public-profile-page .profile-sidebar .profile-avatar {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+.public-profile-page .profile-sidebar .profile-avatar img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 5px solid var(--border-color);
+    object-fit: cover;
+}
+.public-profile-page .profile-sidebar .profile-avatar p {
+    margin-top: 10px;
+    font-weight: 600;
+}
+.public-profile-page .profile-sidebar .contact-btn {
+    width: 100%; /* Кнопка на всю ширину */
+    margin-top: 20px;
+    display: inline-block;
+    background: var(--primary-color);
+    color: var(--text-white);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+}
+.public-profile-page .profile-sidebar .contact-btn i { margin-right: 8px; }
+
+.profile-verification-info {
+    font-size: 0.9rem;
+}
+.profile-verification-info h4 {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+.verify-status-public {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--text-light);
+}
+.verify-status-public i {
+    width: 15px;
+    text-align: center;
+}
+.verify-status-public span {
+    font-weight: 600;
+}
+.verify-status-public span.verified {
+    color: var(--success-color);
+}
+.verify-status-public span.not-verified {
+    color: var(--danger-color);
+}
+.profile-details-public p {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+.profile-details-public p strong {
+    color: var(--text-light);
+    font-weight: 600;
+}
+.public-profile-page .listings-container {
+    grid-template-columns: 1fr; /* 1 колонка в профілі */
+}
+
+/* Адаптація для мобільних */
+@media (max-width: 767px) {
+    .public-profile-page .profile-container { flex-direction: column; }
+    .public-profile-page .profile-sidebar {
+        position: static; /* Вимикаємо "липкість" на мобілках */
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto 20px auto;
+    }
+    .public-profile-page .listings-container {
+        grid-template-columns: 1fr;
+    }
+}
+@media (min-width: 768px) {
+    .public-profile-page .listings-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 колонки в профілі на планшеті */
+    }
+}
+
+.public-profile-page .profile-sidebar .contact-btn {
+    margin-bottom: 15px; /* Додаємо відступ знизу, щоб телефон не прилипав */
+}
+
+/* НОВІ СТИЛІ для телефону */
+.profile-phone-public {
+    display: flex; /* 'none' в інлайновому стилі, 'flex' в app.js */
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: var(--background-form);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+.profile-phone-public i {
+    color: var(--secondary-color);
+}
+.profile-phone-public a {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-decoration: none;
+}
+.profile-phone-public a:hover {
+    text-decoration: underline;
 }
 
 /* ==================================== */
