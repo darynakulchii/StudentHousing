@@ -336,12 +336,6 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-
-// ===============================================
-// 6. ЗАХИЩЕНІ МАРШРУТИ (Потребують токен)
-// ===============================================
-
-// 6.1 ДОДАВАННЯ ОГОЛОШЕННЯ (ОНОВЛЕНО: +authenticateToken)
 // ===============================================
 // 6. ЗАХИЩЕНІ МАРШРУТИ (Потребують токен)
 // ===============================================
@@ -442,6 +436,88 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Помилка сервера при публікації оголошення.' });
     } finally {
         client.release();
+    }
+});
+
+// 6.2 ОТРИМАННЯ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА (НОВЕ)
+app.get('/api/my-listings', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        // Отримуємо всі оголошення користувача, сортуємо за датою (новіші перші)
+        const query = `
+            SELECT listing_id, title, city, price, main_photo_url, is_active, created_at, listing_type
+            FROM listings
+            WHERE user_id = $1
+            ORDER BY created_at DESC;
+        `;
+        const result = await pool.query(query, [userId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Помилка отримання моїх оголошень:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 6.3 ЗМІНА СТАТУСУ АКТИВНОСТІ ОГОЛОШЕННЯ (НОВЕ)
+app.patch('/api/listings/:id/status', authenticateToken, async (req, res) => {
+    const listingId = req.params.id;
+    const userId = req.user.userId;
+    const { is_active } = req.body; // Очікуємо { "is_active": true } або { "is_active": false }
+
+    if (typeof is_active !== 'boolean') {
+        return res.status(400).json({ error: 'Необхідно передати поле is_active (true/false)' });
+    }
+
+    try {
+        const query = `
+            UPDATE listings
+            SET is_active = $1
+            WHERE listing_id = $2 AND user_id = $3
+            RETURNING listing_id, is_active;
+        `;
+        const result = await pool.query(query, [is_active, listingId, userId]);
+
+        if (result.rows.length === 0) {
+            // Або оголошення не існує, або воно не належить користувачу
+            return res.status(404).json({ error: 'Оголошення не знайдено або у вас немає прав на його зміну' });
+        }
+
+        res.json({
+            message: `Статус оголошення ${result.rows[0].listing_id} змінено на ${result.rows[0].is_active ? 'активне' : 'неактивне'}`,
+            listing: result.rows[0]
+        });
+    } catch (err) {
+        console.error('Помилка зміни статусу оголошення:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 6.4 ВИДАЛЕННЯ ОГОЛОШЕННЯ (НОВЕ)
+app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
+    const listingId = req.params.id;
+    const userId = req.user.userId;
+
+    try {
+        // Ми видаляємо тільки якщо listing_id і user_id збігаються
+        const query = `
+            DELETE FROM listings
+            WHERE listing_id = $1 AND user_id = $2
+            RETURNING listing_id;
+        `;
+        const result = await pool.query(query, [listingId, userId]);
+
+        if (result.rows.length === 0) {
+            // Або оголошення не існує, або воно не належить користувачу
+            return res.status(404).json({ error: 'Оголошення не знайдено або у вас немає прав на його видалення' });
+        }
+
+        res.json({ message: `Оголошення ${result.rows[0].listing_id} успішно видалено` });
+    } catch (err) {
+        // Можлива помилка, якщо на оголошення посилаються інші таблиці (напр., favorites)
+        // Поки що просто повертаємо 500
+        console.error('Помилка видалення оголошення:', err);
+        res.status(500).json({ error: 'Помилка сервера при видаленні оголошення' });
     }
 });
 

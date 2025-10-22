@@ -689,7 +689,7 @@ const setupProfileEventListeners = () => {
 
     // Інші кнопки (заглушки)
     document.getElementById('btnMyListings')?.addEventListener('click', () => {
-        alert('Сторінка "Мої оголошення" в розробці.');
+        window.location.href = 'my_listings.html';
     });
     document.getElementById('btnLoginPassword')?.addEventListener('click', () => {
         alert('Розділ "Зміна логіну та пароля" в розробці.');
@@ -1138,6 +1138,182 @@ const handleListingSubmission = async () => {
     });
 };
 
+// --- Логіка my_listings.html ---
+
+const fetchAndDisplayMyListings = async () => {
+    const container = document.getElementById('myListingsContainer');
+    if (!container) return;
+
+    if (!MY_USER_ID) {
+        alert('Будь ласка, увійдіть, щоб переглянути свої оголошення.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/my-listings', {
+            headers: getAuthHeaders()
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            throw new Error('Необхідна автентифікація.');
+        }
+        if (!response.ok) {
+            throw new Error(`HTTP помилка! статус: ${response.status}`);
+        }
+
+        const listings = await response.json();
+        container.innerHTML = ''; // Очищуємо індикатор завантаження
+
+        if (listings.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">У вас ще немає створених оголошень.</p>';
+            return;
+        }
+
+        listings.forEach(listing => {
+            const imageUrl = listing.main_photo_url || 'https://picsum.photos/400/300?random=' + listing.listing_id;
+
+            // Визначення типу оголошення для тегу
+            let typeTag = '';
+            if(listing.listing_type === 'rent_out') {
+                typeTag = '<span class="type-tag rent">Здають</span>';
+            } else if (listing.listing_type === 'find_mate') {
+                typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
+            } else if (listing.listing_type === 'find_home') {
+                typeTag = '<span class="type-tag home">Шукають житло</span>';
+            }
+
+            const listingCard = document.createElement('div');
+            listingCard.className = `my-listing-card ${!listing.is_active ? 'inactive' : ''}`;
+            listingCard.dataset.listingId = listing.listing_id; // Зберігаємо ID
+
+            listingCard.innerHTML = `
+                <a href="listing_detail.html?id=${listing.listing_id}" class="my-listing-link">
+                    <img src="${imageUrl}" alt="${listing.title}" class="my-listing-image">
+                    <div class="my-listing-info">
+                         <h3>${listing.title}</h3>
+                         <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто'}</p>
+                         <p class="my-listing-status">
+                             Статус: ${listing.is_active ? '🟢 Активне' : '🔴 Неактивне'}
+                         </p>
+                         ${typeTag}
+                    </div>
+                </a>
+                <div class="my-listing-actions">
+                    <button class="action-btn edit" title="Редагувати (в розробці)"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="action-btn toggle-status" title="${listing.is_active ? 'Зробити неактивним' : 'Активувати'}">
+                        ${listing.is_active ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'}
+                    </button>
+                    <button class="action-btn delete" title="Видалити"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            `;
+
+            // Додаємо обробники подій для кнопок
+            listingCard.querySelector('.toggle-status').addEventListener('click', () => {
+                handleToggleListingStatus(listing.listing_id, !listing.is_active); // Передаємо НОВИЙ бажаний статус
+            });
+            listingCard.querySelector('.delete').addEventListener('click', () => {
+                handleDeleteListing(listing.listing_id);
+            });
+            listingCard.querySelector('.edit').addEventListener('click', () => {
+                alert('Функція редагування оголошення знаходиться в розробці.');
+            });
+
+            container.appendChild(listingCard);
+        });
+
+    } catch (error) {
+        console.error('Помилка завантаження моїх оголошень:', error);
+        container.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
+        if (error.message === 'Необхідна автентифікація.') {
+             window.location.href = 'login.html';
+        }
+    }
+};
+
+// Функція для зміни статусу оголошення
+const handleToggleListingStatus = async (listingId, newStatus) => {
+    if (!confirm(`Ви впевнені, що хочете ${newStatus ? 'активувати' : 'деактивувати'} це оголошення?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/listings/${listingId}/status`, {
+            method: 'PATCH',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ is_active: newStatus }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Не вдалося змінити статус');
+        }
+
+        const result = await response.json();
+        alert(result.message);
+
+        // Оновлюємо вигляд картки без перезавантаження сторінки
+        const card = document.querySelector(`.my-listing-card[data-listing-id="${listingId}"]`);
+        if (card) {
+            const statusText = card.querySelector('.my-listing-status');
+            const toggleButton = card.querySelector('.toggle-status');
+            if (newStatus) {
+                card.classList.remove('inactive');
+                statusText.innerHTML = 'Статус: 🟢 Активне';
+                toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                toggleButton.title = 'Зробити неактивним';
+            } else {
+                card.classList.add('inactive');
+                statusText.innerHTML = 'Статус: 🔴 Неактивне';
+                toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
+                toggleButton.title = 'Активувати';
+            }
+        }
+
+    } catch (error) {
+        console.error('Помилка зміни статусу:', error);
+        alert(`Помилка: ${error.message}`);
+    }
+};
+
+// Функція для видалення оголошення
+const handleDeleteListing = async (listingId) => {
+    if (!confirm('Ви впевнені, що хочете ВИДАЛИТИ це оголошення? Цю дію неможливо скасувати.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Не вдалося видалити оголошення');
+        }
+
+        const result = await response.json();
+        alert(result.message);
+
+        // Видаляємо картку зі сторінки
+        const card = document.querySelector(`.my-listing-card[data-listing-id="${listingId}"]`);
+        if (card) {
+            card.remove();
+        }
+        // Перевіряємо, чи залишились ще оголошення
+        const container = document.getElementById('myListingsContainer');
+        if (container && container.children.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">У вас більше немає створених оголошень.</p>';
+        }
+
+
+    } catch (error) {
+        console.error('Помилка видалення:', error);
+        alert(`Помилка: ${error.message}`);
+    }
+};
+
 // --- Логіка chat.html ---
 
 let currentOpenConversationId = null;
@@ -1368,9 +1544,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (path.endsWith('profile.html')) {
-            // Перевірка авторизації відбувається всередині loadProfileData
             await loadProfileData();
             setupProfileEventListeners();
+        }
+
+        if (path.endsWith('my_listings.html')) {
+            await fetchAndDisplayMyListings();
         }
 
         if (path.endsWith('chat.html')) {
