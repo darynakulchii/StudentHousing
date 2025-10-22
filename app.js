@@ -14,15 +14,21 @@ const removeToken = () => {
     localStorage.removeItem('authToken');
 };
 
-const getAuthHeaders = () => {
+// === ВИПРАВЛЕНО 1: Функція getAuthHeaders ===
+// Тепер приймає аргумент isJson. Якщо false, 'Content-Type' не додається,
+// дозволяючи браузеру самому встановити 'multipart/form-data' для файлів.
+const getAuthHeaders = (isJson = true) => {
     const token = getToken();
+    const headers = {}; // Створюємо порожній об'єкт
+
     if (token) {
-        return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
+        headers['Authorization'] = `Bearer ${token}`;
     }
-    return { 'Content-Type': 'application/json' };
+
+    if (isJson) {
+        headers['Content-Type'] = 'application/json';
+    }
+    return headers;
 };
 
 const parseJwt = (token) => {
@@ -147,7 +153,8 @@ const toggleNotifications = (action) => {
 };
 
 // --- ФОТО: Додаємо URL за замовчуванням ---
-const DEFAULT_AVATAR_URL = 'https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg';
+// === ОНОВЛЕНО: Новий URL для аватара за замовчуванням ===
+const DEFAULT_AVATAR_URL = 'https://placehold.co/120x120/EBF4FF/7F9CF5?text=User'; // Схожий на іконку
 const DEFAULT_LISTING_IMAGE = {
     'rent_out': 'https://via.placeholder.com/400x300.png?text=Rent+Out',
     'find_mate': 'https://via.placeholder.com/400x300.png?text=Find+Mate',
@@ -815,7 +822,7 @@ const fetchAndDisplayListingDetail = async () => {
                 : listing.photos;
 
             photoGalleryHTML = sortedPhotos
-                .map(photo => `<img src="${photo.image_url}" alt="Фото ${listing.title}" class="gallery-thumbnail">`)
+                .map((photo, index) => `<img src="${photo.image_url}" alt="Фото ${index + 1}" class="gallery-thumbnail ${index === 0 ? 'active' : ''}">`) // Додаємо клас active першому
                 .join('');
         } else {
             // Якщо фото немає зовсім, можна показати дефолтне головне
@@ -947,6 +954,13 @@ const fetchAndDisplayListingDetail = async () => {
 
         // === КІНЕЦЬ НОВОЇ ЛОГІКИ ГРУПУВАННЯ ===
 
+        // === ОНОВЛЕНО: HTML для аватара автора ===
+        const authorAvatarHTML = `
+             <div class="author-avatar">
+                 <img src="${listing.avatar_url || DEFAULT_AVATAR_URL}" alt="Аватар автора">
+             </div>
+        `;
+
         const contactButtonHTML = (MY_USER_ID === listing.user_id)
             ? `<a href="profile.html" class="contact-btn" style="background: #7f8c8d;">
                  <i class="fas fa-user-edit"></i> Це ваше оголошення
@@ -991,7 +1005,7 @@ const fetchAndDisplayListingDetail = async () => {
                 <aside class="listing-detail-author">
                     <h3>Автор оголошення</h3>
                     <div class="author-card">
-                        <div class="author-avatar"><i class="fas fa-user-circle"></i></div>
+                        ${authorAvatarHTML}
                         <p class="author-name">${listing.first_name} ${listing.last_name}</p>
                         ${contactButtonHTML}
                     </div>
@@ -999,6 +1013,23 @@ const fetchAndDisplayListingDetail = async () => {
             </div>
         `;
         container.innerHTML = detailHTML;
+
+        // === ОНОВЛЕНО: Додаємо слухачі для мініатюр після рендеру ===
+        const thumbnails = container.querySelectorAll('.gallery-thumbnail:not(.inactive)');
+        const mainImageElement = container.querySelector('#mainDetailImage');
+
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                // Міняємо головне зображення
+                if (mainImageElement) {
+                    mainImageElement.src = thumb.src;
+                }
+                // Оновлюємо активний клас
+                thumbnails.forEach(t => t.classList.remove('active'));
+                thumb.classList.add('active');
+            });
+        });
+
 
     } catch (error) {
         console.error('Помилка завантаження деталей оголошення:', error);
@@ -1184,6 +1215,7 @@ const handleListingSubmission = async () => {
     }
 
     let selectedFiles = []; // Масив для зберігання вибраних файлів (File об'єктів)
+    let listingId; // Зберігатимемо ID для завантаження фото
     const MAX_PHOTOS = 8;
 
     // --- Функція для оновлення відображення прев'ю та кнопок ---
@@ -1289,6 +1321,7 @@ const handleListingSubmission = async () => {
         updatePhotoDisplay(); // Оновлюємо відображення
     });
 
+    // === ВИПРАВЛЕНО 2: Повністю перебудована логіка відправки ===
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -1296,8 +1329,8 @@ const handleListingSubmission = async () => {
         const selectedType = form.querySelector('input[name="listing_type"]:checked')?.value;
         const requiresPhoto = selectedType === 'rent_out' || selectedType === 'find_mate';
         if (requiresPhoto && selectedFiles.length === 0) {
-             alert('Будь ласка, додайте хоча б одну фотографію для цього типу оголошення.');
-             return;
+            alert('Будь ласка, додайте хоча б одну фотографію для цього типу оголошення.');
+            return;
         }
 
         const formData = new FormData(form);
@@ -1319,70 +1352,72 @@ const handleListingSubmission = async () => {
 
         submitButton.disabled = true;
         submitButton.textContent = 'Публікація...';
-        let listingId;
 
         try {
-            const response = await fetch('http://localhost:3000/api/listings', {
+            // 1. Створюємо оголошення (текстові дані)
+            const listingResponse = await fetch('http://localhost:3000/api/listings', {
                 method: 'POST',
-                headers: getAuthHeaders(),
+                headers: getAuthHeaders(), // Використовуємо getAuthHeaders() (isJson = true)
                 body: JSON.stringify(data),
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                alert(`Успіх! ${result.message} (ID: ${result.listingId})`);
+            if (listingResponse.ok) {
+                const listingResult = await listingResponse.json(); // Отримуємо результат (з listingId)
+                listingId = listingResult.listingId; // Зберігаємо ID
+                console.log(`Оголошення створено, ID: ${listingId}`);
+
+                // 2. Завантажуємо фото (ЯКЩО вони є і ID отримано)
+                if (selectedFiles.length > 0 && listingId) {
+                    console.log(`Завантаження ${selectedFiles.length} фото для оголошення ${listingId}...`);
+                    const photoFormData = new FormData();
+                    selectedFiles.forEach(file => {
+                        photoFormData.append('photos', file);
+                    });
+
+                    // Надсилаємо фото на окремий ендпоінт
+                    const photoResponse = await fetch(`http://localhost:3000/api/upload/listing-photos/${listingId}`, {
+                        method: 'POST',
+                        headers: getAuthHeaders(false), // (isJson = false)
+                        body: photoFormData,
+                    });
+
+                    if (!photoResponse.ok) {
+                        const errorData = await photoResponse.json();
+                        // Помилка фото, але оголошення вже створено.
+                        alert(`Оголошення створено, але сталася помилка при завантаженні фото: ${errorData.error || 'Невідома помилка'}.`);
+                        console.error('Помилка завантаження фото:', errorData);
+                    } else {
+                        const photoResult = await photoResponse.json();
+                        console.log(photoResult.message);
+                    }
+                }
+
+                // 3. Успішне завершення (після фото)
+                alert(`Успіх! ${listingResult.message} (ID: ${listingId})`);
                 form.reset();
-                window.location.href = 'index.html';
-            } else if (response.status === 401 || response.status === 403) {
+                selectedFiles = []; // Очищуємо масив файлів
+                updatePhotoDisplay(); // Оновлюємо відображення (показуємо пусті слоти)
+                window.location.href = 'index.html'; // <-- ПЕРЕМІЩЕНО В КІНЕЦЬ
+
+            } else if (listingResponse.status === 401 || listingResponse.status === 403) {
                 alert('Помилка автентифікації. Будь ласка, увійдіть знову.');
                 window.location.href = 'login.html';
             } else {
-                const errorData = await response.json();
+                const errorData = await listingResponse.json();
                 alert(`Помилка публікації: ${errorData.error || 'Невідома помилка'}`);
             }
-
-            const listingResult = await listingResponse.json();
-            listingId = listingResult.listingId;
-
-            // 2. Завантажуємо фото (якщо вони є і оголошення створено)
-            if (selectedFiles.length > 0 && listingId) {
-                console.log(`Завантаження ${selectedFiles.length} фото для оголошення ${listingId}...`);
-                const photoFormData = new FormData();
-                selectedFiles.forEach(file => {
-                    photoFormData.append('photos', file);
-                });
-
-                const photoResponse = await fetch(`http://localhost:3000/api/upload/listing-photos/${listingId}`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(false),
-                    body: photoFormData,
-                });
-
-                if (!photoResponse.ok) {
-                    const errorData = await photoResponse.json();
-                    alert(`Оголошення створено, але сталася помилка при завантаженні фото: ${errorData.error || 'Невідома помилка'}.`);
-                    console.error('Помилка завантаження фото:', errorData);
-                } else {
-                    const photoResult = await photoResponse.json();
-                    console.log(photoResult.message);
-                }
-            }
-
-            alert(`Успіх! Оголошення опубліковано! (ID: ${listingId})`);
-            form.reset();
-            selectedFiles = []; // Очищуємо масив файлів
-            updatePhotoDisplay(); // Оновлюємо відображення (показуємо пусті слоти)
-            window.location.href = 'index.html';
 
         } catch (error) {
             console.error('Помилка мережі/сервера:', error);
             alert('Не вдалося з’єднатися з сервером. Перевірте, чи запущено бекенд (http://localhost:3000).');
-            }
+        }
         finally {
             submitButton.disabled = false;
             submitButton.textContent = 'Опублікувати оголошення';
-            }
+        }
     });
+
+    // Ініціалізуємо відображення фото при завантаженні сторінки
     updatePhotoDisplay();
 };
 
@@ -1474,7 +1509,7 @@ const fetchAndDisplayMyListings = async () => {
         console.error('Помилка завантаження моїх оголошень:', error);
         container.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
         if (error.message === 'Необхідна автентифікація.') {
-             window.location.href = 'login.html';
+            window.location.href = 'login.html';
         }
     }
 };
