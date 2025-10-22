@@ -1,32 +1,37 @@
-version: '3.8'
+version: '3.8' # Ви можете залишити або видалити цей рядок (він застарів)
 
 services:
   # Наш бекенд-сервіс
   backend:
-    build: ./backend  # Кажемо йому шукати Dockerfile у папці 'backend'
+    build: ./backend
     ports:
-      - "3000:3000"  # Прокидаємо порт 3000 на твій комп'ютер
+      - "3000:3000"
     environment:
-      # Це ті самі змінні, які читає твій оновлений server.js
       DB_HOST: db
       DB_USER: postgres
-      DB_PASSWORD: mysecretpassword # Можеш змінити на будь-який пароль
+      DB_PASSWORD: mysecretpassword
       DB_DATABASE: postgres
     depends_on:
-      - db  # Чекати, поки запуститься база даних
+      db:
+        condition: service_healthy # <--- ОНОВЛЕНО
 
   # Наш сервіс бази даних
   db:
-    image: postgres:15-alpine # Використовуємо готовий образ PostgreSQL
+    image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: mysecretpassword # Пароль має бути ТАКИЙ САМИЙ, як і вище
+      POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432" # Прокидаємо порт, щоб ти могла підключитись з IDE
+      - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data # Зберігає дані
-      - ./db_init:/docker-entrypoint-initdb.d  # Папка для авто-створення таблиць
+      - postgres-data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d
+    healthcheck: # <--- ДОДАНО
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  postgres-data: # Створюємо "сховище" для даних БД
+  postgres-data:

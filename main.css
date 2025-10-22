@@ -985,6 +985,20 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 }
 .detail-section h2 { font-size: 1.3rem; margin-bottom: 1rem; }
 .detail-section p { line-height: 1.6; white-space: pre-wrap; }
+.detail-section p { line-height: 1.6; white-space: pre-wrap; }
+
+/* НОВІ СТИЛІ ДЛЯ ГРУП ХАРАКТЕРИСТИК */
+.char-category-group {
+    margin-bottom: 1.2rem;
+}
+.char-category-group h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-bottom: 0.7rem;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
 .characteristics-list { display: flex; flex-wrap: wrap; gap: 10px; }
 .char-tag {
     background: var(--background-form);
