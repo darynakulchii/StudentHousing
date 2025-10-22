@@ -146,6 +146,15 @@ const toggleNotifications = (action) => {
     }
 };
 
+// --- ФОТО: Додаємо URL за замовчуванням ---
+const DEFAULT_AVATAR_URL = 'https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg';
+const DEFAULT_LISTING_IMAGE = {
+    'rent_out': 'https://via.placeholder.com/400x300.png?text=Rent+Out',
+    'find_mate': 'https://via.placeholder.com/400x300.png?text=Find+Mate',
+    'find_home': 'https://via.placeholder.com/400x300.png?text=Find+Home',
+    'default': 'https://picsum.photos/400/300' // Загальний
+};
+
 // =================================================================================
 // 2. ЛОГІКА ЗАВАНТАЖЕННЯ НАВІГАЦІЇ
 // =================================================================================
@@ -171,30 +180,43 @@ const highlightActiveLink = (isPage) => {
     });
 };
 
-/**
- * Налаштовує посилання в навігації (avatar, login, register) залежно від стану авторизації.
- */
-const setupNavLinks = () => {
+const setupNavLinks = async () => { // --- ФОТО: Зроблено async ---
     const isLoggedIn = !!MY_USER_ID;
-
     const navLoginLink = document.getElementById('navLoginLink');
-    // УВАГА: у вашому navigation.html відсутній ID "navRegisterLink".
-    // Я знаходжу його за посиланням, але краще додати ID.
     const navRegisterLink = document.querySelector('a[href="register.html"]');
-    const userAvatar = document.querySelector('.user-avatar');
-
-    if (userAvatar) {
-        userAvatar.href = isLoggedIn ? 'profile.html' : 'login.html';
-    }
+    const userAvatarElement = document.querySelector('.user-avatar'); // --- ФОТО: Змінено на елемент ---
 
     if (isLoggedIn) {
-        // Користувач авторизований
         if (navLoginLink) navLoginLink.style.display = 'none';
         if (navRegisterLink) navRegisterLink.style.display = 'none';
+
+        // --- ФОТО: Завантажуємо дані профілю для аватара в хедері ---
+        try {
+            const response = await fetch('http://localhost:3000/api/profile', { headers: getAuthHeaders() });
+            if (response.ok) {
+                const user = await response.json();
+                if (userAvatarElement) {
+                    userAvatarElement.style.backgroundImage = `url('${user.avatar_url || DEFAULT_AVATAR_URL}')`;
+                    userAvatarElement.href = 'profile.html'; // Посилання веде на профіль
+                }
+            } else {
+                if (userAvatarElement) userAvatarElement.style.backgroundImage = `url('${DEFAULT_AVATAR_URL}')`;
+            }
+        } catch (error) {
+            console.error("Помилка завантаження аватара для хедера:", error);
+            if (userAvatarElement) userAvatarElement.style.backgroundImage = `url('${DEFAULT_AVATAR_URL}')`;
+        }
+        // -----------------------------------------------------------------
+
     } else {
-        // Користувач НЕ авторизований
         if (navLoginLink) navLoginLink.style.display = 'block';
         if (navRegisterLink) navRegisterLink.style.display = 'block';
+        // --- ФОТО: Встановлюємо дефолтний аватар і посилання на логін ---
+        if (userAvatarElement) {
+            userAvatarElement.style.backgroundImage = `url('${DEFAULT_AVATAR_URL}')`;
+            userAvatarElement.href = 'login.html'; // Посилання веде на логін
+        }
+        // --------------------------------------------------------------
     }
 };
 
@@ -222,7 +244,7 @@ const loadNavigation = async () => {
 
         // Налаштування посилань
         highlightActiveLink(isPage);
-        setupNavLinks(); // <--- Виклик виправленої функції
+        await setupNavLinks();
 
         // Приклад сповіщень
         currentNotificationCount = 2; // (Це можна замінити на fetch)
@@ -235,7 +257,7 @@ const loadNavigation = async () => {
         document.querySelector('.notification-icon-container')?.addEventListener('click', () => toggleNotifications('open'));
         document.getElementById('btnCloseNotifications')?.addEventListener('click', () => toggleNotifications('close'));
 
-        // ОНОВЛЕНО: Слухач для кнопки фільтрів тепер тут
+        // Слухач для кнопки фільтрів тепер тут
         document.querySelector('.filter-btn')?.addEventListener('click', () => toggleFilters('open'));
         document.getElementById('btnCloseFilters')?.addEventListener('click', () => toggleFilters('close'));
 
@@ -283,7 +305,9 @@ const fetchAndDisplayListings = async (filterQuery = '') => {
         }
 
         listings.forEach(listing => {
-            const imageUrl = listing.main_photo_url || 'https://picsum.photos/400/300?random=' + listing.listing_id;
+            const imageUrl = listing.main_photo_url
+                || DEFAULT_LISTING_IMAGE[listing.listing_type]
+                || DEFAULT_LISTING_IMAGE['default'];
 
             // Визначення типу оголошення для тегу
             let typeTag = '';
@@ -321,7 +345,7 @@ const fetchAndDisplayListings = async (filterQuery = '') => {
 
 /**
  * =======================================================================
- * ОНОВЛЕНО: ЦЯ ФУНКЦІЯ КЕРУЄ ВСІЄЮ ЛОГІКОЮ ФІЛЬТРІВ ТА КНОПОК НА index.html
+ * ЦЯ ФУНКЦІЯ КЕРУЄ ВСІЄЮ ЛОГІКОЮ ФІЛЬТРІВ ТА КНОПОК НА index.html
  * =======================================================================
  */
 const setupHomepageLogic = () => {
@@ -627,7 +651,7 @@ const loadProfileData = async () => {
         const avatarImg = document.getElementById('profileAvatarImg');
         const avatarName = document.getElementById('profileAvatarName');
 
-        if (avatarImg) avatarImg.src = user.avatar_url || 'https://i.pinimg.com/736x/20/8e/8f/208e8f23b4ffbab9da6212c9c33fa53b.jpg';
+        if (avatarImg) avatarImg.src = user.avatar_url || DEFAULT_AVATAR_URL;
         if (avatarName) avatarName.textContent = `${user.first_name || ''} ${user.last_name || ''}`;
 
     } catch (error) {
@@ -635,6 +659,47 @@ const loadProfileData = async () => {
         alert(error.message);
         removeToken(); // Видаляємо недійсний токен
         window.location.href = 'login.html';
+    }
+};
+
+// --- ФОТО: Нова функція для завантаження аватара ---
+const handleAvatarUpload = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('avatar', file); // 'avatar' - name інпута
+
+    try {
+        // Показуємо спіннер або змінюємо іконку
+        const editIcon = document.querySelector('.edit-icon');
+        if (editIcon) editIcon.textContent = '⏳'; // Замінюємо на годинник
+
+        const response = await fetch('http://localhost:3000/api/upload/avatar', {
+            method: 'POST',
+            headers: getAuthHeaders(false), // НЕ надсилаємо Content-Type: application/json
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Не вдалося завантажити аватар');
+        }
+
+        const result = await response.json();
+        alert(result.message);
+
+        // Оновлюємо зображення на сторінці
+        const avatarImg = document.getElementById('profileAvatarImg');
+        if (avatarImg) avatarImg.src = result.avatarUrl;
+        // Оновлюємо аватар в хедері (викликаємо функцію, яка це робить)
+        await setupNavLinks();
+
+    } catch (error) {
+        console.error('Помилка завантаження аватара:', error);
+        alert(`Помилка: ${error.message}`);
+    } finally {
+        // Повертаємо іконку олівця
+        const editIcon = document.querySelector('.edit-icon');
+        if (editIcon) editIcon.textContent = '✎';
     }
 };
 
@@ -687,7 +752,18 @@ const setupProfileEventListeners = () => {
         });
     }
 
-    // Інші кнопки (заглушки)
+    // --- ФОТО: Додаємо слухача для завантаження аватара ---
+    const avatarInput = document.getElementById('avatar-upload');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                handleAvatarUpload(file);
+            }
+        });
+    }
+
+    // Інші кнопки
     document.getElementById('btnMyListings')?.addEventListener('click', () => {
         window.location.href = 'my_listings.html';
     });
@@ -695,11 +771,9 @@ const setupProfileEventListeners = () => {
         alert('Розділ "Зміна логіну та пароля" в розробці.');
     });
     document.getElementById('btnSettings')?.addEventListener('click', () => {
-        window.location.href = 'settings.html'; // Перехід на налаштування
+        window.location.href = 'settings.html';
     });
 };
-
-// --- Логіка listing_detail.html ---
 
 // --- Логіка listing_detail.html ---
 
@@ -726,14 +800,26 @@ const fetchAndDisplayListingDetail = async () => {
         const listing = await response.json();
         document.title = `UniHome | ${listing.title}`;
 
-        const mainImage = listing.photos.find(p => p.is_main) || listing.photos[0] || { image_url: 'https://picsum.photos/800/600?random=' + listing.listing_id };
+        // --- ФОТО: Логіка відображення фото з дефолтами ---
+        let mainImage = listing.photos.find(p => p.is_main);
+        let mainImageUrl = mainImage?.image_url
+            || listing.main_photo_url // Про всяк випадок, якщо is_main не встиг оновитись
+            || DEFAULT_LISTING_IMAGE[listing.listing_type]
+            || DEFAULT_LISTING_IMAGE['default'];
 
         let photoGalleryHTML = '';
-        if (listing.photos.length > 1) {
-            photoGalleryHTML = listing.photos
-                .filter(p => !p.is_main)
+        if (listing.photos && listing.photos.length > 0) {
+            // Показуємо головне першим, якщо воно є в масиві
+            const sortedPhotos = mainImage
+                ? [mainImage, ...listing.photos.filter(p => !p.is_main)]
+                : listing.photos;
+
+            photoGalleryHTML = sortedPhotos
                 .map(photo => `<img src="${photo.image_url}" alt="Фото ${listing.title}" class="gallery-thumbnail">`)
                 .join('');
+        } else {
+            // Якщо фото немає зовсім, можна показати дефолтне головне
+            photoGalleryHTML = `<img src="${mainImageUrl}" alt="${listing.title}" class="gallery-thumbnail inactive">`; // Додамо клас inactive
         }
 
         // === ПОЧАТОК НОВОЇ ЛОГІКИ ГРУПУВАННЯ ХАРАКТЕРИСТИК ===
@@ -874,9 +960,9 @@ const fetchAndDisplayListingDetail = async () => {
             <div class="listing-detail-layout">
                 <div class="listing-detail-gallery">
                     <div class="main-image-container">
-                        <img src="${mainImage.image_url}" alt="${listing.title}" id="mainDetailImage">
+                        <img src="${mainImageUrl}" alt="${listing.title}" id="mainDetailImage">
                     </div>
-                    ${photoGalleryHTML ? `<div class="thumbnail-gallery">${photoGalleryHTML}</div>` : ''}
+                    <div class="thumbnail-gallery">${photoGalleryHTML}</div>
                 </div>
 
                 <div class="listing-detail-info">
@@ -1086,7 +1172,10 @@ const setupAddListingFormLogic = () => {
 
 const handleListingSubmission = async () => {
     const form = document.getElementById('addListingForm');
-    if (!form) return;
+    const photoInput = document.getElementById('listingPhotosInput');
+    const previewContainer = document.getElementById('photoPreviewContainer');
+    const submitButton = form.querySelector('.submit-listing-btn');
+    if (!form || !photoInput || !previewContainer || !submitButton) return;
 
     if (!MY_USER_ID) {
         alert('Будь ласка, увійдіть, щоб додати оголошення.');
@@ -1094,10 +1183,126 @@ const handleListingSubmission = async () => {
         return;
     }
 
+    let selectedFiles = []; // Масив для зберігання вибраних файлів (File об'єктів)
+    const MAX_PHOTOS = 8;
+
+    // --- Функція для оновлення відображення прев'ю та кнопок ---
+    const updatePhotoDisplay = () => {
+        const placeholders = previewContainer.querySelectorAll('.photo-upload-placeholder');
+
+        placeholders.forEach((div, index) => {
+            // Очищуємо попередній вміст та стилі
+            div.innerHTML = '';
+            div.style.backgroundImage = '';
+            div.className = 'photo-upload-placeholder'; // Скидаємо класи
+            div.onclick = null; // Скидаємо обробник кліка
+            div.title = '';
+
+            if (index < selectedFiles.length) {
+                // Якщо є файл для цього слота - показуємо прев'ю
+                const file = selectedFiles[index];
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    div.classList.add('preview');
+                    div.style.backgroundImage = `url('${e.target.result}')`;
+                    div.style.backgroundSize = 'cover';
+                    div.style.backgroundPosition = 'center';
+                    div.style.borderStyle = 'solid';
+
+                    // Додаємо кнопку видалення
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'photo-delete-btn';
+                    deleteBtn.innerHTML = '&times;'; // Символ "хрестик"
+                    deleteBtn.title = 'Видалити фото';
+                    deleteBtn.type = 'button'; // Важливо, щоб не відправляти форму
+                    deleteBtn.onclick = (event) => {
+                        event.stopPropagation(); // Зупиняємо спливання, щоб не спрацював клік на div
+                        removeFile(index);
+                    };
+                    div.appendChild(deleteBtn);
+
+                    // Позначаємо головне фото
+                    if (index === 0) {
+                        const mainLabel = document.createElement('span');
+                        mainLabel.className = 'photo-main-label';
+                        mainLabel.textContent = 'Головне';
+                        div.appendChild(mainLabel);
+                        div.title = 'Головне фото';
+                    }
+                }
+                reader.readAsDataURL(file);
+
+            } else if (index === selectedFiles.length && selectedFiles.length < MAX_PHOTOS) {
+                // Наступний порожній слот стає кнопкою "Додати"
+                div.classList.add('add-photo-btn');
+                div.innerHTML = '+ Додати фото';
+                div.onclick = triggerFileInput; // Клік відкриває вибір файлу
+                div.style.borderStyle = 'dashed';
+            } else {
+                // Решта слотів - просто порожні (візуально)
+                div.style.borderStyle = 'dashed';
+                // Можна додати ::before { content: '+' } через CSS для візуального плюсика
+            }
+        });
+    };
+
+    // --- Функція для видалення файлу зі списку та оновлення відображення ---
+    const removeFile = (indexToRemove) => {
+        selectedFiles.splice(indexToRemove, 1); // Видаляємо файл з масиву
+        // Важливо скинути значення input, інакше не можна буде вибрати той самий файл знову
+        photoInput.value = null;
+        updatePhotoDisplay(); // Оновлюємо відображення
+    };
+
+    // --- Функція, яка викликається при кліку на кнопку "Додати фото" ---
+    window.triggerFileInput = () => { // Робимо функцію глобальною, щоб HTML її бачив
+        photoInput.click();
+    };
+
+    // --- Слухач змін в input type="file" ---
+    photoInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (!files) return;
+
+        const currentCount = selectedFiles.length;
+        const availableSlots = MAX_PHOTOS - currentCount;
+        const filesToAddCount = Math.min(files.length, availableSlots);
+
+        if (files.length > availableSlots && availableSlots > 0) {
+            alert(`Ви можете додати ще ${availableSlots} фото.`);
+        } else if (availableSlots <= 0) {
+            alert(`Ви вже додали максимальну кількість фото (${MAX_PHOTOS}).`);
+            photoInput.value = null; // Скидаємо вибір
+            return;
+        }
+
+        // Додаємо тільки дозволену кількість нових файлів
+        for (let i = 0; i < filesToAddCount; i++) {
+            selectedFiles.push(files[i]);
+        }
+
+        // Важливо скинути значення input після обробки,
+        // щоб подія 'change' спрацювала, якщо користувач вибере ті самі файли знову
+        photoInput.value = null;
+
+        updatePhotoDisplay(); // Оновлюємо відображення
+    });
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Перевіряємо, чи є хоча б одне фото для типів, де воно потрібне
+        const selectedType = form.querySelector('input[name="listing_type"]:checked')?.value;
+        const requiresPhoto = selectedType === 'rent_out' || selectedType === 'find_mate';
+        if (requiresPhoto && selectedFiles.length === 0) {
+             alert('Будь ласка, додайте хоча б одну фотографію для цього типу оголошення.');
+             return;
+        }
+
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
+        delete data.photos; // Видаляємо поле з текстових даних
 
         // ОНОВЛЕНО: Збираємо характеристики з обох секцій
         const characteristics = formData.getAll('characteristics');
@@ -1111,6 +1316,10 @@ const handleListingSubmission = async () => {
 
         data.characteristics = [...new Set(allCharacteristics)]; // Зберігаємо тільки унікальні
         delete data.search_characteristics; // Видаляємо старе поле
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Публікація...';
+        let listingId;
 
         try {
             const response = await fetch('http://localhost:3000/api/listings', {
@@ -1131,11 +1340,50 @@ const handleListingSubmission = async () => {
                 const errorData = await response.json();
                 alert(`Помилка публікації: ${errorData.error || 'Невідома помилка'}`);
             }
+
+            const listingResult = await listingResponse.json();
+            listingId = listingResult.listingId;
+
+            // 2. Завантажуємо фото (якщо вони є і оголошення створено)
+            if (selectedFiles.length > 0 && listingId) {
+                console.log(`Завантаження ${selectedFiles.length} фото для оголошення ${listingId}...`);
+                const photoFormData = new FormData();
+                selectedFiles.forEach(file => {
+                    photoFormData.append('photos', file);
+                });
+
+                const photoResponse = await fetch(`http://localhost:3000/api/upload/listing-photos/${listingId}`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(false),
+                    body: photoFormData,
+                });
+
+                if (!photoResponse.ok) {
+                    const errorData = await photoResponse.json();
+                    alert(`Оголошення створено, але сталася помилка при завантаженні фото: ${errorData.error || 'Невідома помилка'}.`);
+                    console.error('Помилка завантаження фото:', errorData);
+                } else {
+                    const photoResult = await photoResponse.json();
+                    console.log(photoResult.message);
+                }
+            }
+
+            alert(`Успіх! Оголошення опубліковано! (ID: ${listingId})`);
+            form.reset();
+            selectedFiles = []; // Очищуємо масив файлів
+            updatePhotoDisplay(); // Оновлюємо відображення (показуємо пусті слоти)
+            window.location.href = 'index.html';
+
         } catch (error) {
             console.error('Помилка мережі/сервера:', error);
             alert('Не вдалося з’єднатися з сервером. Перевірте, чи запущено бекенд (http://localhost:3000).');
-        }
+            }
+        finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Опублікувати оголошення';
+            }
     });
+    updatePhotoDisplay();
 };
 
 // --- Логіка my_listings.html ---

@@ -9,6 +9,9 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -20,6 +23,29 @@ const JWT_SECRET = 'my_super_secret_key_12345';
 // 1. НАЛАШТУВАННЯ MIDDLEWARE
 app.use(cors());
 app.use(express.json());
+
+// --- CLOUDINARY CONFIG ---
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true // Використовувати https
+});
+console.log('Cloudinary Configured:', !!process.env.CLOUDINARY_CLOUD_NAME); // Перевірка
+
+// --- MULTER CONFIG (для обробки файлів в пам'яті) ---
+const storage = multer.memoryStorage(); // Зберігаємо файл в буфері пам'яті
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // Обмеження 5MB на файл
+    fileFilter: (req, file, cb) => { // Дозволяємо тільки зображення
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Дозволено завантажувати лише зображення!'), false);
+        }
+    }
+});
 
 // 2. НАЛАШТУВАННЯ ПІДКЛЮЧЕННЯ ДО БАЗИ ДАНИХ (PostgreSQL)
 const pool = new Pool({
@@ -55,7 +81,7 @@ io.on('connection', (socket) => {
 });
 
 // ===============================================
-// 3. MIDDLEWARE ДЛЯ АВТЕНТИФІКАЦІЇ (НОВЕ)
+// 3. MIDDLEWARE ДЛЯ АВТЕНТИФІКАЦІЇ
 // ===============================================
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -78,7 +104,7 @@ const authenticateToken = (req, res, next) => {
 
 // 4. МАРШРУТИ ДЛЯ ОГОЛОШЕНЬ (Публічні)
 
-// 4.1 ОТРИМАННЯ ВСІХ ОГОЛОШЕНЬ (ОНОВЛЕНО З ФІЛЬТРАЦІЄЮ + ПОШУКОМ)
+// 4.1 ОТРИМАННЯ ВСІХ ОГОЛОШЕНЬ
 app.get('/api/listings', async (req, res) => {
     try {
         let query = `SELECT l.* FROM listings l`;
@@ -675,41 +701,26 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 app.put('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const {
-        first_name, last_name, email, city,
-        date_of_birth, habits, bio, phone_number
+        first_name, last_name, email, city, date_of_birth,
+        habits, bio, phone_number, avatar_url // Додано avatar_url
     } = req.body;
-
-    // Валідація дати (якщо вона не null)
     const dobValue = date_of_birth || null;
-
     try {
         const query = `
-            UPDATE users
-            SET
-                first_name = $1,
-                last_name = $2,
-                email = $3,
-                city = $4,
-                date_of_birth = $5,
-                habits = $6,
-                bio = $7,
-                phone_number = $8
-            WHERE user_id = $9
-            RETURNING user_id, email, first_name, last_name;
+            UPDATE users SET
+                             first_name = $1, last_name = $2, email = $3, city = $4,
+                             date_of_birth = $5, habits = $6, bio = $7, phone_number = $8,
+                             avatar_url = $9  -- Додано оновлення аватара
+            WHERE user_id = $10
+            RETURNING user_id, email, first_name, last_name, avatar_url; -- Повертаємо URL аватара
         `;
-
         const result = await pool.query(query, [
-            first_name, last_name, email, city,
-            dobValue, habits, bio, phone_number, userId
+            first_name, last_name, email, city, dobValue, habits,
+            bio, phone_number, avatar_url, userId // Передаємо avatar_url
         ]);
-
-        res.json({
-            message: 'Профіль успішно оновлено',
-            user: result.rows[0]
-        });
-
+        res.json({ message: 'Профіль успішно оновлено', user: result.rows[0] });
     } catch (err) {
-        if (err.code === '23505') { // Помилка унікальності (наприклад, email)
+        if (err.code === '23505') {
             res.status(409).json({ error: 'Користувач з таким email вже існує.' });
         } else {
             console.error('Помилка оновлення профілю:', err);
@@ -719,7 +730,135 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
 });
 
 // ===============================================
-// 9. ЗАПУСК СЕРВЕРА
+// 9. НОВІ ЗАХИЩЕНІ МАРШРУТИ (Завантаження Фото)
+// ===============================================
+
+// --- Функція для завантаження в Cloudinary ---
+const uploadToCloudinary = (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            { resource_type: 'image', folder: 'student_housing' }, // Можна вказати папку
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(result); // result містить { secure_url: '...' }
+                }
+            }
+        );
+        streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+    });
+};
+
+// --- 9.1 Завантаження Аватара ---
+app.post('/api/upload/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+    // 'avatar' - це ім'я поля (<input name="avatar">), яке ми очікуємо з фронтенду
+    if (!req.file) {
+        return res.status(400).json({ error: 'Файл аватара не знайдено' });
+    }
+
+    const userId = req.user.userId;
+
+    try {
+        console.log(`Uploading avatar for user ${userId}...`);
+        const result = await uploadToCloudinary(req.file.buffer);
+        const avatarUrl = result.secure_url;
+        console.log(`Avatar uploaded to: ${avatarUrl}`);
+
+        // Оновлюємо URL аватара в базі даних
+        const updateQuery = 'UPDATE users SET avatar_url = $1 WHERE user_id = $2 RETURNING avatar_url';
+        const dbResult = await pool.query(updateQuery, [avatarUrl, userId]);
+
+        res.json({ message: 'Аватар успішно оновлено', avatarUrl: dbResult.rows[0].avatar_url });
+
+    } catch (error) {
+        console.error('Помилка завантаження аватара:', error);
+        res.status(500).json({ error: 'Помилка сервера при завантаженні аватара' });
+    }
+});
+
+// --- 9.2 Завантаження Фото Оголошення ---
+app.post('/api/upload/listing-photos/:listingId', authenticateToken, upload.array('photos', 8), async (req, res) => {
+    // 'photos' - ім'я поля (<input name="photos">), maxCount = 8
+    const listingId = req.params.listingId;
+    const userId = req.user.userId;
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'Файли фото не знайдено' });
+    }
+
+    // Перевірка, чи користувач є власником оголошення
+    try {
+        const checkOwner = await pool.query('SELECT user_id FROM listings WHERE listing_id = $1', [listingId]);
+        if (checkOwner.rows.length === 0 || checkOwner.rows[0].user_id !== userId) {
+            return res.status(403).json({ error: 'Ви не є власником цього оголошення' });
+        }
+    } catch(e) {
+        console.error("Помилка перевірки власника:", e);
+        return res.status(500).json({ error: 'Помилка сервера' });
+    }
+
+
+    const uploadedUrls = [];
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Визначаємо наступний photo_order
+        const orderResult = await client.query('SELECT COALESCE(MAX(photo_order), -1) as max_order FROM listing_photos WHERE listing_id = $1', [listingId]);
+        let nextOrder = orderResult.rows[0].max_order + 1;
+
+        for (const file of req.files) {
+            console.log(`Uploading photo for listing ${listingId}...`);
+            const result = await uploadToCloudinary(file.buffer);
+            const imageUrl = result.secure_url;
+            console.log(`Photo uploaded to: ${imageUrl}`);
+
+            const isMain = (nextOrder === 0); // Перше фото стає головним
+
+            // Додаємо фото в базу
+            const insertQuery = `
+                INSERT INTO listing_photos (listing_id, image_url, is_main, photo_order)
+                VALUES ($1, $2, $3, $4) RETURNING image_url;
+            `;
+            const dbResult = await client.query(insertQuery, [listingId, imageUrl, isMain, nextOrder]);
+            uploadedUrls.push(dbResult.rows[0].image_url);
+
+            // Якщо це перше фото, оновлюємо main_photo_url в таблиці listings
+            if (isMain) {
+                await client.query('UPDATE listings SET main_photo_url = $1 WHERE listing_id = $2', [imageUrl, listingId]);
+            }
+
+            nextOrder++;
+        }
+
+        await client.query('COMMIT');
+        res.status(201).json({ message: `${req.files.length} фото успішно завантажено!`, photoUrls: uploadedUrls });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Помилка завантаження фото оголошення:', error);
+        res.status(500).json({ error: 'Помилка сервера при завантаженні фото' });
+    } finally {
+        client.release();
+    }
+});
+
+// --- Обробник помилок Multer ---
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        // Помилка Multer (напр., завеликий файл)
+        return res.status(400).json({ error: `Помилка завантаження файлу: ${err.message}` });
+    } else if (err) {
+        // Інша помилка (напр., невірний тип файлу з fileFilter)
+        return res.status(400).json({ error: err.message });
+    }
+    next();
+});
+
+// ===============================================
+// 10. ЗАПУСК СЕРВЕРА
 // ===============================================
 httpServer.listen(port, () => {
     console.log(`Сервер бекенду (з Socket.io) запущено на http://localhost:${port}`);
