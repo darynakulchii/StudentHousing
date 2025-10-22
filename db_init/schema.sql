@@ -131,6 +131,7 @@ CREATE TABLE "favorites" (
                              "favorite_id" SERIAL PRIMARY KEY,
                              "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE,
                              "listing_id" INT NOT NULL REFERENCES "listings"("listing_id") ON DELETE CASCADE,
+                             "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                              UNIQUE ("user_id", "listing_id")
 );
 

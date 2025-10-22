@@ -1852,3 +1852,73 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 .modal-confirm-btn.error:hover {
     background: #c0392b;
 }
+
+/* ==================================== */
+/* 14. FAVORITES FEATURE */
+/* ==================================== */
+
+/* --- Кнопка "Сердечко" на сторінці деталей --- */
+.listing-title-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Вирівнюємо по верху */
+    gap: 15px;
+    margin-bottom: 10px; /* Відступ, який раніше був у h1 */
+}
+
+.listing-title-header h1 {
+    flex-grow: 1; /* Заголовок займає максимум місця */
+    margin-bottom: 0; /* Прибираємо відступ у h1 */
+}
+
+.favorite-btn {
+    background: var(--background-form);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0; /* Кнопка не стискається */
+    display: none; /* Прихована, поки JS не перевірить логін */
+}
+
+.favorite-btn:hover {
+    background: #e0ecf7;
+    color: var(--primary-color);
+}
+
+.favorite-btn.favorited {
+    background: #fdeaea; /* Світло-червоний фон */
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+    font-weight: 900; /* Це змусить іконку стати суцільною (fas) */
+}
+
+.favorite-btn.favorited:hover {
+    background: #fddddd;
+}
+
+/* --- Контейнер на сторінці favorites.html --- */
+.favorites-page .listings-container {
+    display: grid;
+    /* Використовуємо той самий стиль, що й на головній */
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 1.5rem;
+}
+
+/* Адаптація для планшетів і десктопів */
+@media (min-width: 768px) {
+    .favorites-page .listings-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .favorites-page .listings-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}

@@ -662,7 +662,91 @@ app.get('/api/users/:id/listings', async (req, res) => {
 });
 
 // ===============================================
-// 9. МАРШРУТИ ЗАВАНТАЖЕННЯ ФОТО
+// 9. МАРШРУТИ ДЛЯ "ОБРАНОГО"
+// ===============================================
+
+// 9.1 ОТРИМАННЯ ID ВСІХ ОБРАНИХ ОГОЛОШЕНЬ (для швидкої перевірки)
+app.get('/api/my-favorites/ids', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        const query = 'SELECT listing_id FROM favorites WHERE user_id = $1';
+        const result = await pool.query(query, [userId]);
+        // Повертаємо простий масив ID
+        res.json(result.rows.map(row => row.listing_id));
+    } catch (err) {
+        console.error('Помилка отримання ID обраних:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 9.2 ОТРИМАННЯ ПОВНОГО СПИСКУ ОБРАНИХ ОГОЛОШЕНЬ
+app.get('/api/my-favorites', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        // Отримуємо повні дані оголошень, які користувач додав в обране
+        const query = `
+            SELECT l.*
+            FROM listings l
+            JOIN favorites f ON l.listing_id = f.listing_id
+            WHERE f.user_id = $1 AND l.is_active = TRUE
+            ORDER BY f.created_at DESC; 
+        `;
+        // Примітка: f.created_at ще не існує в схемі, але було б добре додати
+        // Тим часом, сортуємо за l.created_at
+        const fallbackQuery = `
+            SELECT l.*
+            FROM listings l
+            JOIN favorites f ON l.listing_id = f.listing_id
+            WHERE f.user_id = $1 AND l.is_active = TRUE
+            ORDER BY l.created_at DESC;
+        `;
+        const result = await pool.query(fallbackQuery, [userId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Помилка отримання обраних оголошень:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 9.3 ДОДАТИ ОГОЛОШЕННЯ В ОБРАНЕ
+app.post('/api/favorites/:listingId', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { listingId } = req.params;
+    try {
+        const query = 'INSERT INTO favorites (user_id, listing_id) VALUES ($1, $2) RETURNING favorite_id';
+        const result = await pool.query(query, [userId, listingId]);
+        res.status(201).json({ message: 'Додано до обраного', favoriteId: result.rows[0].favorite_id });
+    } catch (err) {
+        if (err.code === '23505') { // 'unique_violation'
+            return res.status(409).json({ error: 'Оголошення вже у вибраному' });
+        }
+        if (err.code === '23503') { // 'foreign_key_violation'
+            return res.status(404).json({ error: 'Оголошення не знайдено' });
+        }
+        console.error('Помилка додавання в обране:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 9.4 ВИДАЛИТИ ОГОЛОШЕННЯ З ОБРАНОГО
+app.delete('/api/favorites/:listingId', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { listingId } = req.params;
+    try {
+        const query = 'DELETE FROM favorites WHERE user_id = $1 AND listing_id = $2 RETURNING favorite_id';
+        const result = await pool.query(query, [userId, listingId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Оголошення не знайдено у вашому списку обраного' });
+        }
+        res.json({ message: 'Видалено з обраного' });
+    } catch (err) {
+        console.error('Помилка видалення з обраного:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// ===============================================
+// 10. МАРШРУТИ ЗАВАНТАЖЕННЯ ФОТО
 // ===============================================
 
 // --- Функція для завантаження в Cloudinary ---
@@ -679,7 +763,7 @@ const uploadToCloudinary = (fileBuffer) => {
     });
 };
 
-// --- 9.1 Завантаження Аватара ---
+// --- 10.1 Завантаження Аватара ---
 app.post('/api/upload/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'Файл аватара не знайдено' });
@@ -699,7 +783,7 @@ app.post('/api/upload/avatar', authenticateToken, upload.single('avatar'), async
     }
 });
 
-// --- 9.2 Завантаження Фото Оголошення ---
+// --- 10.2 Завантаження Фото Оголошення ---
 app.post('/api/upload/listing-photos/:listingId', authenticateToken, upload.array('photos', 8), async (req, res) => {
     const listingId = req.params.listingId;
     const userId = req.user.userId;
@@ -760,7 +844,7 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================================
-// 10. ЗАПУСК СЕРВЕРА
+// 11. ЗАПУСК СЕРВЕРА
 // ===============================================
 httpServer.listen(port, () => {
     console.log(`Сервер бекенду (з Socket.io) запущено на http://localhost:${port}`);

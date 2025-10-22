@@ -83,7 +83,8 @@ let filterSidebar;
 let notificationSidebar;
 let overlay;
 let notificationBadge;
-let currentNotificationCount = 0; // Приклад
+let currentNotificationCount = 0;
+let currentUserFavoriteIds = new Set();
 
 const updateNotificationCount = (count) => {
     if (notificationBadge) {
@@ -152,8 +153,31 @@ const toggleNotifications = (action) => {
     }
 };
 
+/*
+ * Завантажує ID обраних оголошень для залогіненого користувача
+ */
+const fetchFavoriteIds = async () => {
+    if (!MY_USER_ID) {
+        return; // Не залогінений, нічого завантажувати
+    }
+    try {
+        const response = await fetch('http://localhost:3000/api/my-favorites/ids', {
+            headers: getAuthHeaders()
+        });
+        if (response.ok) {
+            const ids = await response.json();
+            currentUserFavoriteIds = new Set(ids);
+            console.log('ID обраних завантажено:', currentUserFavoriteIds);
+        } else {
+            console.error('Не вдалося завантажити ID обраних');
+        }
+    } catch (error) {
+        console.error('Помилка при завантаженні ID обраних:', error);
+    }
+};
+
 // --- ФОТО: Додаємо URL за замовчуванням ---
-// === ОНОВЛЕНО: Новий URL для аватара за замовчуванням ===
+// === Новий URL для аватара за замовчуванням ===
 const DEFAULT_AVATAR_URL = 'https://placehold.co/120x120/EBF4FF/7F9CF5?text=User'; // Схожий на іконку
 const DEFAULT_LISTING_IMAGE = {
     'rent_out': 'https://via.placeholder.com/400x300.png?text=Rent+Out',
@@ -1052,7 +1076,11 @@ const fetchAndDisplayListingDetail = async () => {
                 </div>
 
                 <div class="listing-detail-info">
-                    <h1>${listing.title}</h1>
+                    <div class="listing-title-header">
+                        <h1>${listing.title}</h1>
+                        <button class="favorite-btn" id="favoriteBtn" title="Додати у вибране" data-listing-id="${listingId}">
+                            <i class="far fa-heart"></i> </button>
+                    </div>                    
                     <span class="detail-price">₴${listing.price || 0} / міс</span>
                     
                     <div class="detail-meta">
@@ -1104,6 +1132,7 @@ const fetchAndDisplayListingDetail = async () => {
             });
         });
 
+        setupFavoriteButton(listingId, listing.user_id);
 
     } catch (error) {
         console.error('Помилка завантаження деталей оголошення:', error);
@@ -1671,6 +1700,145 @@ const handleDeleteListing = async (listingId) => {
     }
 };
 
+/*
+ * Налаштовує логіку кнопки "Обране" на сторінці деталей
+ */
+const setupFavoriteButton = (listingId, authorId) => {
+    const favButton = document.getElementById('favoriteBtn');
+    if (!favButton) return;
+
+    // 1. Перевіряємо, чи залогінений користувач і чи це НЕ його оголошення
+    if (!MY_USER_ID || MY_USER_ID === authorId) {
+        favButton.style.display = 'none'; // Ховаємо кнопку, якщо не залогінений або це власник
+        return;
+    }
+
+    // 2. Показуємо кнопку
+    favButton.style.display = 'flex'; // 'flex' бо ми центруємо іконку
+
+    // 3. Встановлюємо початковий стан (зафарбоване чи ні)
+    if (currentUserFavoriteIds.has(parseInt(listingId))) {
+        favButton.classList.add('favorited');
+        favButton.querySelector('i').className = 'fas fa-heart'; // 'fas' - суцільне
+        favButton.title = 'Видалити з обраного';
+    } else {
+        favButton.classList.remove('favorited');
+        favButton.querySelector('i').className = 'far fa-heart'; // 'far' - контур
+        favButton.title = 'Додати у вибране';
+    }
+
+    // 4. Додаємо обробник кліка
+    favButton.addEventListener('click', async () => {
+        const isFavorited = favButton.classList.contains('favorited');
+        const url = `http://localhost:3000/api/favorites/${listingId}`;
+        const method = isFavorited ? 'DELETE' : 'POST';
+
+        try {
+            favButton.disabled = true; // Блокуємо кнопку на час запиту
+
+            const response = await fetch(url, {
+                method: method,
+                headers: getAuthHeaders()
+            });
+
+            if (response.ok) {
+                // Успіх! Оновлюємо UI
+                if (isFavorited) {
+                    favButton.classList.remove('favorited');
+                    favButton.querySelector('i').className = 'far fa-heart';
+                    favButton.title = 'Додати у вибране';
+                    currentUserFavoriteIds.delete(parseInt(listingId));
+                } else {
+                    favButton.classList.add('favorited');
+                    favButton.querySelector('i').className = 'fas fa-heart';
+                    favButton.title = 'Видалити з обраного';
+                    currentUserFavoriteIds.add(parseInt(listingId));
+                }
+            } else if (response.status === 401 || response.status === 403) {
+                alert('Будь ласка, увійдіть, щоб додати оголошення в обране.');
+                window.location.href = 'login.html';
+            } else {
+                const errorData = await response.json();
+                alert(`Помилка: ${errorData.error || 'Не вдалося виконати дію'}`);
+            }
+
+        } catch (error) {
+            console.error('Помилка при оновленні обраного:', error);
+            alert('Помилка мережі. Спробуйте пізніше.');
+        } finally {
+            favButton.disabled = false; // Розблоковуємо кнопку
+        }
+    });
+};
+
+/*
+ * Завантажує та відображає список обраних оголошень
+ */
+const fetchAndDisplayFavorites = async () => {
+    const container = document.getElementById('favoritesContainer');
+    if (!container) return;
+
+    if (!MY_USER_ID) {
+        alert('Будь ласка, увійдіть, щоб переглянути обрані оголошення.');
+        container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Будь ласка, <a href="login.html">увійдіть</a>, щоб побачити цей розділ.</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/my-favorites', {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP помилка! статус: ${response.status}`);
+        }
+
+        const listings = await response.json();
+        container.innerHTML = ''; // Очищуємо спіннер
+
+        if (listings.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Ви ще не додали жодного оголошення до вибраного.</p>';
+            return;
+        }
+
+        // Рендеримо картки (використовуємо той самий шаблон, що й на index.html)
+        listings.forEach(listing => {
+            const imageUrl = listing.main_photo_url
+                || DEFAULT_LISTING_IMAGE[listing.listing_type]
+                || DEFAULT_LISTING_IMAGE['default'];
+
+            let typeTag = '';
+            if(listing.listing_type === 'rent_out') {
+                typeTag = '<span class="type-tag rent">Здають</span>';
+            } else if (listing.listing_type === 'find_mate') {
+                typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
+            } else if (listing.listing_type === 'find_home') {
+                typeTag = '<span class="type-tag home">Шукають житло</span>';
+            }
+
+            const listingCard = `
+                <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
+                    <div class="listing-card"> <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
+                        <div class="info-overlay">
+                            <span class="price-tag">₴${listing.price || '...'} / міс</span>
+                            ${typeTag} 
+                        </div>
+                        <div class="listing-content">
+                            <h3>${listing.title}</h3>
+                            <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
+                        </div>
+                    </div>
+                </a>
+            `;
+            container.innerHTML += listingCard;
+        });
+
+    } catch (error) {
+        console.error('Помилка завантаження обраних:', error);
+        container.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
+    }
+};
+
 // --- Логіка chat.html ---
 
 let currentOpenConversationId = null;
@@ -2004,6 +2172,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. ЗАВЖДИ ЗАВАНТАЖУЄМО НАВІГАЦІЮ СПОЧАТКУ
         await loadNavigation();
 
+        // 1.5. ЗАВАНТАЖУЄМО ID ОБРАНИХ, ЯКЩО КОРИСТУВАЧ ЗАЛОГІНЕНИЙ
+        await fetchFavoriteIds();
+
         // 2. Визначаємо поточну сторінку
         const path = window.location.pathname;
 
@@ -2064,6 +2235,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (path.endsWith('user_profile.html')) {
             await loadPublicProfileData();
+        }
+
+        if (path.endsWith('favorites.html')) {
+            await fetchAndDisplayFavorites();
         }
 
     })();
