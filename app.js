@@ -701,6 +701,8 @@ const setupProfileEventListeners = () => {
 
 // --- Логіка listing_detail.html ---
 
+// --- Логіка listing_detail.html ---
+
 const fetchAndDisplayListingDetail = async () => {
     const container = document.getElementById('listingDetailContainer');
     if (!container) return;
@@ -734,31 +736,130 @@ const fetchAndDisplayListingDetail = async () => {
                 .join('');
         }
 
-        // --- НОВА ЛОГІКА РОЗПОДІЛУ ХАРАКТЕРИСТИК ---
+        // === ПОЧАТОК НОВОЇ ЛОГІКИ ГРУПУВАННЯ ХАРАКТЕРИСТИК ===
 
-        // Допоміжна функція для фільтрації
-        const filterChars = (categories) => {
-            if (!listing.characteristics) return '';
-            return listing.characteristics
-                .filter(char => categories.includes(char.category))
-                .map(char => `<span class="char-tag">${char.name_ukr}</span>`)
-                .join('');
+        // 1. Словник для "красивих" назв категорій (з schema.sql)
+        const categoryNames = {
+            'tech': 'Побутова техніка',
+            'media': 'Мультимедіа',
+            'comfort': 'Комфорт',
+            'pets_allowed': 'Домашні улюбленці (Дозволено)',
+            'blackout': 'Автономність при блекауті',
+            'rules': 'Правила',
+            'communications': 'Комунікації',
+            'infra': 'Інфраструктура (до 500 метрів)',
+            'inclusive': 'Інклюзивність',
+            'my_personality': 'Особистість',
+            'my_lifestyle': 'Спосіб життя',
+            'my_interests': 'Інтереси',
+            'my_pets': 'Мої тварини',
+            'mate_personality': 'Бажана особистість',
+            'mate_lifestyle': 'Бажаний спосіб життя',
+            'mate_interests': 'Бажані інтереси',
+            'mate_pets': 'Тварини у сусіда'
         };
 
-        // Категорії з schema.sql
-        const myCategories = ['my_personality', 'my_lifestyle', 'my_interests', 'my_pets'];
-        const mateCategories = ['mate_personality', 'mate_lifestyle', 'mate_interests', 'mate_pets'];
+        // 2. Групуємо всі характеристики, які прийшли з бекенду
+        const characteristicsByCategory = {};
+        if (listing.characteristics) {
+            listing.characteristics.forEach(char => {
+                const category = char.category;
+                if (!characteristicsByCategory[category]) {
+                    characteristicsByCategory[category] = [];
+                }
+                // Додаємо HTML-тег
+                characteristicsByCategory[category].push(`<span class="char-tag">${char.name_ukr}</span>`);
+            });
+        }
+
+        // 3. Допоміжна функція для побудови HTML-секції
+        const buildCharSection = (categoriesToShow) => {
+            let html = '';
+            for (const category of categoriesToShow) {
+                if (characteristicsByCategory[category]) {
+                    html += `
+                        <div class="char-category-group">
+                            <h3>${categoryNames[category] || category}</h3>
+                            <div class="characteristics-list">
+                                ${characteristicsByCategory[category].join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            return html;
+        };
+
+        // 4. Генеруємо HTML-блоки для кожної секції
+        let aboutAuthorHTML = '';
+        let roommatePrefsHTML = '';
+        let housingCharsHTML = '';
+
+        // -- "Про автора" та "Вимоги до сусіда" (ТІЛЬКИ для find_home та find_mate)
+        if (listing.listing_type === 'find_home' || listing.listing_type === 'find_mate') {
+            const myCategories = ['my_personality', 'my_lifestyle', 'my_interests', 'my_pets'];
+            const myCharsHTML = buildCharSection(myCategories);
+
+            if (listing.my_age || listing.my_gender || myCharsHTML) {
+                aboutAuthorHTML = `
+                    <div class="detail-section">
+                        <h2>Про автора</h2>
+                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">
+                            ${listing.my_age ? `<span class="char-tag">Вік: ${listing.my_age}</span>` : ''}
+                            ${listing.my_gender === 'female' ? `<span class="char-tag">Стать: Жіноча</span>` : ''}
+                            ${listing.my_gender === 'male' ? `<span class="char-tag">Стать: Чоловіча</span>` : ''}
+                            ${listing.my_smoking ? `<span class="char-tag">Паління: ${listing.my_smoking}</span>` : ''}
+                            ${listing.my_drinking ? `<span class="char-tag">Алкоголь: ${listing.my_drinking}</span>` : ''}
+                        </div>
+                        ${myCharsHTML}
+                    </div>
+                `;
+            }
+
+            const mateCategories = ['mate_personality', 'mate_lifestyle', 'mate_interests', 'mate_pets'];
+            const mateCharsHTML = buildCharSection(mateCategories);
+
+            if (listing.roommate_gender || listing.roommate_age_min || mateCharsHTML) {
+                roommatePrefsHTML = `
+                    <div class="detail-section">
+                        <h2>Вимоги до сусіда</h2>
+                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">
+                            ${listing.roommate_gender && listing.roommate_gender !== 'any' ? `<span class="char-tag">Стать: ${listing.roommate_gender}</span>` : ''}
+                            ${listing.roommate_age_min && listing.roommate_age_max ? `<span class="char-tag">Вік: ${listing.roommate_age_min} - ${listing.roommate_age_max}</span>` : ''}
+                            ${listing.roommate_smoking && listing.roommate_smoking !== 'any' ? `<span class="char-tag">Паління (сусід): ${listing.roommate_smoking}</span>` : ''}
+                        </div>
+                        ${mateCharsHTML}
+                    </div>
+                `;
+            }
+        }
+
+        // -- "Характеристики житла" (для всіх типів, але з різними заголовками)
         const apartmentCategories = [
             'tech', 'media', 'comfort', 'pets_allowed', 'blackout',
             'rules', 'communications', 'infra', 'inclusive'
         ];
+        const apartmentCharsHTML = buildCharSection(apartmentCategories);
 
-        const myCharsHTML = filterChars(myCategories);
-        const mateCharsHTML = filterChars(mateCategories);
-        const apartmentCharsHTML = filterChars(apartmentCategories);
+        if (listing.listing_type === 'find_home') {
+            // "find_home" шукає житло, тому це "Бажані"
+            housingCharsHTML = `
+                <div class="detail-section">
+                    <h2>Бажані характеристики житла</h2>
+                    ${apartmentCharsHTML || '<p>Автор не вказав бажаних характеристик.</p>'}
+                </div>
+            `;
+        } else if (listing.listing_type === 'rent_out' || listing.listing_type === 'find_mate') {
+            // "rent_out" та "find_mate" описують житло, яке ВЖЕ Є
+            housingCharsHTML = `
+                <div class="detail-section">
+                    <h2>Характеристики житла</h2>
+                    ${apartmentCharsHTML || '<p>Характеристики не вказані.</p>'}
+                </div>
+            `;
+        }
 
-        // --- КІНЕЦЬ НОВОЇ ЛОГІКИ ---
-
+        // === КІНЕЦЬ НОВОЇ ЛОГІКИ ГРУПУВАННЯ ===
 
         const contactButtonHTML = (MY_USER_ID === listing.user_id)
             ? `<a href="profile.html" class="contact-btn" style="background: #7f8c8d;">
@@ -768,6 +869,7 @@ const fetchAndDisplayListingDetail = async () => {
                  <i class="fas fa-comment-dots"></i> Зв'язатись з автором
                </a>`;
 
+        // Збираємо фінальний HTML з умовними блоками
         const detailHTML = `
             <div class="listing-detail-layout">
                 <div class="listing-detail-gallery">
@@ -795,39 +897,10 @@ const fetchAndDisplayListingDetail = async () => {
                         <p>${listing.description ? listing.description.replace(/\\n/g, '<br>') : 'Опис відсутній.'}</p>
                     </div>
 
-                    ${(listing.my_age || listing.my_gender || myCharsHTML) ? `
-                    <div class="detail-section">
-                        <h2>Про автора</h2>
-                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                            ${listing.my_age ? `<span class="char-tag">Вік: ${listing.my_age}</span>` : ''}
-                            ${listing.my_gender === 'female' ? `<span class="char-tag">Стать: Жіноча</span>` : ''}
-                            ${listing.my_gender === 'male' ? `<span class="char-tag">Стать: Чоловіча</span>` : ''}
-                            ${listing.my_smoking ? `<span class="char-tag">Паління: ${listing.my_smoking}</span>` : ''}
-                            ${listing.my_drinking ? `<span class="char-tag">Алкоголь: ${listing.my_drinking}</span>` : ''}
-                        </div>
-                        ${myCharsHTML ? `<div class="characteristics-list" style="margin-top: 10px;">${myCharsHTML}</div>` : ''}
+                    ${aboutAuthorHTML}
+                    ${roommatePrefsHTML}
+                    ${housingCharsHTML}
                     </div>
-                    ` : ''}
-
-                    ${(listing.roommate_gender || mateCharsHTML) ? `
-                    <div class="detail-section">
-                        <h2>Вимоги до сусіда</h2>
-                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                            ${listing.roommate_gender ? `<span class="char-tag">Стать: ${listing.roommate_gender}</span>` : ''}
-                            ${listing.roommate_age_min && listing.roommate_age_max ? `<span class="char-tag">Вік: ${listing.roommate_age_min} - ${listing.roommate_age_max}</span>` : ''}
-                            ${listing.roommate_smoking ? `<span class="char-tag">Паління (сусід): ${listing.roommate_smoking}</span>` : ''}
-                        </div>
-                        ${mateCharsHTML ? `<div class="characteristics-list" style="margin-top: 10px;">${mateCharsHTML}</div>` : ''}
-                    </div>
-                    ` : ''}
-
-                    <div class="detail-section">
-                        <h2>Характеристики житла</h2>
-                        <div class="characteristics-list">
-                            ${apartmentCharsHTML || '<p>Характеристики не вказані.</p>'}
-                        </div>
-                    </div>
-                </div>
 
                 <aside class="listing-detail-author">
                     <h3>Автор оголошення</h3>
