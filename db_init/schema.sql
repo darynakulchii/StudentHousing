@@ -30,7 +30,8 @@ CREATE TABLE "users" (
                          "date_of_birth" DATE,
                          "bio" TEXT,
                          "avatar_url" VARCHAR(255),
-                         "phone_number" VARCHAR(20) -- З profile.html
+                         "phone_number" VARCHAR(20),
+                         "show_phone_publicly" BOOLEAN DEFAULT FALSE
 );
 
 -- Головна таблиця оголошень

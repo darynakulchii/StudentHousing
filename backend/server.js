@@ -577,7 +577,7 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
         const query = `
-            SELECT email, first_name, last_name, city, date_of_birth, bio, avatar_url, phone_number
+            SELECT email, first_name, last_name, city, date_of_birth, bio, avatar_url, phone_number, show_phone_publicly
             FROM users WHERE user_id = $1
         `;
         const result = await pool.query(query, [userId]);
@@ -594,20 +594,21 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 // 8.2 ОНОВЛЕННЯ ДАНИХ ПРОФІЛЮ
 app.put('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
-    const { first_name, last_name, email, city, date_of_birth, bio, phone_number, avatar_url } = req.body;
+    const { first_name, last_name, email, city, date_of_birth, bio, phone_number, avatar_url, show_phone_publicly } = req.body;
     const dobValue = date_of_birth || null;
+    const showPhoneBool = !!show_phone_publicly;
     try {
         const query = `
             UPDATE users SET
                              first_name = $1, last_name = $2, email = $3, city = $4,
                              date_of_birth = $5, bio = $6, phone_number = $7,
-                             avatar_url = $8
-            WHERE user_id = $9
-            RETURNING user_id, email, first_name, last_name, avatar_url;
+                             avatar_url = $8, show_phone_publicly = $9
+            WHERE user_id = $10
+            RETURNING user_id, email, first_name, last_name, avatar_url, show_phone_publicly;
         `;
         const result = await pool.query(query, [
             first_name, last_name, email, city, dobValue,
-            bio, phone_number, avatar_url, userId
+            bio, phone_number, avatar_url, showPhoneBool, userId
         ]);
         res.json({ message: 'Профіль успішно оновлено', user: result.rows[0] });
     } catch (err) {
@@ -617,6 +618,46 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
             console.error('Помилка оновлення профілю:', err);
             res.status(500).json({ error: 'Помилка сервера' });
         }
+    }
+});
+
+// 8.3 ОТРИМАННЯ ПУБЛІЧНИХ ДАНИХ ПРОФІЛЮ (НОВИЙ ЕНДПОІНТ)
+app.get('/api/users/:id/public-profile', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const query = `
+            SELECT user_id, first_name, last_name, city, date_of_birth, bio, avatar_url,
+                   (CASE WHEN show_phone_publicly = TRUE THEN phone_number ELSE NULL END) as phone_number
+            FROM users WHERE user_id = $1
+        `;
+        const result = await pool.query(query, [userId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+
+        // Ми НЕ повертаємо email чи сам номер телефону
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Помилка отримання публічного профілю:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 8.4 ОТРИМАННЯ АКТИВНИХ ОГОЛОШЕНЬ КОРИСТУВАЧА (НОВИЙ ЕНДПОІНТ)
+app.get('/api/users/:id/listings', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        const query = `
+            SELECT listing_id, title, city, price, main_photo_url, listing_type, created_at
+            FROM listings
+            WHERE user_id = $1 AND is_active = TRUE
+            ORDER BY created_at DESC;
+        `;
+        const result = await pool.query(query, [userId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Помилка отримання публічних оголошень:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
     }
 });
 
