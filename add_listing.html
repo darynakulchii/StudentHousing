@@ -522,18 +522,34 @@
     </div> <div id="listingDetails" style="display: none; border-top: 2px solid var(--primary-color); padding-top: 20px; margin-top: 10px;">
         <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary-color);">Характеристики житла</h2>
 
+<!--        <div class="form-group" id="photoGroup" style="display: none;">-->
+<!--            <label>Фото</label>-->
+<!--            <p class="form-description">Перше фото буде на обкладинці оголошення. Перетягніть, щоб змінити порядок фото.</p>-->
+<!--            <div class="photo-upload-grid">-->
+<!--                <div class="photo-upload-placeholder add-photo-btn">Додати фото</div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--                <div class="photo-upload-placeholder"></div>-->
+<!--            </div>-->
+<!--        </div>-->
+
         <div class="form-group" id="photoGroup" style="display: none;">
-            <label>Фото</label>
-            <p class="form-description">Перше фото буде на обкладинці оголошення. Перетягніть, щоб змінити порядок фото.</p>
-            <div class="photo-upload-grid">
-                <div class="photo-upload-placeholder add-photo-btn">Додати фото</div>
-                <div class="photo-upload-placeholder"></div>
-                <div class="photo-upload-placeholder"></div>
-                <div class="photo-upload-placeholder"></div>
-                <div class="photo-upload-placeholder"></div>
-                <div class="photo-upload-placeholder"></div>
-                <div class="photo-upload-placeholder"></div>
-                <div class="photo-upload-placeholder"></div>
+            <label>Фото (до 8 шт.)</label>
+            <p class="form-description">Перше вибране фото буде головним. Натисніть на будь-який квадрат, щоб додати фото.</p>
+            <input type="file" id="listingPhotosInput" name="photos" multiple accept="image/*" style="display: none;">
+            <div class="photo-upload-grid" id="photoPreviewContainer">
+                <div class="photo-upload-placeholder add-photo-btn" data-index="0" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="1" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="2" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="3" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="4" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="5" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="6" onclick="triggerFileInput()">+ Додати фото</div>
+                <div class="photo-upload-placeholder add-photo-btn" data-index="7" onclick="triggerFileInput()">+ Додати фото</div>
             </div>
         </div>
 

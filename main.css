@@ -891,6 +891,53 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     content: none;
 }
 
+/* Стиль для прев'ю зображення */
+.photo-upload-placeholder.preview {
+    border-style: solid;
+    font-size: 0;
+    cursor: default; /* Не показувати курсор "рука" на прев'ю */
+    position: relative; /* Для позиціонування кнопки видалення */
+}
+.photo-upload-placeholder.preview::before {
+    content: none;
+}
+
+/* Кнопка видалення фото */
+.photo-delete-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background-color: rgba(231, 76, 60, 0.8); /* Напівпрозорий червоний */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 20px; /* Центрування хрестика */
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.7; /* Спочатку трохи прозора */
+    transition: opacity 0.2s, background-color 0.2s;
+}
+.photo-delete-btn:hover {
+    background-color: rgba(192, 57, 43, 1); /* Непрозорий червоний при наведенні */
+    opacity: 1;
+}
+
+/* Мітка "Головне" */
+.photo-main-label {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
 #addListingForm #housingFilters,
 #addListingForm #listingDetails,
 #addListingForm #aboutMe,
