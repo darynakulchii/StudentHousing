@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniHome | Профіль користувача</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<div id="navigation-placeholder"></div>
+
+<main class="public-profile-page">
+    <div class="loading-placeholder" id="loadingIndicator">
+        <h1>Завантаження профілю...</h1>
+        <p style="text-align: center; color: var(--text-light);">
+            <i class="fas fa-spinner fa-spin"></i>
+        </p>
+    </div>
+
+    <div class="public-profile-container" id="profileContainer" style="display: none;">
+        <aside class="profile-sidebar">
+            <div class="profile-avatar">
+                <img src="https://placehold.co/120x120/EBF4FF/7F9CF5?text=User" alt="Avatar" id="profileAvatarImg">
+                <p id="profileAvatarName">Ім'я користувача</p>
+            </div>
+            <hr class="sidebar-divider">
+            <div class="profile-verification-info">
+                <h4>Верифікація</h4>
+                <div class="verify-status-public">
+                    <i class="fas fa-envelope"></i> Email: <span id="email_status">Не підтверджено</span>
+                </div>
+                <div class="verify-status-public">
+                    <i class="fas fa-phone"></i> Телефон: <span id="phone_status">Не підтверджено</span>
+                </div>
+            </div>
+
+            <a href="#" class="contact-btn" id="btnContactUser">
+                <i class="fas fa-comment-dots"></i> Зв'язатись
+            </a>
+        </aside>
+
+        <section class="profile-info">
+            <h2>Про користувача</h2>
+            <div classs="profile-details-public">
+                <p><strong>Місто:</strong> <span id="profileCity">Не вказано</span></p>
+                <p><strong>Вік:</strong> <span id="profileAge">Не вказано</span></p>
+
+                <div class="detail-section">
+                    <h3>Біографія</h3>
+                    <p id="profileBio">Користувач ще не додав біографію.</p>
+                </div>
+            </div>
+
+            <h2>Активні оголошення (<span id="listingsCount">0</span>)</h2>
+            <div class="listings-container" id="userListingsContainer">
+            </div>
+        </section>
+    </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

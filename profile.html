@@ -44,32 +44,25 @@
                     <input type="text" placeholder="Ім’я" name="first_name" id="profile_first_name">
                 </div>
 
-                <input type="email" placeholder="Email" name="email" id="profile_email">
-                <input type="tel" placeholder="Телефон" name="phone_number" id="profile_phone">
+                <div class="form-group-with-verify">
+                    <input type="email" placeholder="Email" name="email" id="profile_email">
+<!--                    <div class="verify-status" id="email_verify_status">-->
+<!--                        <span class="status-icon" data-verified="false"></span>-->
+<!--                        <button type="button" class="verify-btn" id="btnVerifyEmail">Підтвердити</button>-->
+<!--                    </div>-->
+                </div>
+
+                <div class="form-group-with-verify">
+                    <input type="tel" placeholder="Телефон (напр. +380991234567)" name="phone_number" id="profile_phone">
+                    <div class="verify-status" id="phone_verify_status">
+                        <span class="status-icon" data-verified="false"></span>
+                        <button type="button" class="verify-btn" id="btnVerifyPhone">Підтвердити</button>
+                    </div>
+                </div>
 
                 <div class="form-row">
                     <input type="text" placeholder="Місто" name="city" id="profile_city">
                     <input type="date" placeholder="Дата народження" name="date_of_birth" id="profile_date">
-                </div>
-
-                <div class="form-row">
-                    <select id="habits-select" name="habits">
-                        <option value="" disabled selected>Звички:</option>
-                        <option value="Палю">Палю</option>
-                        <option value="Вегетаріанець">Вегетаріанець</option>
-                        <option value="Ранній птах">Ранній птах</option>
-                        <option value="Сова">Сова</option>
-                        <option value="Інше">Інше</option>
-                    </select>
-
-                    <select id="interests-select" name="interests">
-                        <option value="" disabled selected>Інтереси:</option>
-                        <option value="Мистецтво">Мистецтво</option>
-                        <option value="Подорожі">Подорожі</option>
-                        <option value="Кіно">Кіно</option>
-                        <option value="Спорт">Спорт</option>
-                        <option value="Інше">Інше</option>
-                    </select>
                 </div>
 
                 <textarea placeholder="Про себе..." name="bio" id="profile_bio"></textarea>
