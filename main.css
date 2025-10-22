@@ -91,11 +91,13 @@ h3 {
 .user-avatar {
     width: 35px;
     height: 35px;
-    background-image: url('https://i.pravatar.cc/35?img=5');
+    /* --- Змінено: background-image встановлюється через JS --- */
     background-size: cover;
+    background-position: center; /* Додано */
     border-radius: 50%;
     border: 2px solid var(--primary-color);
 }
+
 
 /* --- Desktop Navigation --- */
 .desktop-nav {
@@ -765,17 +767,26 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     height: 120px;
     border-radius: 50%;
     border: 5px solid var(--border-color);
+    object-fit: cover; /* Додано, щоб зображення не спотворювалось */
 }
 .edit-icon {
     position: absolute;
     bottom: 20px;
-    right: calc(50% - 60px + 85px - 10px);
+    /* Оновлено позиціонування іконки редагування */
+    right: calc(50% - 60px); /* 60px - половина ширини аватара */
     background: var(--background-white);
     border: 1px solid var(--border-color);
     border-radius: 50%;
-    padding: 4px 6px;
+    width: 30px; /* Збільшено розмір */
+    height: 30px; /* Збільшено розмір */
+    display: flex; /* Для центрування іконки */
+    align-items: center; /* Для центрування іконки */
+    justify-content: center; /* Для центрування іконки */
     cursor: pointer;
     font-size: 14px;
+    line-height: 1; /* Для кращого центрування */
+    transform: translateX(50%); /* Точне центрування під аватаром */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Легка тінь */
 }
 .profile-avatar p {
     margin-top: 10px;
@@ -873,12 +884,15 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     font-size: 2.5rem;
     font-weight: 300;
     position: relative;
+    overflow: hidden; /* Щоб діти не виходили за межі */
 }
-.photo-upload-placeholder::before {
-    content: '+';
-}
+
+/* Прибираємо стандартний плюсик */
+/*.photo-upload-placeholder::before {*/
+/* content: '+';*/
+/*}*/
 .photo-upload-placeholder.add-photo-btn {
-    border-style: solid;
+    border-style: solid; /* Змінюємо на суцільну для кнопки */
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--primary-color);
@@ -886,7 +900,9 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     line-height: 1.3;
     text-align: center;
     padding: 5px;
+    background-color: var(--background-white); /* Трохи інший фон */
 }
+/* Прибираємо контент для кнопки */
 .photo-upload-placeholder.add-photo-btn::before {
     content: none;
 }
@@ -894,10 +910,14 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* Стиль для прев'ю зображення */
 .photo-upload-placeholder.preview {
     border-style: solid;
+    border-color: var(--border-color); /* Звичайна рамка */
     font-size: 0;
     cursor: default; /* Не показувати курсор "рука" на прев'ю */
     position: relative; /* Для позиціонування кнопки видалення */
+    background-size: cover; /* Важливо для background-image */
+    background-position: center; /* Важливо для background-image */
 }
+/* Прибираємо контент для прев'ю */
 .photo-upload-placeholder.preview::before {
     content: none;
 }
@@ -905,21 +925,22 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* Кнопка видалення фото */
 .photo-delete-btn {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: 4px; /* Трохи змістимо */
+    right: 4px; /* Трохи змістимо */
     background-color: rgba(231, 76, 60, 0.8); /* Напівпрозорий червоний */
     color: white;
     border: none;
     border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    font-size: 14px;
+    width: 24px; /* Трохи збільшимо */
+    height: 24px; /* Трохи збільшимо */
+    font-size: 16px; /* Збільшимо хрестик */
     font-weight: bold;
-    line-height: 20px; /* Центрування хрестика */
+    line-height: 22px; /* Центрування хрестика */
     text-align: center;
     cursor: pointer;
     opacity: 0.7; /* Спочатку трохи прозора */
     transition: opacity 0.2s, background-color 0.2s;
+    z-index: 1; /* Щоб була над міткою */
 }
 .photo-delete-btn:hover {
     background-color: rgba(192, 57, 43, 1); /* Непрозорий червоний при наведенні */
@@ -929,13 +950,14 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* Мітка "Головне" */
 .photo-main-label {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
+    bottom: 4px; /* Трохи змістимо */
+    left: 4px; /* Трохи змістимо */
     background: rgba(0,0,0,0.6);
     color: white;
     font-size: 0.7rem;
-    padding: 1px 4px;
+    padding: 2px 5px; /* Змінимо падінг */
     border-radius: 3px;
+    z-index: 0; /* Щоб була під кнопкою */
 }
 
 #addListingForm #housingFilters,
@@ -979,26 +1001,42 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     object-fit: cover;
     border-radius: 12px;
     border: 1px solid #eee;
+    box-shadow: var(--box-shadow-light); /* Додаємо тінь */
 }
 .thumbnail-gallery {
     display: flex;
-    gap: 10px;
+    gap: 15px; /* Збільшуємо відступ */
     flex-wrap: wrap;
-    margin-top: 10px;
+    margin-top: 15px; /* Збільшуємо відступ */
 }
 .gallery-thumbnail {
-    width: 80px;
-    height: 60px;
+    /* === ОНОВЛЕНО: Збільшуємо розмір мініатюр === */
+    width: 120px;
+    height: 90px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px; /* Робимо кути трохи більшими */
     cursor: pointer;
     opacity: 0.7;
-    transition: opacity 0.2s;
-    border: 1px solid #eee;
+    transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+    border: 2px solid transparent; /* Додаємо прозору рамку для анімації */
 }
 .gallery-thumbnail:hover {
     opacity: 1;
+    transform: scale(1.05); /* Легке збільшення при наведенні */
 }
+.gallery-thumbnail.active {
+    opacity: 1;
+    border-color: var(--primary-color); /* Активна рамка */
+}
+.gallery-thumbnail.inactive { /* Стиль для заглушки, якщо фото немає */
+    opacity: 0.5;
+    cursor: default;
+    border: 1px dashed #ccc;
+}
+.gallery-thumbnail.inactive:hover {
+    transform: none; /* Забороняємо збільшення */
+}
+
 .listing-detail-info {
     background: var(--background-white);
     padding: 25px;
@@ -1031,7 +1069,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     border-top: 1px solid #eee;
 }
 .detail-section h2 { font-size: 1.3rem; margin-bottom: 1rem; }
-.detail-section p { line-height: 1.6; white-space: pre-wrap; }
 .detail-section p { line-height: 1.6; white-space: pre-wrap; }
 
 /* НОВІ СТИЛІ ДЛЯ ГРУП ХАРАКТЕРИСТИК */
@@ -1073,11 +1110,25 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     text-align: center;
     color: var(--secondary-color);
 }
-.author-avatar { font-size: 4rem; color: #ccc; margin-bottom: 10px; }
+/* === ОНОВЛЕНО: Стилі для аватара автора === */
+.author-avatar {
+    margin-bottom: 15px; /* Збільшуємо відступ */
+}
+.author-avatar img {
+    width: 80px; /* Зменшуємо розмір аватара */
+    height: 80px; /* Зменшуємо розмір аватара */
+    border-radius: 50%;
+    border: 3px solid var(--border-color); /* Тонша рамка */
+    object-fit: cover; /* Щоб зображення не спотворювалось */
+    display: block; /* Забирає зайвий відступ знизу */
+    margin: 0 auto; /* Центруємо */
+    box-shadow: var(--box-shadow-light); /* Легка тінь */
+}
 .author-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; }
 .contact-btn {
     display: inline-block;
-    width: auto;
+    width: auto; /* Автоматична ширина */
+    max-width: 100%; /* Обмеження ширини на малих екранах */
     background: var(--primary-color);
     color: var(--text-white);
     padding: 10px 20px;
@@ -1087,6 +1138,9 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     transition: background-color 0.2s;
     border: none;
     cursor: pointer;
+    white-space: nowrap; /* Заборона переносу тексту */
+    overflow: hidden; /* Обрізання тексту */
+    text-overflow: ellipsis; /* Додавання "..." */
 }
 .contact-btn i { margin-right: 8px; }
 .contact-btn:hover { background: #2c2c8c; }
@@ -1228,13 +1282,30 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     .profile-sidebar { width: 250px; }
 
     .chat-container { height: calc(100vh - 120px);}
+
+    /* Збільшуємо мініатюри на планшетах/десктопах ще трохи */
+    .gallery-thumbnail {
+        width: 140px;
+        height: 105px;
+    }
 }
 
 /* --- Larger Desktop --- */
 @media (min-width: 1024px) {
     .listings-container { grid-template-columns: repeat(3, 1fr); }
-    .listing-detail-layout { grid-template-columns: 2fr 3fr 1.5fr; }
+    .listing-detail-layout { grid-template-columns: 2fr 3fr 1.5fr; } /* Повертаємо три колонки */
+
+    .gallery-thumbnail {
+        width: 150px; /* Ще трохи збільшуємо */
+        height: 112px;
+    }
+
+    .author-avatar img { /* Збільшуємо аватар автора */
+        width: 100px;
+        height: 100px;
+    }
 }
+
 
 /* --- Mobile Fixes --- */
 @media (max-width: 767px) {
@@ -1246,7 +1317,13 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     .chat-window { width: 100%; height: 60%; }
     .message { max-width: 85%; }
 
-    .form-row { flex-direction: column; gap: 15px; }
+    .form-row { flex-direction: column; gap: 15px; } /* Завжди в стовпчик на мобілках */
+
+    /* Залишаємо мініатюри меншими на мобілках */
+    .gallery-thumbnail {
+        width: 90px;
+        height: 67px;
+    }
 }
 
 @media (max-width: 600px) {
@@ -1257,6 +1334,14 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 
     .profile-page, .add-listing-page { padding: 15px; }
     .profile-info, .listing-form { padding: 20px; }
+
+    .gallery-thumbnail { /* Ще менші на дуже малих екранах */
+        width: 80px;
+        height: 60px;
+    }
+
+    .listing-detail-layout { grid-template-columns: 1fr; } /* Завжди одна колонка */
+    .listing-detail-author { grid-row: 3; } /* Переміщаємо блок автора вниз */
 }
 
 /* ==================================== */
