@@ -14,7 +14,7 @@ const removeToken = () => {
     localStorage.removeItem('authToken');
 };
 
-// === ВИПРАВЛЕНО 1: Функція getAuthHeaders ===
+// === Функція getAuthHeaders ===
 // Тепер приймає аргумент isJson. Якщо false, 'Content-Type' не додається,
 // дозволяючи браузеру самому встановити 'multipart/form-data' для файлів.
 const getAuthHeaders = (isJson = true) => {
@@ -78,6 +78,7 @@ const MY_USER_ID = getMyUserId();
 // 1. ГЛОБАЛЬНІ ЗМІННІ ТА ФУНКЦІЇ ІНТЕРФЕЙСУ
 // =================================================================================
 
+let socket;
 let mobileMenuWindow;
 let filterSidebar;
 let notificationSidebar;
@@ -1961,10 +1962,26 @@ const handleMessageSend = () => {
             });
 
             if (response.ok) {
+                const newMessage = await response.json(); // Отримуємо повідомлення
                 messageInput.value = ''; // Очищуємо поле вводу
-                const messagesArea = document.getElementById('messagesArea');
-                if (messagesArea) messagesArea.scrollTop = messagesArea.scrollHeight;
-            } else {
+
+                // Якщо це була нова розмова (ми відправили, не маючи ID розмови)
+                if (currentOpenConversationId === null) {
+                    console.log('Створено нову розмову, ID:', newMessage.conversation_id);
+                    // 1. Оновлюємо поточні ID
+                    currentOpenConversationId = newMessage.conversation_id.toString();
+
+                    // 2. Приєднуємось до нової socket.io кімнати
+                    if (socket) { // Перевіряємо, чи socket ініціалізовано
+                        socket.emit('join_conversation', currentOpenConversationId);
+                    }
+                    // 3. Оновлюємо список розмов зліва
+                    await loadConversations();
+                    // 4. "Клікаємо" на щойно створену розмову, щоб вона стала активною
+                    const newItem = document.querySelector(`.conversation-item[data-conversation-id="${currentOpenConversationId}"]`);
+                    if (newItem) newItem.classList.add('active');
+                }
+            }else {
                 const errorData = await response.json();
                 alert(`Помилка відправки: ${errorData.error || 'Невідома помилка'}`);
             }
@@ -1983,29 +2000,21 @@ const setupSocketIO = () => {
         return;
     }
 
-    const socket = io("http://localhost:3000");
+    socket = io("http://localhost:3000");
 
     socket.on('connect', () => {
         console.log(`Socket.io підключено: ${socket.id}`);
-
         // Приєднатись до кімнат (розмов)
         const list = document.getElementById('conversationsList');
         if (list) {
-            // Використовуємо MutationObserver, щоб дочекатись завантаження розмов
-            const observer = new MutationObserver(() => {
-                const conversationItems = document.querySelectorAll('.conversation-item');
-                if (conversationItems.length > 0) {
-                    console.log('Приєднуємось до кімнат socket.io...');
-                    conversationItems.forEach(item => {
-                        const convoId = item.dataset.conversationId;
-                        if (convoId) {
-                            socket.emit('join_conversation', convoId);
-                        }
-                    });
-                    observer.disconnect(); // Зупиняємо спостереження
+            console.log('Приєднуємось до кімнат socket.io...');
+            const conversationItems = document.querySelectorAll('.conversation-item');
+            conversationItems.forEach(item => {
+                const convoId = item.dataset.conversationId;
+                if (convoId) {
+                    socket.emit('join_conversation', convoId);
                 }
             });
-            observer.observe(list, { childList: true, subtree: true });
         }
     });
 
@@ -2028,6 +2037,70 @@ const setupSocketIO = () => {
     socket.on('disconnect', () => {
         console.log('Socket.io відключено');
     });
+};
+
+// НОВА ФУНКЦІЯ: Обробляє ?user_id=... на сторінці чату
+const handleChatUrlParams = async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userIdToOpen = urlParams.get('user_id');
+
+    // Немає параметра, або користувач клікнув "зв'язатись" сам із собою
+    if (!userIdToOpen || (MY_USER_ID && userIdToOpen === MY_USER_ID.toString())) {
+        return;
+    }
+
+    // 1. Шукаємо, чи такий чат ВЖЕ Є у списку
+    const conversationItems = document.querySelectorAll('.conversation-item');
+    let foundItem = null;
+    conversationItems.forEach(item => {
+        if (item.dataset.receiverId === userIdToOpen) {
+            foundItem = item;
+        }
+    });
+
+    // Очищуємо URL, щоб він не заважав при перезавантаженні
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    if (foundItem) {
+        // 2. Якщо чат знайдено, просто клікаємо на нього
+        console.log('Знайдено існуючу розмову, відкриваємо...');
+        foundItem.click();
+        return;
+    }
+
+    // 3. Якщо чат НЕ знайдено (це нова розмова)
+    console.log('Це нова розмова, готуємо вікно чату...');
+
+    const chatHeader = document.getElementById('chatHeader');
+    const messageForm = document.getElementById('messageForm');
+    const messagesArea = document.getElementById('messagesArea');
+    if (!chatHeader || !messageForm || !messagesArea) return;
+
+    // Встановлюємо ID для відправки
+    currentOpenConversationId = null; // Немає ID розмови, бо вона нова
+    currentOpenReceiverId = userIdToOpen;
+
+    // Показуємо форму вводу
+    messageForm.style.display = 'flex';
+    // Показуємо пусту область
+    messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;">Почніть розмову, щоб надіслати перше повідомлення.</p>';
+    // Знімаємо 'active' з усіх інших
+    document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
+
+    // 4. Завантажуємо ім'я користувача для заголовка
+    chatHeader.textContent = 'Завантаження...';
+    try {
+        // Використовуємо той самий ендпоінт, що й на сторінці публічного профілю
+        const response = await fetch(`http://localhost:3000/api/users/${userIdToOpen}/public-profile`);
+        if (!response.ok) throw new Error('Не вдалося отримати дані користувача');
+
+        const user = await response.json();
+        chatHeader.textContent = `${user.first_name} ${user.last_name}`;
+
+    } catch (err) {
+        console.error(err);
+        chatHeader.textContent = 'Нова розмова';
+    }
 };
 
 // --- Логіка user_profile.html (НОВА ФУНКЦІЯ) ---
@@ -2217,9 +2290,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Будь ласка, увійдіть, щоб переглянути повідомлення.');
                 window.location.href = 'login.html';
             } else {
-                await loadConversations();
-                handleMessageSend();
-                setupSocketIO(); // Запускаємо сокети
+                await loadConversations(); // 1. Чекаємо на список розмов
+                handleMessageSend();       // 2. Встановлюємо слухач відправки
+                setupSocketIO();           // 3. Встановлюємо слухачі сокетів
+                await handleChatUrlParams(); // 4. Перевіряємо URL
             }
         }
 
