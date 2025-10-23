@@ -1,6 +1,5 @@
 -- =================================================================
--- КРОК 0: СТВОРЕННЯ УКРАЇНСЬКОЇ КОНФІГУРАЦІЇ ПОШУКУ (НОВЕ!)
--- Спроба створити конфігурацію, якщо вона ще не існує
+-- КРОК 0: СТВОРЕННЯ УКРАЇНСЬКОЇ КОНФІГУРАЦІЇ ПОШУКУ
 -- =================================================================
 DO $$
     BEGIN
@@ -155,6 +154,18 @@ CREATE TABLE "messages" (
                             "is_read" BOOLEAN DEFAULT FALSE
 );
 
+-- Таблиця сповіщень
+CREATE TABLE "notifications" (
+                                 "notification_id" SERIAL PRIMARY KEY,
+                                 "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE, -- ID одержувача
+                                 "message" TEXT NOT NULL, -- Текст сповіщення
+                                 "link_url" VARCHAR(500), -- Посилання
+                                 "is_read" BOOLEAN DEFAULT FALSE,
+                                 "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Додаємо індекс для швидкого пошуку сповіщень
+CREATE INDEX "idx_notifications_user_id" ON "notifications" ("user_id");
 
 -- =================================================================
 -- КРОК 2: ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК

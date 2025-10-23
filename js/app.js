@@ -132,16 +132,17 @@ const toggleFilters = (action) => {
     }
 };
 
-const toggleNotifications = (action) => {
+const toggleNotifications = async (action) => {
     if (!notificationSidebar || !overlay) return;
     if (action === 'open') {
         notificationSidebar.classList.add('open');
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
-        // Приклад скидання лічильника при відкритті
+
         if (currentNotificationCount > 0) {
-            updateNotificationCount(0);
+            await markNotificationsAsRead(); // Відправляємо запит на бекенд
             currentNotificationCount = 0;
+            updateNotificationCount(0); // Скидаємо лічильник
         }
     } else if (action === 'close') {
         notificationSidebar.classList.remove('open');
@@ -185,6 +186,110 @@ const DEFAULT_LISTING_IMAGE = {
     'find_mate': 'https://via.placeholder.com/400x300.png?text=Find+Mate',
     'find_home': 'https://via.placeholder.com/400x300.png?text=Find+Home',
     'default': 'https://picsum.photos/400/300' // Загальний
+};
+
+/**
+ * Генерує HTML для одного елемента сповіщення
+ * @param {object} notification - Об'єкт сповіщення з БД
+ * @returns {string} - HTML-рядок
+ */
+const renderNotificationItem = (notification) => {
+    // Визначаємо іконку (можна додати більше логіки)
+    let iconClass = 'fa-bell';
+    if (notification.message.includes('повідомлення')) {
+        iconClass = 'fa-comment-dots';
+    } else if (notification.message.includes('вибране')) {
+        iconClass = 'fa-heart';
+    }
+
+    const isUnread = !notification.is_read ? 'unread' : '';
+    const timeAgo = notification.created_at ? new Date(notification.created_at).toLocaleString('uk-UA') : 'нещодавно'; // (Для "time ago" потрібна складніша логіка)
+
+    // Використовуємо <a>, якщо є посилання, інакше <div>
+    const tag = notification.link_url ? 'a' : 'div';
+    const href = notification.link_url ? `href="${notification.link_url}"` : '';
+
+    return `
+        <${tag} ${href} class="notification-item ${isUnread}" data-id="${notification.notification_id}">
+            <i class="fas ${iconClass}"></i>
+            <p>${notification.message}</p>
+            <span class="notification-time">${timeAgo}</span>
+        </${tag}>
+    `;
+};
+
+/**
+ * Завантажує сповіщення з сервера та відображає їх
+ */
+const fetchAndDisplayNotifications = async () => {
+    const container = document.querySelector('.notification-list');
+    if (!container || !MY_USER_ID) return;
+
+    try {
+        const response = await fetch('http://localhost:3000/api/my-notifications', {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Не вдалося завантажити сповіщення');
+
+        const notifications = await response.json();
+        container.innerHTML = ''; // Очищуємо
+
+        let unreadCount = 0;
+        if (notifications.length === 0) {
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: var(--text-light);">У вас немає сповіщень.</p>';
+        } else {
+            notifications.forEach(n => {
+                if (!n.is_read) unreadCount++;
+                container.innerHTML += renderNotificationItem(n);
+            });
+        }
+
+        currentNotificationCount = unreadCount;
+        updateNotificationCount(currentNotificationCount);
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = '<p style="padding: 20px; text-align: center; color: var(--danger-color);">Помилка завантаження.</p>';
+    }
+};
+
+/**
+ * Додає нове сповіщення (отримане по socket) на початок списку
+ * @param {object} notification - Об'єкт сповіщення
+ */
+const prependNotification = (notification) => {
+    const container = document.querySelector('.notification-list');
+    if (!container) return;
+
+    // Видаляємо заглушку "немає сповіщень"
+    const placeholder = container.querySelector('p');
+    if (placeholder) placeholder.remove();
+
+    const itemHTML = renderNotificationItem(notification);
+    container.insertAdjacentHTML('afterbegin', itemHTML); // Додаємо на початок
+};
+
+/**
+ * Відправляє запит на сервер, щоб позначити сповіщення як прочитані
+ */
+const markNotificationsAsRead = async () => {
+    if (currentNotificationCount === 0) return; // Нема чого оновлювати
+
+    try {
+        await fetch('http://localhost:3000/api/my-notifications/read', {
+            method: 'PATCH',
+            headers: getAuthHeaders()
+        });
+
+        // Візуально прибираємо клас 'unread'
+        document.querySelectorAll('.notification-item.unread').forEach(item => {
+            item.classList.remove('unread');
+        });
+        console.log('Сповіщення позначено як прочитані');
+
+    } catch (error) {
+        console.error('Помилка при оновленні статусу сповіщень:', error);
+    }
 };
 
 // =================================================================================
@@ -278,9 +383,11 @@ const loadNavigation = async () => {
         highlightActiveLink(isPage);
         await setupNavLinks();
 
-        // Приклад сповіщень
-        currentNotificationCount = 2; // (Це можна замінити на fetch)
-        updateNotificationCount(currentNotificationCount);
+        if (MY_USER_ID) {
+            await fetchAndDisplayNotifications(); // Завантажуємо реальні сповіщення
+        } else {
+            updateNotificationCount(0); // 0 сповіщень, якщо не залогінений
+        }
 
         // Налаштування слухачів подій
         document.querySelector('.mobile-menu-toggle')?.addEventListener('click', () => toggleMenu('open'));
@@ -1995,47 +2102,68 @@ const handleMessageSend = () => {
 // --- Логіка Socket.IO (для chat.html) ---
 
 const setupSocketIO = () => {
-    if (typeof io === 'undefined') {
-        console.error('Socket.io клієнт не завантажено! Додайте скрипт у chat.html');
+    if (typeof io === 'undefined' || !MY_USER_ID) {
+        console.error('Socket.io клієнт не завантажено або користувач не залогінений!');
         return;
     }
+
+    // Підключаємось, тільки якщо ще не підключені
+    if (socket) return;
 
     socket = io("http://localhost:3000");
 
     socket.on('connect', () => {
         console.log(`Socket.io підключено: ${socket.id}`);
-        // Приєднатись до кімнат (розмов)
-        const list = document.getElementById('conversationsList');
-        if (list) {
-            console.log('Приєднуємось до кімнат socket.io...');
-            const conversationItems = document.querySelectorAll('.conversation-item');
-            conversationItems.forEach(item => {
-                const convoId = item.dataset.conversationId;
-                if (convoId) {
-                    socket.emit('join_conversation', convoId);
-                }
-            });
-        }
+
+        // 1. Приєднуємось до особистої кімнати
+        socket.emit('join_user_room', MY_USER_ID);
+
+        // 2. Приєднуємось до кімнат (розмов)
+        console.log('Приєднуємось до кімнат чатів socket.io...');
+        const conversationItems = document.querySelectorAll('.conversation-item');
+        conversationItems.forEach(item => {
+            const convoId = item.dataset.conversationId;
+            if (convoId) {
+                socket.emit('join_conversation', convoId);
+            }
+        });
     });
 
+    // Слухаємо нові ПОВІДОМЛЕННЯ (для оновлення чату)
     socket.on('receive_message', (newMessage) => {
         console.log('Отримано нове повідомлення:', newMessage);
 
+        // Перевіряємо, чи ми на сторінці чату
+        const messagesArea = document.getElementById('messagesArea');
+        if (!messagesArea) return;
+
+        // Якщо чат з цією людиною відкритий, додаємо повідомлення
         if (newMessage.conversation_id.toString() === currentOpenConversationId) {
-            // Якщо чат відкритий, додаємо повідомлення
             appendMessage(newMessage);
-            const messagesArea = document.getElementById('messagesArea');
-            if (messagesArea) messagesArea.scrollTop = messagesArea.scrollHeight;
-        } else {
-            // Якщо чат закритий, показуємо сповіщення
-            console.log("Нове повідомлення в іншому чаті!");
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+    });
+
+    // (НОВЕ) Слухаємо всі СПОВІЩЕННЯ
+    socket.on('new_notification', (notification) => {
+        console.log('Отримано нове сповіщення:', notification);
+
+        // Додаємо на початок списку в сайдбарі
+        prependNotification(notification);
+
+        // Збільшуємо лічильник (якщо сайдбар закритий)
+        if (!notificationSidebar.classList.contains('open')) {
             currentNotificationCount++;
             updateNotificationCount(currentNotificationCount);
+        } else {
+            // Якщо сайдбар відкритий, одразу позначаємо його як прочитане
+            markNotificationsAsRead();
         }
     });
 
     socket.on('disconnect', () => {
         console.log('Socket.io відключено');
+        socket = null; // Дозволяємо перепідключення
     });
 };
 
