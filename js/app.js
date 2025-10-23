@@ -464,7 +464,7 @@ const fetchAndDisplayListings = async (filterQuery = '') => {
                         <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
                         <div class="info-overlay">
                             <span class="price-tag">₴${listing.price || '...'} / міс</span>
-                            ${typeTag} 
+                            ${typeTag}
                         </div>
                         <div class="listing-content">
                             <h3>${listing.title}</h3>
@@ -1188,9 +1188,9 @@ const fetchAndDisplayListingDetail = async () => {
                         <h1>${listing.title}</h1>
                         <button class="favorite-btn" id="favoriteBtn" title="Додати у вибране" data-listing-id="${listingId}">
                             <i class="far fa-heart"></i> </button>
-                    </div>                    
+                    </div>
                     <span class="detail-price">₴${listing.price || 0} / міс</span>
-                    
+
                     <div class="detail-meta">
                         <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'}</p>
                         ${listing.target_university ? `<p><i class="fas fa-university"></i> ${listing.target_university}</p>` : ''}
@@ -1252,76 +1252,69 @@ const fetchAndDisplayListingDetail = async () => {
 
 /**
  * Динамічно керує видимістю полів ТА атрибутами 'required'
+ * ДЛЯ СТОРІНКИ СТВОРЕННЯ
  */
 const setupAddListingFormLogic = () => {
     const form = document.getElementById('addListingForm');
     if (!form) return;
 
-    // Секції
-    const roommatePrefs = document.getElementById('roommatePreferences');
-    const housingFilters = document.getElementById('housingFilters');
-    const listingDetails = document.getElementById('listingDetails');
-    const aboutMe = document.getElementById('aboutMe');
-    const priceGroup = document.getElementById('priceGroup');
-    const photoGroup = document.getElementById('photoGroup');
-    const maxOccupantsGroup = document.getElementById('maxOccupantsGroup');
-    const findMateGroups = document.getElementById('findMateGroups');
-    const myGroupSizeGroup = document.getElementById('myGroupSizeGroup');
-    const myGroupCount = document.getElementById('my_group_count');
-    const targetRoommatesTotalGroup = document.getElementById('targetRoommatesTotalGroup');
-    const studentParams = document.getElementById('studentParams');
+    // Секції та елементи, які залежать від типу оголошення
+    const roommatePrefs = form.querySelector('#roommatePreferences');
+    const housingFilters = form.querySelector('#housingFilters');
+    const listingDetails = form.querySelector('#listingDetails');
+    const aboutMe = form.querySelector('#aboutMe');
+    const priceGroup = form.querySelector('#priceGroup');
+    const photoGroup = form.querySelector('#photoGroup');
+    const maxOccupantsGroup = form.querySelector('#maxOccupantsGroup');
+    const findMateGroups = form.querySelector('#findMateGroups');
+    const myGroupSizeGroup = form.querySelector('#myGroupSizeGroup');
+    const targetRoommatesTotalGroup = form.querySelector('#targetRoommatesTotalGroup');
+    const studentParams = form.querySelector('#studentParams');
+    const myGroupCountSelect = form.querySelector('#my_group_count'); // Додано для 'more'
 
-    // Поля, що валідуються
-    const priceInput = document.getElementById('price'); // ОНОВЛЕНО
-    const targetPriceMaxInput = document.getElementById('target_price_max');
-    const myGenderRadios = document.querySelectorAll('input[name="my_gender"]');
-    const myAgeInput = document.getElementById('my_age');
-    const maxOccupantsSelect = document.getElementById('max_occupants');
-    const currentOccupantsSelect = document.getElementById('current_occupants');
-    const seekingRoommatesSelect = document.getElementById('seeking_roommates');
-    const roomsSelect = document.getElementById('rooms');
-    const floorInput = document.getElementById('floor');
-    const totalFloorsInput = document.getElementById('total_floors');
-    const totalAreaInput = document.getElementById('total_area');
-    const kitchenAreaInput = document.getElementById('kitchen_area');
-    const furnishingRadios = document.querySelectorAll('input[name="furnishing"]');
+    // Поля, що можуть бути required
+    const priceInput = form.querySelector('#price');
+    const targetPriceMaxInput = form.querySelector('#target_price_max');
+    const myGenderRadios = form.querySelectorAll('input[name="my_gender"]');
+    const myAgeInput = form.querySelector('#my_age');
+    const maxOccupantsSelect = form.querySelector('#max_occupants');
+    const currentOccupantsSelect = form.querySelector('#current_occupants');
+    const seekingRoommatesSelect = form.querySelector('#seeking_roommates');
+    const roomsSelect = form.querySelector('#rooms');
+    const floorInput = form.querySelector('#floor');
+    const totalFloorsInput = form.querySelector('#total_floors');
+    const totalAreaInput = form.querySelector('#total_area');
+    const kitchenAreaInput = form.querySelector('#kitchen_area');
+    const furnishingRadios = form.querySelectorAll('input[name="furnishing"]');
 
-    // Слухачі
-    const listingTypeRadios = document.querySelectorAll('input[name="listing_type"]');
-    const readyToShareRadios = document.querySelectorAll('input[name="ready_to_share"]');
-    const isStudentRadios = document.querySelectorAll('input[name="is_student"]');
-    const myGroupSizeRadios = document.querySelectorAll('input[name="my_group_size"]');
+    // Масив усіх полів, що можуть бути required, для легкого скидання
+    const potentiallyRequiredFields = [
+        priceInput, targetPriceMaxInput, myAgeInput, maxOccupantsSelect,
+        currentOccupantsSelect, seekingRoommatesSelect, roomsSelect, floorInput,
+        totalFloorsInput, totalAreaInput, kitchenAreaInput,
+        ...myGenderRadios, ...furnishingRadios // Додаємо радіо кнопки
+    ].filter(el => el); // Фільтруємо null, якщо елемент не знайдено
+
+    // Слухачі змін
+    const listingTypeRadios = form.querySelectorAll('input[name="listing_type"]');
+    const readyToShareRadios = form.querySelectorAll('input[name="ready_to_share"]');
+    const isStudentRadios = form.querySelectorAll('input[name="is_student"]');
+    const myGroupSizeRadios = form.querySelectorAll('input[name="my_group_size"]');
+
 
     function updateVisibility() {
-        const selectedType = document.querySelector('input[name="listing_type"]:checked')?.value;
-        const isSharing = document.querySelector('input[name="ready_to_share"]:checked')?.value;
+        const selectedType = form.querySelector('input[name="listing_type"]:checked')?.value;
+        const isSharing = form.querySelector('input[name="ready_to_share"]:checked')?.value;
+        const isStudent = form.querySelector('input[name="is_student"]:checked')?.value;
+        const myGroupSize = form.querySelector('input[name="my_group_size"]:checked')?.value;
 
-        // 1. Скидаємо видимість
-        roommatePrefs.style.display = 'none';
-        housingFilters.style.display = 'none';
-        listingDetails.style.display = 'none';
-        aboutMe.style.display = 'none';
-        photoGroup.style.display = 'none';
-        priceGroup.style.display = 'none';
-        maxOccupantsGroup.style.display = 'none';
-        findMateGroups.style.display = 'none';
-        myGroupSizeGroup.style.display = 'none';
-        targetRoommatesTotalGroup.style.display = 'none';
+        // 1. Скидаємо видимість для всіх динамічних блоків
+        [roommatePrefs, housingFilters, listingDetails, aboutMe, priceGroup, photoGroup, maxOccupantsGroup, findMateGroups, myGroupSizeGroup, targetRoommatesTotalGroup, studentParams, myGroupCountSelect]
+            .filter(el => el) // Перевіряємо, чи елемент існує
+            .forEach(el => el.style.display = 'none');
 
-        // 2. Скидаємо 'required' АБСОЛЮТНО ДЛЯ ВСІХ
-        priceInput.required = false; // ОНОВЛЕНО
-        targetPriceMaxInput.required = false;
-        myAgeInput.required = false;
-        myGenderRadios.forEach(radio => radio.required = false);
-        maxOccupantsSelect.required = false;
-        currentOccupantsSelect.required = false;
-        seekingRoommatesSelect.required = false;
-        roomsSelect.required = false;
-        floorInput.required = false;
-        totalFloorsInput.required = false;
-        totalAreaInput.required = false;
-        kitchenAreaInput.required = false;
-        furnishingRadios.forEach(radio => radio.required = false);
+        // 2. Скидаємо 'required' для всіх полів
+        potentiallyRequiredFields.forEach(field => field.required = false);
 
         // 3. Налаштовуємо видимість і 'required' на основі типу
         if (selectedType === 'find_home') {
@@ -1330,14 +1323,24 @@ const setupAddListingFormLogic = () => {
             myGroupSizeGroup.style.display = 'block';
             targetRoommatesTotalGroup.style.display = 'block';
 
+            // Показуємо вибір кількості друзів, якщо обрано 'more'
+            if (myGroupSize === 'more' && myGroupCountSelect) {
+                myGroupCountSelect.style.display = 'block';
+            }
+
             // Встановлюємо required
-            targetPriceMaxInput.required = true;
-            myAgeInput.required = true;
+            if (targetPriceMaxInput) targetPriceMaxInput.required = true;
+            if (myAgeInput) myAgeInput.required = true;
             myGenderRadios.forEach(radio => radio.required = true);
 
-            if (isSharing !== 'no') {
+            if (isSharing !== 'no' && roommatePrefs) {
                 roommatePrefs.style.display = 'block';
             }
+
+            if (isStudent === 'yes' && studentParams) {
+                studentParams.style.display = 'block';
+            }
+
 
         } else if (selectedType === 'rent_out') {
             listingDetails.style.display = 'block';
@@ -1346,13 +1349,13 @@ const setupAddListingFormLogic = () => {
             maxOccupantsGroup.style.display = 'block';
 
             // Встановлюємо required
-            priceInput.required = true; // ОНОВЛЕНО
-            maxOccupantsSelect.required = true;
-            roomsSelect.required = true;
-            floorInput.required = true;
-            totalFloorsInput.required = true;
-            totalAreaInput.required = true;
-            kitchenAreaInput.required = true;
+            if (priceInput) priceInput.required = true;
+            if (maxOccupantsSelect) maxOccupantsSelect.required = true;
+            if (roomsSelect) roomsSelect.required = true;
+            if (floorInput) floorInput.required = true;
+            if (totalFloorsInput) totalFloorsInput.required = true;
+            if (totalAreaInput) totalAreaInput.required = true;
+            if (kitchenAreaInput) kitchenAreaInput.required = true;
             furnishingRadios.forEach(radio => radio.required = true);
 
         } else if (selectedType === 'find_mate') {
@@ -1364,51 +1367,202 @@ const setupAddListingFormLogic = () => {
             findMateGroups.style.display = 'block';
 
             // Встановлюємо required
-            priceInput.required = true; // ОНОВЛЕНО
-            myAgeInput.required = true;
+            if (priceInput) priceInput.required = true;
+            if (myAgeInput) myAgeInput.required = true;
             myGenderRadios.forEach(radio => radio.required = true);
-            currentOccupantsSelect.required = true;
-            seekingRoommatesSelect.required = true;
-            roomsSelect.required = true;
-            floorInput.required = true;
-            totalFloorsInput.required = true;
-            totalAreaInput.required = true;
-            kitchenAreaInput.required = true;
+            if (currentOccupantsSelect) currentOccupantsSelect.required = true;
+            if (seekingRoommatesSelect) seekingRoommatesSelect.required = true;
+            if (roomsSelect) roomsSelect.required = true;
+            if (floorInput) floorInput.required = true;
+            if (totalFloorsInput) totalFloorsInput.required = true;
+            if (totalAreaInput) totalAreaInput.required = true;
+            if (kitchenAreaInput) kitchenAreaInput.required = true;
             furnishingRadios.forEach(radio => radio.required = true);
         }
-
-        const isStudent = document.querySelector('input[name="is_student"]:checked')?.value;
-        studentParams.style.display = (isStudent === 'yes' && selectedType === 'find_home') ? 'block' : 'none';
     }
 
     // --- ЛОГІКА ПОДІЙ ---
     listingTypeRadios.forEach(radio => {
         radio.addEventListener('change', () => {
-            document.getElementById('listingTypeHint').style.display = 'none';
+            const hint = form.querySelector('#listingTypeHint');
+            if (hint) hint.style.display = 'none';
             updateVisibility();
         });
     });
 
-    readyToShareRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
-    isStudentRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+    if(readyToShareRadios) readyToShareRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+    if(isStudentRadios) isStudentRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+    if(myGroupSizeRadios) myGroupSizeRadios.forEach(radio => radio.addEventListener('change', updateVisibility)); // Оновлюємо слухач
 
     form.addEventListener('submit', function(event) {
-        const selectedType = document.querySelector('input[name="listing_type"]:checked');
+        const selectedType = form.querySelector('input[name="listing_type"]:checked');
         if (!selectedType) {
             event.preventDefault();
-            const listingTypeHint = document.getElementById('listingTypeHint');
-            listingTypeHint.style.display = 'block';
-            listingTypeHint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const listingTypeHint = form.querySelector('#listingTypeHint');
+            if (listingTypeHint) {
+                listingTypeHint.style.display = 'block';
+                listingTypeHint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     });
 
-    myGroupSizeRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            document.getElementById('my_group_count').style.display = (this.value === 'more') ? 'block' : 'none';
+    // Перший виклик для ініціалізації
+    updateVisibility();
+};
+
+/**
+ * Динамічно керує видимістю полів ТА атрибутами 'required'
+ * ДЛЯ СТОРІНКИ РЕДАГУВАННЯ
+ */
+const setupEditListingFormLogic = () => {
+    // --- ПОВНІСТЮ ІДЕНТИЧНО setupAddListingFormLogic, АЛЕ ДЛЯ editListingForm ---
+    const form = document.getElementById('editListingForm');
+    if (!form) return;
+
+    // Секції та елементи, які залежать від типу оголошення
+    const roommatePrefs = form.querySelector('#roommatePreferences');
+    const housingFilters = form.querySelector('#housingFilters');
+    const listingDetails = form.querySelector('#listingDetails');
+    const aboutMe = form.querySelector('#aboutMe');
+    const priceGroup = form.querySelector('#priceGroup');
+    // const photoGroup = form.querySelector('#photoGroup'); // Немає в edit
+    const maxOccupantsGroup = form.querySelector('#maxOccupantsGroup');
+    const findMateGroups = form.querySelector('#findMateGroups');
+    const myGroupSizeGroup = form.querySelector('#myGroupSizeGroup');
+    const targetRoommatesTotalGroup = form.querySelector('#targetRoommatesTotalGroup');
+    const studentParams = form.querySelector('#studentParams');
+    const myGroupCountSelect = form.querySelector('#my_group_count');
+
+    // Поля, що можуть бути required
+    const priceInput = form.querySelector('#price');
+    const targetPriceMaxInput = form.querySelector('#target_price_max');
+    const myGenderRadios = form.querySelectorAll('input[name="my_gender"]');
+    const myAgeInput = form.querySelector('#my_age');
+    const maxOccupantsSelect = form.querySelector('#max_occupants');
+    const currentOccupantsSelect = form.querySelector('#current_occupants');
+    const seekingRoommatesSelect = form.querySelector('#seeking_roommates');
+    const roomsSelect = form.querySelector('#rooms');
+    const floorInput = form.querySelector('#floor');
+    const totalFloorsInput = form.querySelector('#total_floors');
+    const totalAreaInput = form.querySelector('#total_area');
+    const kitchenAreaInput = form.querySelector('#kitchen_area');
+    const furnishingRadios = form.querySelectorAll('input[name="furnishing"]');
+
+    const potentiallyRequiredFields = [
+        priceInput, targetPriceMaxInput, myAgeInput, maxOccupantsSelect,
+        currentOccupantsSelect, seekingRoommatesSelect, roomsSelect, floorInput,
+        totalFloorsInput, totalAreaInput, kitchenAreaInput,
+        ...myGenderRadios, ...furnishingRadios
+    ].filter(el => el);
+
+    // Слухачі змін
+    const listingTypeRadios = form.querySelectorAll('input[name="listing_type"]');
+    const readyToShareRadios = form.querySelectorAll('input[name="ready_to_share"]');
+    const isStudentRadios = form.querySelectorAll('input[name="is_student"]');
+    const myGroupSizeRadios = form.querySelectorAll('input[name="my_group_size"]');
+
+    function updateVisibility() {
+        const selectedType = form.querySelector('input[name="listing_type"]:checked')?.value;
+        const isSharing = form.querySelector('input[name="ready_to_share"]:checked')?.value;
+        const isStudent = form.querySelector('input[name="is_student"]:checked')?.value;
+        const myGroupSize = form.querySelector('input[name="my_group_size"]:checked')?.value;
+
+        // 1. Скидаємо видимість
+        [roommatePrefs, housingFilters, listingDetails, aboutMe, priceGroup, /*photoGroup,*/ maxOccupantsGroup, findMateGroups, myGroupSizeGroup, targetRoommatesTotalGroup, studentParams, myGroupCountSelect]
+            .filter(el => el)
+            .forEach(el => el.style.display = 'none');
+
+        // 2. Скидаємо 'required'
+        potentiallyRequiredFields.forEach(field => field.required = false);
+
+        // 3. Налаштовуємо видимість і 'required'
+        if (selectedType === 'find_home') {
+            housingFilters.style.display = 'block';
+            aboutMe.style.display = 'block';
+            myGroupSizeGroup.style.display = 'block';
+            targetRoommatesTotalGroup.style.display = 'block';
+
+            if (myGroupSize === 'more' && myGroupCountSelect) {
+                myGroupCountSelect.style.display = 'block';
+            }
+
+            if (targetPriceMaxInput) targetPriceMaxInput.required = true;
+            if (myAgeInput) myAgeInput.required = true;
+            myGenderRadios.forEach(radio => radio.required = true);
+
+            if (isSharing !== 'no' && roommatePrefs) {
+                roommatePrefs.style.display = 'block';
+            }
+            if (isStudent === 'yes' && studentParams) {
+                studentParams.style.display = 'block';
+            }
+
+
+        } else if (selectedType === 'rent_out') {
+            listingDetails.style.display = 'block';
+            // photoGroup.style.display = 'block';
+            priceGroup.style.display = 'block';
+            maxOccupantsGroup.style.display = 'block';
+
+            if (priceInput) priceInput.required = true;
+            if (maxOccupantsSelect) maxOccupantsSelect.required = true;
+            if (roomsSelect) roomsSelect.required = true;
+            if (floorInput) floorInput.required = true;
+            if (totalFloorsInput) totalFloorsInput.required = true;
+            if (totalAreaInput) totalAreaInput.required = true;
+            if (kitchenAreaInput) kitchenAreaInput.required = true;
+            furnishingRadios.forEach(radio => radio.required = true);
+
+        } else if (selectedType === 'find_mate') {
+            listingDetails.style.display = 'block';
+            roommatePrefs.style.display = 'block';
+            aboutMe.style.display = 'block';
+            // photoGroup.style.display = 'block';
+            priceGroup.style.display = 'block';
+            findMateGroups.style.display = 'block';
+
+            if (priceInput) priceInput.required = true;
+            if (myAgeInput) myAgeInput.required = true;
+            myGenderRadios.forEach(radio => radio.required = true);
+            if (currentOccupantsSelect) currentOccupantsSelect.required = true;
+            if (seekingRoommatesSelect) seekingRoommatesSelect.required = true;
+            if (roomsSelect) roomsSelect.required = true;
+            if (floorInput) floorInput.required = true;
+            if (totalFloorsInput) totalFloorsInput.required = true;
+            if (totalAreaInput) totalAreaInput.required = true;
+            if (kitchenAreaInput) kitchenAreaInput.required = true;
+            furnishingRadios.forEach(radio => radio.required = true);
+        }
+    }
+
+    // --- ЛОГІКА ПОДІЙ ---
+    listingTypeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            const hint = form.querySelector('#listingTypeHint');
+            if (hint) hint.style.display = 'none';
+            updateVisibility();
         });
     });
 
-    updateVisibility();
+    if(readyToShareRadios) readyToShareRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+    if(isStudentRadios) isStudentRadios.forEach(radio => radio.addEventListener('change', updateVisibility));
+    if(myGroupSizeRadios) myGroupSizeRadios.forEach(radio => radio.addEventListener('change', updateVisibility)); // Оновлюємо слухач
+
+
+    form.addEventListener('submit', function(event) {
+        const selectedType = form.querySelector('input[name="listing_type"]:checked');
+        if (!selectedType) {
+            event.preventDefault();
+            const listingTypeHint = form.querySelector('#listingTypeHint');
+            if (listingTypeHint) {
+                listingTypeHint.style.display = 'block';
+                listingTypeHint.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+
+    // Перший виклик для ініціалізації (ВАЖЛИВО: викликати ПІСЛЯ завантаження даних)
+    // updateVisibility(); // Викликається після loadListingDataForEdit
 };
 
 
@@ -1416,7 +1570,8 @@ const handleListingSubmission = async () => {
     const form = document.getElementById('addListingForm');
     const photoInput = document.getElementById('listingPhotosInput');
     const previewContainer = document.getElementById('photoPreviewContainer');
-    const submitButton = form.querySelector('.submit-listing-btn');
+    const submitButton = form?.querySelector('.submit-listing-btn'); // Додано перевірку form
+    // Додано перевірку елементів перед використанням
     if (!form || !photoInput || !previewContainer || !submitButton) return;
 
     if (!MY_USER_ID) {
@@ -1431,6 +1586,8 @@ const handleListingSubmission = async () => {
 
     // --- Функція для оновлення відображення прев'ю та кнопок ---
     const updatePhotoDisplay = () => {
+        // Додано перевірку previewContainer
+        if (!previewContainer) return;
         const placeholders = previewContainer.querySelectorAll('.photo-upload-placeholder');
 
         placeholders.forEach((div, index) => {
@@ -1494,45 +1651,46 @@ const handleListingSubmission = async () => {
     const removeFile = (indexToRemove) => {
         selectedFiles.splice(indexToRemove, 1); // Видаляємо файл з масиву
         // Важливо скинути значення input, інакше не можна буде вибрати той самий файл знову
-        photoInput.value = null;
+        if (photoInput) photoInput.value = null; // Додано перевірку
         updatePhotoDisplay(); // Оновлюємо відображення
     };
 
     // --- Функція, яка викликається при кліку на кнопку "Додати фото" ---
     window.triggerFileInput = () => { // Робимо функцію глобальною, щоб HTML її бачив
-        photoInput.click();
+        if (photoInput) photoInput.click(); // Додано перевірку
     };
 
     // --- Слухач змін в input type="file" ---
-    photoInput.addEventListener('change', (event) => {
-        const files = event.target.files;
-        if (!files) return;
+    if (photoInput) { // Додано перевірку
+        photoInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (!files) return;
 
-        const currentCount = selectedFiles.length;
-        const availableSlots = MAX_PHOTOS - currentCount;
-        const filesToAddCount = Math.min(files.length, availableSlots);
+            const currentCount = selectedFiles.length;
+            const availableSlots = MAX_PHOTOS - currentCount;
+            const filesToAddCount = Math.min(files.length, availableSlots);
 
-        if (files.length > availableSlots && availableSlots > 0) {
-            alert(`Ви можете додати ще ${availableSlots} фото.`);
-        } else if (availableSlots <= 0) {
-            alert(`Ви вже додали максимальну кількість фото (${MAX_PHOTOS}).`);
-            photoInput.value = null; // Скидаємо вибір
-            return;
-        }
+            if (files.length > availableSlots && availableSlots > 0) {
+                alert(`Ви можете додати ще ${availableSlots} фото.`);
+            } else if (availableSlots <= 0) {
+                alert(`Ви вже додали максимальну кількість фото (${MAX_PHOTOS}).`);
+                photoInput.value = null; // Скидаємо вибір
+                return;
+            }
 
-        // Додаємо тільки дозволену кількість нових файлів
-        for (let i = 0; i < filesToAddCount; i++) {
-            selectedFiles.push(files[i]);
-        }
+            // Додаємо тільки дозволену кількість нових файлів
+            for (let i = 0; i < filesToAddCount; i++) {
+                selectedFiles.push(files[i]);
+            }
 
-        // Важливо скинути значення input після обробки,
-        // щоб подія 'change' спрацювала, якщо користувач вибере ті самі файли знову
-        photoInput.value = null;
+            // Важливо скинути значення input після обробки,
+            // щоб подія 'change' спрацювала, якщо користувач вибере ті самі файли знову
+            photoInput.value = null;
 
-        updatePhotoDisplay(); // Оновлюємо відображення
-    });
+            updatePhotoDisplay(); // Оновлюємо відображення
+        });
+    }
 
-    // === ВИПРАВЛЕНО 2: Повністю перебудована логіка відправки ===
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -1632,6 +1790,168 @@ const handleListingSubmission = async () => {
     updatePhotoDisplay();
 };
 
+
+// --- НОВА ЛОГІКА ДЛЯ РЕДАГУВАННЯ ---
+
+/**
+ * Завантажує дані оголошення та заповнює форму редагування
+ */
+const loadListingDataForEdit = async (formId, listingId) => {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    // Показуємо спіннер або блокуємо форму під час завантаження
+    const submitButton = form.querySelector('.submit-listing-btn');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = 'Завантаження даних...';
+    }
+
+    try {
+        // Використовуємо публічний ендпоінт, він надає всі необхідні дані
+        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
+        if (response.status === 404) {
+            throw new Error('Оголошення не знайдено.');
+        }
+        if (!response.ok) {
+            throw new Error('Не вдалося завантажити дані оголошення.');
+        }
+        const listing = await response.json();
+
+        // Перевірка, чи поточний користувач є власником
+        if (MY_USER_ID !== listing.user_id) {
+            alert('Ви не можете редагувати це оголошення.');
+            window.location.href = 'my_listings.html';
+            return;
+        }
+
+        // 1. Заповнюємо прості поля
+        Object.keys(listing).forEach(key => {
+            const element = form.elements[key];
+            if (element) {
+                // Спеціальна обробка для радіокнопок
+                if (element.length && element[0]?.type === 'radio') { // Перевірка на NodeList радіокнопок
+                    const radioGroup = form.querySelectorAll(`input[name="${key}"]`);
+                    radioGroup.forEach(radio => {
+                        radio.checked = (String(radio.value) === String(listing[key]));
+                    });
+                }
+                // Ігноруємо чекбокси тут, обробимо окремо
+                else if (element.type !== 'checkbox') {
+                    element.value = listing[key] ?? ''; // Використовуємо ?? для null/undefined
+                }
+            }
+        });
+
+        // 2. Заповнюємо чекбокси (Характеристики)
+        // Спочатку знімаємо всі прапорці
+        form.querySelectorAll('input[name="characteristics"], input[name="search_characteristics"]').forEach(cb => cb.checked = false);
+        // Потім відмічаємо ті, що є в даних
+        if (listing.characteristics) {
+            listing.characteristics.forEach(char => {
+                // Шукаємо в обох можливих іменах (characteristics та search_characteristics)
+                const checkbox = form.querySelector(`input[name="characteristics"][value="${char.system_key}"], input[name="search_characteristics"][value="${char.system_key}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+
+        // 3. Встановлюємо ID в приховане поле
+        const idField = document.getElementById('listingIdField');
+        if (idField) idField.value = listingId;
+
+        // 4. Оновлюємо видимість полів ПІСЛЯ заповнення типу
+        setupEditListingFormLogic(); // Ця функція тепер містить updateVisibility()
+
+    } catch (error) {
+        console.error('Помилка завантаження даних для редагування:', error);
+        alert(error.message);
+        // Перенаправляємо на список оголошень, якщо сталася помилка
+        window.location.href = 'my_listings.html';
+    } finally {
+        // Розблоковуємо кнопку
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Зберегти зміни';
+        }
+    }
+};
+
+/**
+ * Обробляє відправку форми редагування (без фото)
+ */
+const handleListingUpdateSubmission = async () => {
+    const form = document.getElementById('editListingForm');
+    const submitButton = form?.querySelector('.submit-listing-btn'); // Додано ?
+    if (!form || !submitButton) return;
+
+    if (!MY_USER_ID) {
+        alert('Будь ласка, увійдіть, щоб редагувати оголошення.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const listingId = document.getElementById('listingIdField')?.value;
+        if (!listingId) {
+            alert('Помилка: ID оголошення не знайдено. Оновлення неможливе.');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        // Видаляємо поля, які не належать до DB або не потрібні для PUT
+        delete data.photos;
+        delete data.listing_id; // listing_id береться з URL
+
+        // Збираємо характеристики
+        const characteristics = formData.getAll('characteristics');
+        const searchCharacteristics = formData.getAll('search_characteristics');
+        const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => {
+            return key && key !== 'my_pet_no' && key !== 'mate_no_pet';
+        });
+        data.characteristics = [...new Set(allCharacteristics)]; // Унікальні значення
+        delete data.search_characteristics; // Видаляємо тимчасове поле
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Збереження...';
+
+        try {
+            // 1. Оновлюємо оголошення (текстові дані)
+            const listingResponse = await fetch(`http://localhost:3000/api/listings/${listingId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data),
+            });
+
+            if (listingResponse.ok) {
+                alert(`Успіх! Оголошення оновлено.`);
+                // Не скидаємо форму, бо користувач може захотіти ще редагувати
+                // form.reset();
+                window.location.href = `listing_detail.html?id=${listingId}`; // Перехід на сторінку деталей
+
+            } else if (listingResponse.status === 401 || listingResponse.status === 403) {
+                alert('Помилка автентифікації або доступу. Будь ласка, увійдіть знову.');
+                window.location.href = 'login.html';
+            } else {
+                const errorData = await listingResponse.json();
+                alert(`Помилка оновлення: ${errorData.error || 'Невідома помилка'}`);
+            }
+
+        } catch (error) {
+            console.error('Помилка мережі/сервера при оновленні:', error);
+            alert('Не вдалося з’єднатися з сервером.');
+        }
+        finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Зберегти зміни';
+        }
+    });
+};
+
+
 // --- Логіка my_listings.html ---
 
 const fetchAndDisplayMyListings = async () => {
@@ -1643,6 +1963,10 @@ const fetchAndDisplayMyListings = async () => {
         window.location.href = 'login.html';
         return;
     }
+
+    // Показуємо індикатор завантаження
+    container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження ваших оголошень...</p>';
+
 
     try {
         const response = await fetch('http://localhost:3000/api/my-listings', {
@@ -1665,7 +1989,8 @@ const fetchAndDisplayMyListings = async () => {
         }
 
         listings.forEach(listing => {
-            const imageUrl = listing.main_photo_url || 'https://picsum.photos/400/300?random=' + listing.listing_id;
+            const imageUrl = listing.main_photo_url || DEFAULT_LISTING_IMAGE[listing.listing_type] || DEFAULT_LISTING_IMAGE['default'];
+
 
             // Визначення типу оголошення для тегу
             let typeTag = '';
@@ -1694,7 +2019,7 @@ const fetchAndDisplayMyListings = async () => {
                     </div>
                 </a>
                 <div class="my-listing-actions">
-                    <button class="action-btn edit" title="Редагувати (в розробці)"><i class="fas fa-pencil-alt"></i></button>
+                     <button class="action-btn edit" title="Редагувати"><i class="fas fa-pencil-alt"></i></button>
                     <button class="action-btn toggle-status" title="${listing.is_active ? 'Зробити неактивним' : 'Активувати'}">
                         ${listing.is_active ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'}
                     </button>
@@ -1709,9 +2034,12 @@ const fetchAndDisplayMyListings = async () => {
             listingCard.querySelector('.delete').addEventListener('click', () => {
                 handleDeleteListing(listing.listing_id);
             });
+
+            // === ОНОВЛЕНО СЛУХАЧ РЕДАГУВАННЯ ===
             listingCard.querySelector('.edit').addEventListener('click', () => {
-                alert('Функція редагування оголошення знаходиться в розробці.');
+                window.location.href = `edit_listing.html?id=${listing.listing_id}`; // НОВИЙ КОД
             });
+            // === КІНЕЦЬ ОНОВЛЕННЯ ===
 
             container.appendChild(listingCard);
         });
@@ -1720,7 +2048,8 @@ const fetchAndDisplayMyListings = async () => {
         console.error('Помилка завантаження моїх оголошень:', error);
         container.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
         if (error.message === 'Необхідна автентифікація.') {
-            window.location.href = 'login.html';
+            // Затримка перед перенаправленням, щоб користувач встиг побачити повідомлення
+            setTimeout(() => { window.location.href = 'login.html'; }, 1500);
         }
     }
 };
@@ -1892,6 +2221,10 @@ const fetchAndDisplayFavorites = async () => {
         return;
     }
 
+    // Показуємо спіннер
+    container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження обраних...</p>';
+
+
     try {
         const response = await fetch('http://localhost:3000/api/my-favorites', {
             headers: getAuthHeaders()
@@ -1929,7 +2262,7 @@ const fetchAndDisplayFavorites = async () => {
                     <div class="listing-card"> <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
                         <div class="info-overlay">
                             <span class="price-tag">₴${listing.price || '...'} / міс</span>
-                            ${typeTag} 
+                            ${typeTag}
                         </div>
                         <div class="listing-content">
                             <h3>${listing.title}</h3>
@@ -1956,6 +2289,9 @@ const loadConversations = async () => {
     const container = document.getElementById('conversationsList');
     if (!container) return;
 
+    // Додано індикатор завантаження
+    container.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Завантаження розмов...</p>';
+
     try {
         const response = await fetch('http://localhost:3000/api/my-conversations', {
             headers: getAuthHeaders()
@@ -1968,6 +2304,14 @@ const loadConversations = async () => {
 
         if (conversations.length === 0) {
             container.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);">У вас ще немає розмов.</p>';
+            // Якщо розмов немає, показуємо заглушку у вікні повідомлень
+            const messagesArea = document.getElementById('messagesArea');
+            const chatHeader = document.getElementById('chatHeader');
+            const messageForm = document.getElementById('messageForm');
+            if(messagesArea) messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;">Оберіть або почніть нову розмову.</p>';
+            if(chatHeader) chatHeader.textContent = 'Оберіть розмову';
+            if(messageForm) messageForm.style.display = 'none';
+
             return;
         }
 
@@ -2006,7 +2350,8 @@ const loadMessages = async (conversationId, receiverId, receiverName) => {
 
     chatHeader.textContent = receiverName;
     messageForm.style.display = 'flex';
-    messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;">Завантаження...</p>';
+    messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;"><i class="fas fa-spinner fa-spin"></i> Завантаження повідомлень...</p>';
+
 
     try {
         const response = await fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`, {
@@ -2022,6 +2367,7 @@ const loadMessages = async (conversationId, receiverId, receiverName) => {
             messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;">Повідомлень ще немає.</p>';
         } else {
             messages.forEach(msg => appendMessage(msg));
+            // Прокрутка до останнього повідомлення
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
 
@@ -2035,7 +2381,7 @@ const appendMessage = (msg) => {
     const messagesArea = document.getElementById('messagesArea');
     if (!messagesArea) return;
 
-    // Видаляємо заглушку "Повідомлень ще немає"
+    // Видаляємо заглушку "Повідомлень ще немає" або спіннер
     const placeholder = messagesArea.querySelector('p');
     if (placeholder) placeholder.remove();
 
@@ -2049,13 +2395,18 @@ const appendMessage = (msg) => {
 const handleMessageSend = () => {
     const messageForm = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
-    if (!messageForm || !messageInput) return;
+    const sendButton = messageForm?.querySelector('button[type="submit"]'); // Додано для блокування
+    if (!messageForm || !messageInput || !sendButton) return;
 
     messageForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const messageBody = messageInput.value.trim();
 
+        // Перевіряємо, чи є текст і чи обрано отримувача (важливо для нових розмов)
         if (messageBody === '' || !currentOpenReceiverId) return;
+
+        // Блокуємо кнопку на час відправки
+        sendButton.disabled = true;
 
         try {
             // Оптимістична відправка (поки не чекаємо відповіді socket.io)
@@ -2071,9 +2422,16 @@ const handleMessageSend = () => {
             if (response.ok) {
                 const newMessage = await response.json(); // Отримуємо повідомлення
                 messageInput.value = ''; // Очищуємо поле вводу
+                messageInput.focus(); // Повертаємо фокус для наступного повідомлення
+
+                // Додаємо візуально, НЕ чекаючи socket.io (щоб уникнути подвоєння, якщо socket прийде)
+                appendMessage(newMessage);
+                messagesArea.scrollTop = messagesArea.scrollHeight; // Прокручуємо вниз
+
 
                 // Якщо це була нова розмова (ми відправили, не маючи ID розмови)
-                if (currentOpenConversationId === null) {
+                // currentOpenConversationId буде null
+                if (currentOpenConversationId === null && newMessage.conversation_id) {
                     console.log('Створено нову розмову, ID:', newMessage.conversation_id);
                     // 1. Оновлюємо поточні ID
                     currentOpenConversationId = newMessage.conversation_id.toString();
@@ -2095,38 +2453,54 @@ const handleMessageSend = () => {
         } catch (error) {
             console.error('Помилка відправки:', error);
             alert('Помилка мережі.');
+        } finally {
+            // Розблоковуємо кнопку
+            sendButton.disabled = false;
         }
     });
 };
 
-// --- Логіка Socket.IO (для chat.html) ---
+// --- Логіка Socket.IO (для chat.html та навігації) ---
 
 const setupSocketIO = () => {
-    if (typeof io === 'undefined' || !MY_USER_ID) {
-        console.error('Socket.io клієнт не завантажено або користувач не залогінений!');
+    // Перевіряємо наявність io та MY_USER_ID
+    if (typeof io === 'undefined') {
+        console.warn('Socket.io client library not found.');
         return;
     }
+    if (!MY_USER_ID) {
+        console.log("Користувач не авторизований, Socket.IO не підключається.");
+        return; // Не підключаємо, якщо не залогінений
+    }
+
 
     // Підключаємось, тільки якщо ще не підключені
-    if (socket) return;
+    if (socket && socket.connected) {
+        console.log("Socket.IO вже підключено.");
+        return; // Вже підключено
+    }
 
+    // Встановлюємо з'єднання
+    console.log("Підключення до Socket.IO...");
     socket = io("http://localhost:3000");
 
     socket.on('connect', () => {
         console.log(`Socket.io підключено: ${socket.id}`);
 
-        // 1. Приєднуємось до особистої кімнати
+        // 1. Приєднуємось до особистої кімнати для сповіщень
         socket.emit('join_user_room', MY_USER_ID);
 
-        // 2. Приєднуємось до кімнат (розмов)
-        console.log('Приєднуємось до кімнат чатів socket.io...');
-        const conversationItems = document.querySelectorAll('.conversation-item');
-        conversationItems.forEach(item => {
-            const convoId = item.dataset.conversationId;
-            if (convoId) {
-                socket.emit('join_conversation', convoId);
-            }
-        });
+        // 2. Приєднуємось до кімнат існуючих розмов (ЯКЩО ми на сторінці чату)
+        if (window.location.pathname.endsWith('chat.html')) {
+            console.log('Приєднуємось до кімнат чатів socket.io...');
+            const conversationItems = document.querySelectorAll('.conversation-item');
+            conversationItems.forEach(item => {
+                const convoId = item.dataset.conversationId;
+                if (convoId) {
+                    socket.emit('join_conversation', convoId);
+                }
+            });
+        }
     });
 
     // Слухаємо нові ПОВІДОМЛЕННЯ (для оновлення чату)
@@ -2135,12 +2509,21 @@ const setupSocketIO = () => {
 
         // Перевіряємо, чи ми на сторінці чату
         const messagesArea = document.getElementById('messagesArea');
-        if (!messagesArea) return;
+        if (!messagesArea) return; // Ми не на сторінці чату
 
         // Якщо чат з цією людиною відкритий, додаємо повідомлення
-        if (newMessage.conversation_id.toString() === currentOpenConversationId) {
-            appendMessage(newMessage);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+        // Перевіряємо, чи ID співпадають (і чи currentOpenConversationId не null)
+        if (currentOpenConversationId && newMessage.conversation_id.toString() === currentOpenConversationId) {
+            // Перевіряємо, чи це не наше власне повідомлення (щоб уникнути дублювання)
+            if (newMessage.sender_id !== MY_USER_ID) {
+                appendMessage(newMessage);
+                messagesArea.scrollTop = messagesArea.scrollHeight; // Прокручуємо вниз
+            }
+        } else {
+            console.log("Повідомлення для іншої розмови, оновлюємо список розмов...");
+            // Якщо чат не відкритий, можна оновити список розмов (показати непрочитане)
+            // Або просто покластися на сповіщення
+            loadConversations(); // Оновлюємо список, щоб побачити нову розмову або порядок
         }
     });
 
@@ -2152,7 +2535,8 @@ const setupSocketIO = () => {
         prependNotification(notification);
 
         // Збільшуємо лічильник (якщо сайдбар закритий)
-        if (!notificationSidebar.classList.contains('open')) {
+        const isSidebarOpen = notificationSidebar?.classList.contains('open'); // Додано перевірку
+        if (!isSidebarOpen) {
             currentNotificationCount++;
             updateNotificationCount(currentNotificationCount);
         } else {
@@ -2161,9 +2545,15 @@ const setupSocketIO = () => {
         }
     });
 
-    socket.on('disconnect', () => {
-        console.log('Socket.io відключено');
-        socket = null; // Дозволяємо перепідключення
+    socket.on('connect_error', (err) => {
+        console.error("Помилка підключення Socket.IO:", err.message);
+        // Можна спробувати перепідключитися або показати повідомлення користувачу
+    });
+
+
+    socket.on('disconnect', (reason) => {
+        console.log(`Socket.io відключено: ${reason}`);
+        // socket = null; // Не скидаємо, бібліотека сама спробує перепідключитися
     });
 };
 
@@ -2172,10 +2562,28 @@ const handleChatUrlParams = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const userIdToOpen = urlParams.get('user_id');
 
+    // Очищуємо URL одразу, щоб він не заважав при перезавантаженні або навігації
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+
     // Немає параметра, або користувач клікнув "зв'язатись" сам із собою
     if (!userIdToOpen || (MY_USER_ID && userIdToOpen === MY_USER_ID.toString())) {
+        console.log("Параметр user_id відсутній або вказує на поточного користувача.");
         return;
     }
+
+    // Чекаємо, поки список розмов завантажиться (необхідно для пошуку)
+    // Простий варіант - невелика затримка. Кращий - чекати на подію або обіцянку від loadConversations.
+    // await new Promise(resolve => setTimeout(resolve, 500)); // Затримка 0.5с - простий варіант
+
+    // Перевіряємо, чи список вже завантажено (чи немає спіннера)
+    const conversationList = document.getElementById('conversationsList');
+    if (!conversationList || conversationList.querySelector('.fa-spinner')) {
+        console.log("Список розмов ще завантажується, чекаємо...");
+        // Можна додати більш надійний механізм очікування
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Чекаємо 1 секунду
+    }
+
 
     // 1. Шукаємо, чи такий чат ВЖЕ Є у списку
     const conversationItems = document.querySelectorAll('.conversation-item');
@@ -2186,13 +2594,10 @@ const handleChatUrlParams = async () => {
         }
     });
 
-    // Очищуємо URL, щоб він не заважав при перезавантаженні
-    window.history.replaceState({}, document.title, window.location.pathname);
-
     if (foundItem) {
         // 2. Якщо чат знайдено, просто клікаємо на нього
         console.log('Знайдено існуючу розмову, відкриваємо...');
-        foundItem.click();
+        foundItem.click(); // Симулюємо клік, щоб викликати loadMessages та оновити UI
         return;
     }
 
@@ -2206,7 +2611,7 @@ const handleChatUrlParams = async () => {
 
     // Встановлюємо ID для відправки
     currentOpenConversationId = null; // Немає ID розмови, бо вона нова
-    currentOpenReceiverId = userIdToOpen;
+    currentOpenReceiverId = userIdToOpen; // ID отримувача
 
     // Показуємо форму вводу
     messageForm.style.display = 'flex';
@@ -2216,18 +2621,18 @@ const handleChatUrlParams = async () => {
     document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
 
     // 4. Завантажуємо ім'я користувача для заголовка
-    chatHeader.textContent = 'Завантаження...';
+    chatHeader.textContent = 'Завантаження імені...';
     try {
         // Використовуємо той самий ендпоінт, що й на сторінці публічного профілю
         const response = await fetch(`http://localhost:3000/api/users/${userIdToOpen}/public-profile`);
         if (!response.ok) throw new Error('Не вдалося отримати дані користувача');
 
         const user = await response.json();
-        chatHeader.textContent = `${user.first_name} ${user.last_name}`;
+        chatHeader.textContent = `${user.first_name} ${user.last_name}`; // Встановлюємо ім'я
 
     } catch (err) {
         console.error(err);
-        chatHeader.textContent = 'Нова розмова';
+        chatHeader.textContent = 'Нова розмова'; // Запасний варіант
     }
 };
 
@@ -2260,16 +2665,22 @@ const loadPublicProfileData = async () => {
         const [profileResponse, listingsResponse] = await Promise.all([profilePromise, listingsPromise]);
 
         // 1. Обробка профілю
+        if (profileResponse.status === 404) {
+            throw new Error('Користувача не знайдено.');
+        }
         if (!profileResponse.ok) {
-            throw new Error('Не вдалося завантажити профіль. Можливо, користувача не існує.');
+            throw new Error('Не вдалося завантажити профіль.');
         }
         const user = await profileResponse.json();
 
         // 2. Обробка оголошень
         if (!listingsResponse.ok) {
-            throw new Error('Не вдалося завантажити оголошення користувача.');
+            // Не критична помилка, просто виводимо в консоль
+            console.error('Не вдалося завантажити оголошення користувача.');
+            // throw new Error('Не вдалося завантажити оголошення користувача.');
         }
-        const listings = await listingsResponse.json();
+        const listings = listingsResponse.ok ? await listingsResponse.json() : []; // Якщо помилка, вважаємо список порожнім
+
 
         // --- Заповнення даними ---
 
@@ -2282,75 +2693,110 @@ const loadPublicProfileData = async () => {
 
         // Кнопка "Зв'язатись"
         const contactBtn = document.getElementById('btnContactUser');
-        if (MY_USER_ID) {
-            contactBtn.href = `chat.html?user_id=${user.user_id}`;
-        } else {
-            // Якщо поточний користувач не залогінений, відправляємо на сторінку логіну
-            contactBtn.href = 'login.html';
-            contactBtn.onclick = (e) => {
-                e.preventDefault();
-                alert('Будь ласка, увійдіть, щоб зв\'язатися з користувачем.');
-                window.location.href = 'login.html';
-            };
+        if(contactBtn) { // Додано перевірку
+            if (MY_USER_ID) {
+                contactBtn.href = `chat.html?user_id=${user.user_id}`;
+                contactBtn.style.display = 'inline-block'; // Показуємо кнопку
+            } else {
+                // Якщо поточний користувач не залогінений, ховаємо кнопку
+                contactBtn.style.display = 'none';
+                // Можна додати повідомлення про необхідність логіну
+                const sidebar = contactBtn.closest('.profile-sidebar');
+                if(sidebar){
+                    const loginMsg = document.createElement('p');
+                    loginMsg.innerHTML = '<small>Щоб зв\'язатися, <a href="login.html">увійдіть</a>.</small>';
+                    loginMsg.style.textAlign = 'center';
+                    loginMsg.style.marginTop = '10px';
+                    sidebar.appendChild(loginMsg);
+                }
+            }
         }
+
 
         // Показ телефону
         const phoneContainer = document.getElementById('publicPhoneContainer');
-        if (user.phone_number) { // `phone_number` буде null, якщо показ приховано
+        if (phoneContainer && user.phone_number) { // `phone_number` буде null, якщо показ приховано
             const phoneLink = document.getElementById('publicPhoneLink');
-            phoneLink.href = `tel:${user.phone_number}`;
-            phoneLink.textContent = user.phone_number;
-            phoneContainer.style.display = 'flex';
+            if(phoneLink){
+                phoneLink.href = `tel:${user.phone_number}`;
+                phoneLink.textContent = user.phone_number;
+                phoneContainer.style.display = 'flex';
+            }
+        } else if (phoneContainer) {
+            phoneContainer.style.display = 'none'; // Ховаємо, якщо номера немає або приховано
         }
 
+
         // Основна інформація
-        document.getElementById('profileCity').textContent = user.city || 'Не вказано';
+        const profileCityEl = document.getElementById('profileCity');
+        if(profileCityEl) profileCityEl.textContent = user.city || 'Не вказано';
+
 
         // Розрахунок віку
         const ageSpan = document.getElementById('profileAge');
-        if (user.date_of_birth) {
-            const birthDate = new Date(user.date_of_birth);
-            const age = new Date(Date.now() - birthDate.getTime()).getUTCFullYear() - 1970;
-            ageSpan.textContent = `${age} років`;
-        } else {
-            ageSpan.textContent = 'Не вказано';
+        if(ageSpan){
+            if (user.date_of_birth) {
+                try { // Додано try-catch для обробки невалідних дат
+                    const birthDate = new Date(user.date_of_birth);
+                    // Перевірка, чи дата валідна
+                    if (!isNaN(birthDate.getTime())) {
+                        const ageDifMs = Date.now() - birthDate.getTime();
+                        const ageDate = new Date(ageDifMs);
+                        const age = Math.abs(ageDate.getUTCFullYear() - 1970);
+                        ageSpan.textContent = `${age} років`;
+                    } else {
+                        ageSpan.textContent = 'Не вказано';
+                    }
+                } catch (e) {
+                    console.error("Помилка обробки дати народження:", e);
+                    ageSpan.textContent = 'Не вказано';
+                }
+            } else {
+                ageSpan.textContent = 'Не вказано';
+            }
         }
 
-        document.getElementById('profileBio').textContent = user.bio || 'Користувач ще не додав біографію.';
+
+        const profileBioEl = document.getElementById('profileBio');
+        if(profileBioEl) profileBioEl.textContent = user.bio || 'Користувач ще не додав біографію.';
 
         // Оголошення
-        document.getElementById('listingsCount').textContent = listings.length;
+        const listingsCountEl = document.getElementById('listingsCount');
+        if(listingsCountEl) listingsCountEl.textContent = listings.length;
+
         const listingsContainer = document.getElementById('userListingsContainer');
-        listingsContainer.innerHTML = ''; // Очищуємо
+        if(listingsContainer) {
+            listingsContainer.innerHTML = ''; // Очищуємо
 
-        if (listings.length === 0) {
-            listingsContainer.innerHTML = '<p style="color: var(--text-light); padding: 10px;">Користувач не має активних оголошень.</p>';
-        } else {
-            // Використовуємо той самий шаблон картки, що й на index.html
-            listings.forEach(listing => {
-                const imageUrl = listing.main_photo_url || DEFAULT_LISTING_IMAGE[listing.listing_type] || DEFAULT_LISTING_IMAGE['default'];
+            if (listings.length === 0) {
+                listingsContainer.innerHTML = '<p style="color: var(--text-light); padding: 10px;">Користувач не має активних оголошень.</p>';
+            } else {
+                // Використовуємо той самий шаблон картки, що й на index.html
+                listings.forEach(listing => {
+                    const imageUrl = listing.main_photo_url || DEFAULT_LISTING_IMAGE[listing.listing_type] || DEFAULT_LISTING_IMAGE['default'];
 
-                let typeTag = '';
-                if (listing.listing_type === 'rent_out') typeTag = '<span class="type-tag rent">Здають</span>';
-                else if (listing.listing_type === 'find_mate') typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
-                else if (listing.listing_type === 'find_home') typeTag = '<span class="type-tag home">Шукають житло</span>';
+                    let typeTag = '';
+                    if (listing.listing_type === 'rent_out') typeTag = '<span class="type-tag rent">Здають</span>';
+                    else if (listing.listing_type === 'find_mate') typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
+                    else if (listing.listing_type === 'find_home') typeTag = '<span class="type-tag home">Шукають житло</span>';
 
-                listingsContainer.innerHTML += `
-                    <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
-                        <div class="listing-card">
-                            <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
-                            <div class="info-overlay">
-                                <span class="price-tag">₴${listing.price || '...'} / міс</span>
-                                ${typeTag} 
+                    listingsContainer.innerHTML += `
+                        <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
+                            <div class="listing-card">
+                                <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
+                                <div class="info-overlay">
+                                    <span class="price-tag">₴${listing.price || '...'} / міс</span>
+                                    ${typeTag}
+                                </div>
+                                <div class="listing-content">
+                                    <h3>${listing.title}</h3>
+                                    <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто'}</p>
+                                </div>
                             </div>
-                            <div class="listing-content">
-                                <h3>${listing.title}</h3>
-                                <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто'}</p>
-                            </div>
-                        </div>
-                    </a>
-                `;
-            });
+                        </a>
+                    `;
+                });
+            }
         }
 
         // Показуємо контент
@@ -2376,11 +2822,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1.5. ЗАВАНТАЖУЄМО ID ОБРАНИХ, ЯКЩО КОРИСТУВАЧ ЗАЛОГІНЕНИЙ
         await fetchFavoriteIds();
 
+        // 1.6 Ініціалізуємо Socket.IO ПІСЛЯ завантаження навігації та перевірки MY_USER_ID
+        setupSocketIO();
+
+
         // 2. Визначаємо поточну сторінку
         const path = window.location.pathname;
 
         // 3. ЗАПУСКАЄМО ЛОГІКУ ДЛЯ КОНКРЕТНИХ СТОРІНОК
-        if (path.endsWith('index.html') || path.endsWith('/')) {
+        if (path.endsWith('index.html') || path === '/' || path.endsWith('/StudentHousing-d229248ae41ce68ce49f49f62d8e7276f6fe911d/')) { // Додано / та шлях проекту
             // Запускаємо завантаження (за замовчуванням покаже "Всі", крім 'find_home')
             fetchAndDisplayListings('listing_type!=find_home');
             // Запускаємо всю логіку кнопок та фільтрів
@@ -2399,6 +2849,26 @@ document.addEventListener('DOMContentLoaded', () => {
             setupAddListingFormLogic();
             await handleListingSubmission();
         }
+
+        // === ОНОВЛЕНО БЛОК ДЛЯ РЕДАГУВАННЯ ===
+        if (path.endsWith('edit_listing.html')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const listingId = urlParams.get('id');
+
+            if (!listingId) {
+                alert('Помилка: ID оголошення для редагування не вказано.');
+                window.location.href = 'my_listings.html'; // Повертаємо до списку
+            } else if (!MY_USER_ID) {
+                alert('Будь ласка, увійдіть, щоб редагувати оголошення.');
+                window.location.href = 'login.html'; // Відправляємо на логін
+            } else {
+                // 1. Завантажуємо дані та заповнюємо форму (ця функція також викличе setupEditListingFormLogic)
+                await loadListingDataForEdit('editListingForm', listingId);
+                // 2. Налаштовуємо відправку форми (PUT)
+                await handleListingUpdateSubmission();
+            }
+        }
+        // === КІНЕЦЬ ОНОВЛЕНОГО БЛОКУ ===
 
         if (path.endsWith('listing_detail.html')) {
             await fetchAndDisplayListingDetail();
@@ -2420,8 +2890,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 await loadConversations(); // 1. Чекаємо на список розмов
                 handleMessageSend();       // 2. Встановлюємо слухач відправки
-                setupSocketIO();           // 3. Встановлюємо слухачі сокетів
-                await handleChatUrlParams(); // 4. Перевіряємо URL
+                // setupSocketIO() викликається глобально, тут не потрібно
+                await handleChatUrlParams(); // 3. Перевіряємо URL (викликається ПІСЛЯ loadConversations)
             }
         }
 

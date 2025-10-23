@@ -509,6 +509,101 @@ app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// 6.5 ОНОВЛЕННЯ ОГОЛОШЕННЯ (НОВИЙ МАРШРУТ)
+app.put('/api/listings/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user.userId;
+    const { characteristics, ...listingData } = req.body;
+
+    // Перевірка, чи користувач є власником
+    try {
+        const checkOwner = await pool.query('SELECT user_id FROM listings WHERE listing_id = $1', [id]);
+        if (checkOwner.rows.length === 0) {
+            return res.status(404).json({ error: 'Оголошення не знайдено' });
+        }
+        if (checkOwner.rows[0].user_id !== user_id) {
+            return res.status(403).json({ error: 'Ви не є власником цього оголошення' });
+        }
+    } catch(e) {
+        console.error("Помилка перевірки власника:", e);
+        return res.status(500).json({ error: 'Помилка сервера' });
+    }
+
+    // --- Початок транзакції ---
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Оновлюємо основні дані оголошення
+        const allowedKeys = [
+            'listing_type', 'title', 'description', 'city', 'price', 'building_type', 'rooms', 'floor',
+            'total_floors', 'total_area', 'kitchen_area', 'wall_type', 'planning', 'bathroom_type',
+            'heating_type', 'renovation_type', 'furnishing', 'max_occupants', 'current_occupants',
+            'seeking_roommates', 'target_price_min', 'target_price_max', 'housing_type_search',
+            'target_rooms', 'target_roommates_max', 'is_student', 'target_university',
+            'target_uni_distance', 'ready_to_share', 'my_gender', 'my_age', 'my_group_size',
+            'my_group_count', 'my_smoking', 'my_drinking', 'my_guests', 'about_me_description',
+            'roommate_gender', 'roommate_age_min', 'roommate_age_max', 'roommate_smoking',
+            'roommate_drinking', 'roommate_guests', 'roommate_description'
+        ];
+
+        const setClauses = [];
+        const values = [];
+        let counter = 1;
+
+        for (const key of allowedKeys) {
+            // Оновлюємо поле, навіть якщо воно null (для скидання)
+            if (listingData.hasOwnProperty(key)) {
+                setClauses.push(`${key} = $${counter}`);
+                values.push(listingData[key] === '' ? null : listingData[key]); // Встановлюємо null, якщо прийшов порожній рядок
+                counter++;
+            }
+        }
+
+        if (setClauses.length > 0) {
+            values.push(id); // Додаємо listing_id в кінець для WHERE
+            const updateQuery = `
+                UPDATE listings SET ${setClauses.join(', ')}
+                WHERE listing_id = $${counter};
+            `;
+            await client.query(updateQuery, values);
+        }
+
+        // 2. Видаляємо СТАРІ характеристики
+        await client.query('DELETE FROM listing_characteristics WHERE listing_id = $1', [id]);
+
+        // 3. Додаємо НОВІ характеристики
+        if (characteristics && characteristics.length > 0) {
+            const uniqueChars = [...new Set(characteristics)];
+            const validChars = uniqueChars.filter(key => key && key.trim() !== '');
+            if (validChars.length > 0) {
+                // Екрануємо ' для system_key
+                const charKeys = validChars.map(key => `'${key.replace(/'/g, "''")}'`).join(',');
+                const charIdQuery = `SELECT char_id FROM characteristics WHERE system_key IN (${charKeys})`;
+                const charIdResult = await client.query(charIdQuery);
+                if (charIdResult.rows.length > 0) {
+                    const insertChars = charIdResult.rows.map(row =>
+                        `(${id}, ${row.char_id})`
+                    ).join(',');
+                    const insertCharQuery = `INSERT INTO listing_characteristics (listing_id, char_id) VALUES ${insertChars} ON CONFLICT DO NOTHING;`;
+                    await client.query(insertCharQuery);
+                }
+            }
+        }
+
+        // 4. Завершуємо транзакцію
+        await client.query('COMMIT');
+        res.status(200).json({ message: 'Оголошення успішно оновлено!', listingId: id });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Помилка оновлення оголошення:', err);
+        res.status(500).json({ error: 'Помилка сервера при оновленні оголошення.' });
+    } finally {
+        client.release();
+    }
+});
+
 // ===============================================
 // 7. МАРШРУТИ ДЛЯ ЧАТУ
 // ===============================================
