@@ -71,6 +71,15 @@ const io = new Server(httpServer, {
 io.on('connection', (socket) => {
     console.log(`Клієнт підключився: ${socket.id}`);
 
+    // Приєднуємось до особистої кімнати для сповіщень
+    socket.on('join_user_room', (userId) => {
+        if (userId) {
+            const userRoom = `user_${userId}`;
+            socket.join(userRoom);
+            console.log(`Клієнт ${socket.id} приєднався до особистої кімнати ${userRoom}`);
+        }
+    });
+
     socket.on('join_conversation', (conversationId) => {
         socket.join(conversationId.toString());
         console.log(`Клієнт ${socket.id} приєднався до кімнати ${conversationId}`);
@@ -102,6 +111,32 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+/**
+ * Допоміжна функція для створення та відправки сповіщень
+ * @param {number} userId - ID користувача, ЯКИЙ ОТРИМУЄ сповіщення
+ * @param {string} message - Текст сповіщення
+ * @param {string} link_url - (Необов'язково) Посилання, куди перейде користувач
+ */
+const createNotification = async (userId, message, link_url = null) => {
+    try {
+        const insertQuery = `
+            INSERT INTO notifications (user_id, message, link_url)
+            VALUES ($1, $2, $3)
+            RETURNING *;
+        `;
+        const result = await pool.query(insertQuery, [userId, message, link_url]);
+        const newNotification = result.rows[0];
+
+        // Відправляємо сповіщення через Socket.io в "кімнату" цього користувача
+        io.to(`user_${userId}`).emit('new_notification', newNotification);
+
+        console.log(`Notification created for user ${userId}: ${message}`);
+        return newNotification;
+
+    } catch (err) {
+        console.error('Error creating notification:', err);
+    }
+};
 
 // ===============================================
 // 4. МАРШРУТИ ДЛЯ ОГОЛОШЕНЬ (Публічні)
@@ -558,6 +593,17 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
         await client.query('COMMIT');
         const newMessage = messageResult.rows[0];
         io.to(conversationId.toString()).emit('receive_message', newMessage);
+        // Створюємо сповіщення для ОДЕРЖУВАЧА
+        try {
+            const senderName = req.user.first_name || 'Хтось';
+            await createNotification(
+                receiver_id, // Кому
+                `Нове повідомлення від ${senderName}`, // Текст
+                `chat.html?user_id=${sender_id}` // Посилання
+            );
+        } catch (notifyErr) {
+            console.error("Не вдалося створити сповіщення про повідомлення:", notifyErr);
+        }
         res.status(201).json(newMessage);
     } catch (err) {
         await client.query('ROLLBACK');
@@ -565,6 +611,46 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Помилка сервера' });
     } finally {
         client.release();
+    }
+});
+
+// ===============================================
+// 7.5 МАРШРУТИ ДЛЯ СПОВІЩЕНЬ (НОВІ)
+// ===============================================
+
+// 7.5.1 Отримати всі мої сповіщення
+app.get('/api/my-notifications', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        const query = `
+            SELECT * FROM notifications 
+            WHERE user_id = $1 
+            ORDER BY created_at DESC 
+            LIMIT 50; -- Обмежимо, щоб не завантажувати забагато
+        `;
+        const result = await pool.query(query, [userId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Помилка отримання сповіщень:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 7.5.2 Позначити мої сповіщення як прочитані
+app.patch('/api/my-notifications/read', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        const query = `
+            UPDATE notifications 
+            SET is_read = TRUE 
+            WHERE user_id = $1 AND is_read = FALSE 
+            RETURNING notification_id;
+        `;
+        const result = await pool.query(query, [userId]);
+        res.json({ message: `Оновлено ${result.rows.length} сповіщень` });
+    } catch (err) {
+        console.error('Помилка оновлення сповіщень:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
     }
 });
 
@@ -715,6 +801,27 @@ app.post('/api/favorites/:listingId', authenticateToken, async (req, res) => {
     try {
         const query = 'INSERT INTO favorites (user_id, listing_id) VALUES ($1, $2) RETURNING favorite_id';
         const result = await pool.query(query, [userId, listingId]);
+
+        try {
+            // Дізнаємось, хто власник оголошення
+            const listingQuery = await pool.query('SELECT user_id, title FROM listings WHERE listing_id = $1', [listingId]);
+            if (listingQuery.rows.length > 0) {
+                const ownerId = listingQuery.rows[0].user_id;
+                const listingTitle = listingQuery.rows[0].title;
+                const favoritedByName = req.user.first_name || 'Хтось';
+                // Не надсилаємо сповіщення самому собі
+                if (ownerId !== userId) {
+                    await createNotification(
+                        ownerId, // Кому
+                        `${favoritedByName} додав ваше оголошення "${listingTitle}" у вибране.`, // Текст
+                        `listing_detail.html?id=${listingId}` // Посилання
+                    );
+                }
+            }
+        } catch (notifyErr) {
+            console.error("Не вдалося створити сповіщення про 'вибране':", notifyErr);
+        }
+
         res.status(201).json({ message: 'Додано до обраного', favoriteId: result.rows[0].favorite_id });
     } catch (err) {
         if (err.code === '23505') { // 'unique_violation'
