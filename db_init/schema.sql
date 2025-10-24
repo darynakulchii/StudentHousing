@@ -5,9 +5,6 @@ DO $$
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'ukrainian') THEN
             CREATE TEXT SEARCH CONFIGURATION ukrainian (COPY = simple);
-            -- Примітка: Для кращої роботи може знадобитися словник (наприклад, Hunspell),
-            -- але це вимагає встановлення додаткових пакетів в образ Docker,
-            -- тому поки що ми копіюємо 'simple', що забезпечить базову роботу.
             ALTER TEXT SEARCH CONFIGURATION ukrainian
                 ALTER MAPPING FOR hword, hword_part, word WITH simple;
         END IF;
@@ -45,25 +42,37 @@ CREATE TABLE "listings" (
                             "title" VARCHAR(255) NOT NULL,
                             "description" TEXT,
                             "city" VARCHAR(100) NOT NULL,
-                            "main_photo_url" VARCHAR(500), -- Для картки оголошення
+                            "city_other" VARCHAR(255) NOT NULL,
+                            "main_photo_url" VARCHAR(500),
+                            "address" VARCHAR(255),          -- Нове поле адреси
+                            "latitude" DECIMAL(9, 6),        -- Нове поле координат
+                            "longitude" DECIMAL(9, 6),       -- Нове поле координат
+                            "study_conditions" TEXT,         -- Нове поле умов для навчання
 
     -- === Поля для 'rent_out' та 'find_mate' (Характеристики житла) ===
                             "price" DECIMAL(10, 2),
                             "building_type" VARCHAR(50),
-                            "rooms" VARCHAR(10), -- '1', '2', '4+'
+                            "building_type_other" VARCHAR(255), -- Нове поле для іншого типу будинку
+                            "rooms" VARCHAR(10),
                             "floor" INT,
                             "total_floors" INT,
-                            "total_area" DECIMAL(8, 2), -- м²
-                            "kitchen_area" DECIMAL(8, 2), -- м²
+                            "total_area" DECIMAL(8, 2),
+                            "kitchen_area" DECIMAL(8, 2),
                             "wall_type" VARCHAR(50),
+                            "wall_type_other" VARCHAR(255),    -- Нове поле для іншого типу стін
                             "planning" VARCHAR(50),
+                            "planning_other" VARCHAR(255),     -- Нове поле для іншого планування
                             "bathroom_type" VARCHAR(50),
                             "heating_type" VARCHAR(50),
+                            "heating_type_other" VARCHAR(255), -- Нове поле для іншого опалення
                             "renovation_type" VARCHAR(50),
-                            "furnishing" VARCHAR(10), -- 'yes', 'no'
+                            "renovation_type_other" VARCHAR(255), -- Нове поле для іншого ремонту
+                            "furnishing" VARCHAR(10),
+                            "pet_policy" VARCHAR(10),          -- Нове поле політики щодо тварин ('yes', 'no')
+                            "owner_rules" TEXT,                -- Нове поле правил від власника
 
     -- Специфічно для 'rent_out'
-                            "max_occupants" VARCHAR(10), -- '1', '2', '5+'
+                            "max_occupants" VARCHAR(10),
 
     -- Специфічно для 'find_mate'
                             "current_occupants" VARCHAR(10),
@@ -73,24 +82,25 @@ CREATE TABLE "listings" (
                             "target_price_min" INT,
                             "target_price_max" INT,
                             "housing_type_search" VARCHAR(50),
+                            "housing_type_search_other" VARCHAR(50),
                             "target_rooms" VARCHAR(10),
                             "target_roommates_max" VARCHAR(10),
-                            "is_student" VARCHAR(5), -- 'yes', 'no'
                             "target_university" VARCHAR(255),
+                            "target_university_other" VARCHAR(255),
                             "target_uni_distance" VARCHAR(50),
-                            "ready_to_share" VARCHAR(10), -- 'yes', 'no', 'any'
+                            "ready_to_share" VARCHAR(10),
+                            "search_pet_policy" VARCHAR(10),
 
-    -- === Поля для 'find_home' та 'find_mate' (Про себе) ===
+    -- === Поля для 'find_home' та 'find_mate' (Про себе/Вимоги) ===
+                            "is_student" VARCHAR(5),
                             "my_gender" VARCHAR(10),
                             "my_age" INT,
-                            "my_group_size" VARCHAR(10), -- '1', 'more'
+                            "my_group_size" VARCHAR(10),
                             "my_group_count" INT,
                             "my_smoking" VARCHAR(20),
                             "my_drinking" VARCHAR(20),
                             "my_guests" VARCHAR(20),
                             "about_me_description" TEXT,
-
-    -- === Поля для 'find_home' та 'find_mate' (Вимоги до сусіда) ===
                             "roommate_gender" VARCHAR(10),
                             "roommate_age_min" INT,
                             "roommate_age_max" INT,
@@ -100,7 +110,7 @@ CREATE TABLE "listings" (
                             "roommate_description" TEXT
 );
 
--- Таблиця фотографій (для галереї)
+-- Таблиця фотографій
 CREATE TABLE "listing_photos" (
                                   "photo_id" SERIAL PRIMARY KEY,
                                   "listing_id" INT NOT NULL REFERENCES "listings"("listing_id") ON DELETE CASCADE,
@@ -109,15 +119,15 @@ CREATE TABLE "listing_photos" (
                                   "photo_order" INT DEFAULT 0
 );
 
--- Довідник УСІХ можливих характеристик
+-- Довідник характеристик
 CREATE TABLE "characteristics" (
                                    "char_id" SERIAL PRIMARY KEY,
-                                   "system_key" VARCHAR(50) UNIQUE NOT NULL, -- 'fridge', 'my_introvert', 'infra_metro'
-                                   "name_ukr" VARCHAR(100) NOT NULL, -- 'Холодильник', 'Інтроверт', 'Метро'
-                                   "category" VARCHAR(50) NOT NULL -- 'tech', 'my_personality', 'infra'
+                                   "system_key" VARCHAR(50) UNIQUE NOT NULL,
+                                   "name_ukr" VARCHAR(100) NOT NULL,
+                                   "category" VARCHAR(50) NOT NULL
 );
 
--- Зв'язуюча таблиця "багато-до-багатьох" (Оголошення <-> Характеристики)
+-- Зв'язуюча таблиця
 CREATE TABLE "listing_characteristics" (
                                            "listing_char_id" SERIAL PRIMARY KEY,
                                            "listing_id" INT NOT NULL REFERENCES "listings"("listing_id") ON DELETE CASCADE,
@@ -134,7 +144,7 @@ CREATE TABLE "favorites" (
                              UNIQUE ("user_id", "listing_id")
 );
 
--- Таблиця розмов (чатів)
+-- Таблиця розмов
 CREATE TABLE "conversations" (
                                  "conversation_id" SERIAL PRIMARY KEY,
                                  "user_one_id" INT REFERENCES "users"("user_id") ON DELETE CASCADE NOT NULL,
@@ -144,7 +154,7 @@ CREATE TABLE "conversations" (
                                  CONSTRAINT "unique_user_pair" UNIQUE ("user_one_id", "user_two_id")
 );
 
--- Таблиця повідомлень (для чатів)
+-- Таблиця повідомлень
 CREATE TABLE "messages" (
                             "message_id" SERIAL PRIMARY KEY,
                             "conversation_id" INT REFERENCES "conversations"("conversation_id") ON DELETE CASCADE NOT NULL,
@@ -157,70 +167,107 @@ CREATE TABLE "messages" (
 -- Таблиця сповіщень
 CREATE TABLE "notifications" (
                                  "notification_id" SERIAL PRIMARY KEY,
-                                 "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE, -- ID одержувача
-                                 "message" TEXT NOT NULL, -- Текст сповіщення
-                                 "link_url" VARCHAR(500), -- Посилання
+                                 "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE,
+                                 "message" TEXT NOT NULL,
+                                 "link_url" VARCHAR(500),
                                  "is_read" BOOLEAN DEFAULT FALSE,
                                  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Додаємо індекс для швидкого пошуку сповіщень
+-- Індекс для сповіщень
 CREATE INDEX "idx_notifications_user_id" ON "notifications" ("user_id");
 
 -- =================================================================
--- КРОК 2: ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК
--- Всі дані взяті з add_listing.html
+-- КРОК 2: ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК (Оновлено)
 -- =================================================================
 
 INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
--- 'Про себе' (Особистість)
+-- 'Про себе' (Особистість) - Розширено
 ('my_introvert', 'Інтроверт', 'my_personality'),
 ('my_extrovert', 'Екстраверт', 'my_personality'),
 ('my_ambivert', 'Амбіверт', 'my_personality'),
 ('my_tidy', 'Охайний/а', 'my_personality'),
 ('my_creative', 'Творчий/а', 'my_personality'),
-('my_sporty', 'Спортивний/а', 'my_personality'),
--- 'Про себе' (Спосіб життя)
-('my_early_bird', '"Жайворонок"', 'my_lifestyle'),
-('my_night_owl', '"Сова"', 'my_lifestyle'),
-('my_wfh', 'Працюю/вчуся вдома', 'my_lifestyle'),
-('my_office', 'Працюю/вчуся в офісі', 'my_lifestyle'),
--- 'Про себе' (Інтереси)
+('my_calm', 'Спокійний/а', 'my_personality'),
+('my_communicative', 'Комунікабельний/а', 'my_personality'),
+('my_responsible', 'Відповідальний/а', 'my_personality'),
+('my_humorous', 'З почуттям гумору', 'my_personality'),
+
+-- 'Про себе' (Спосіб життя) - Змінено
+('my_early_bird', 'Жайворонок', 'my_lifestyle'),
+('my_night_owl', 'Сова', 'my_lifestyle'),
+('my_student', 'Вчуся', 'my_lifestyle'),
+('my_worker', 'Працюю', 'my_lifestyle'),
+('my_study_home', 'Вчуся вдома', 'my_lifestyle'),
+('my_work_home', 'Працюю вдома', 'my_lifestyle'),
+
+-- 'Про себе' (Інтереси) - Розширено
 ('my_music', 'Музика', 'my_interests'),
 ('my_gaming', 'Ігри', 'my_interests'),
 ('my_cooking', 'Кулінарія', 'my_interests'),
 ('my_movies', 'Кіно', 'my_interests'),
 ('my_travel', 'Подорожі', 'my_interests'),
 ('my_reading', 'Читання', 'my_interests'),
--- 'Про себе' (Мої тварини)
+('my_sports', 'Спорт', 'my_interests'),
+('my_art', 'Мистецтво', 'my_interests'),
+('my_photography', 'Фотографія', 'my_interests'),
+('my_dancing', 'Танці', 'my_interests'),
+('my_volunteering', 'Волонтерство', 'my_interests'),
+('my_board_games', 'Настільні ігри', 'my_interests'),
+('my_it', 'IT / Технології', 'my_interests'),
+('my_nature', 'Природа / Походи', 'my_interests'),
+('my_fashion', 'Мода', 'my_interests'),
+('my_politics', 'Політика', 'my_interests'),
+
+-- 'Про себе' (Мої тварини) - Додано multiple
 ('my_pet_cat', 'Маю кота', 'my_pets'),
 ('my_pet_dog', 'Маю собаку', 'my_pets'),
 ('my_pet_other', 'Маю іншу тваринку', 'my_pets'),
+('my_pet_multiple', 'Маю декілька тварин', 'my_pets'),
 ('my_pet_no', 'Не маю тварин', 'my_pets'),
 
--- 'Вимоги до сусіда' (Особистість)
+-- 'Вимоги до сусіда' (Особистість) - Розширено
 ('mate_introvert', 'Інтроверт', 'mate_personality'),
 ('mate_extrovert', 'Екстраверт', 'mate_personality'),
 ('mate_ambivert', 'Амбіверт', 'mate_personality'),
 ('mate_tidy', 'Охайний', 'mate_personality'),
 ('mate_creative', 'Творчий', 'mate_personality'),
-('mate_sporty', 'Спортивний', 'mate_personality'),
--- 'Вимоги до сусіда' (Спосіб життя)
-('mate_early_bird', '"Жайворонок"', 'mate_lifestyle'),
-('mate_night_owl', '"Сова"', 'mate_lifestyle'),
-('mate_wfh', 'Працюю/вчиться вдома', 'mate_lifestyle'),
-('mate_office', 'Працюю/вчиться в офісі', 'mate_lifestyle'),
--- 'Вимоги до сусіда' (Інтереси)
+('mate_calm', 'Спокійний/а', 'mate_personality'),
+('mate_communicative', 'Комунікабельний/а', 'mate_personality'),
+('mate_responsible', 'Відповідальний/а', 'mate_personality'),
+('mate_humorous', 'З почуттям гумору', 'mate_personality'),
+
+-- 'Вимоги до сусіда' (Спосіб життя) - Змінено
+('mate_early_bird', 'Жайворонок', 'mate_lifestyle'),
+('mate_night_owl', 'Сова', 'mate_lifestyle'),
+('mate_student', 'Вчиться', 'mate_lifestyle'),
+('mate_worker', 'Працює', 'mate_lifestyle'),
+('mate_study_home', 'Вчиться вдома', 'mate_lifestyle'),
+('mate_work_home', 'Працює вдома', 'mate_lifestyle'),
+
+-- 'Вимоги до сусіда' (Інтереси) - Розширено
 ('mate_music', 'Музика', 'mate_interests'),
 ('mate_gaming', 'Ігри', 'mate_interests'),
 ('mate_cooking', 'Кулінарія', 'mate_interests'),
 ('mate_movies', 'Кіно', 'mate_interests'),
 ('mate_travel', 'Подорожі', 'mate_interests'),
 ('mate_reading', 'Читання', 'mate_interests'),
--- 'Вимоги до сусіда' (Тварини у сусіда)
+('mate_sports', 'Спорт', 'mate_interests'),
+('mate_art', 'Мистецтво', 'mate_interests'),
+('mate_photography', 'Фотографія', 'mate_interests'),
+('mate_dancing', 'Танці', 'mate_interests'),
+('mate_volunteering', 'Волонтерство', 'mate_interests'),
+('mate_board_games', 'Настільні ігри', 'mate_interests'),
+('mate_it', 'IT / Технології', 'mate_interests'),
+('mate_nature', 'Природа / Походи', 'mate_interests'),
+('mate_fashion', 'Мода', 'mate_interests'),
+('mate_politics', 'Політика', 'mate_interests'),
+
+-- 'Вимоги до сусіда' (Тварини у сусіда) - Додано multiple
 ('mate_has_cat', 'З котом', 'mate_pets'),
 ('mate_has_dog', 'З собакою', 'mate_pets'),
 ('mate_has_other', 'З іншою тваринкою', 'mate_pets'),
+('mate_has_multiple', 'З кількома тваринами', 'mate_pets'),
 ('mate_no_pet', 'Бажано без тварин', 'mate_pets'),
 
 -- 'Характеристики житла' (Побутова техніка)
@@ -251,9 +298,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('cctv', 'Відеоспостереження', 'comfort'),
 ('floor_heating', 'Підігрів підлоги', 'comfort'),
 ('concierge', 'Консьєрж', 'comfort'),
-('bath', 'Ванна', 'comfort'),
 ('security', 'Охорона території', 'comfort'),
-('shower', 'Душова кабіна', 'comfort'),
 ('parking', 'Паркувальне місце', 'comfort'),
 ('kitchen_furniture', 'Меблі на кухні', 'comfort'),
 ('guest_parking', 'Гостьовий паркінг', 'comfort'),
@@ -271,11 +316,13 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('smart_home', 'Технологія "розумний будинок"', 'comfort'),
 ('fire_alarm', 'Пожежна сигналізація', 'comfort'),
 ('generator', 'Автономний електрогенератор', 'comfort'),
--- 'Характеристики житла' (Домашні улюбленці)
-('pet_no', 'Ні', 'pets_allowed'),
-('pet_mid_dog', 'Так, песик', 'pets_allowed'),
-('pet_cat', 'Так, котик', 'pets_allowed'),
-('pet_other', 'Так, інша тваринка', 'pets_allowed'),
+
+-- 'Характеристики житла' (Домашні улюбленці) - Ці ключі тепер для деталізації, коли обрано 'yes'
+('pet_cat', 'Котик', 'pets_allowed_detail'),
+('pet_mid_dog', 'Собачка', 'pets_allowed_detail'),
+('pet_other', 'Інша тваринка', 'pets_allowed_detail'),
+('pet_multiple', 'Кілька тварин', 'pets_allowed_detail'),
+
 -- 'Характеристики житла' (Автономність при блекауті)
 ('blackout_internet', 'Працює інтернет', 'blackout'),
 ('blackout_heating', 'Працює опалення', 'blackout'),
@@ -286,14 +333,11 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('rules_families', 'Тільки сім''ям', 'rules'),
 ('rules_with_owners', 'З господарями', 'rules'),
 ('rules_kids', 'Можна з дітьми', 'rules'),
-('rules_students', 'Можна студентам', 'rules'),
 ('rules_smoking', 'Можна курити', 'rules'),
 -- 'Характеристики житла' (Комунікації)
 ('comm_gas', 'Газ', 'communications'),
-('comm_septic', 'Каналізація септик', 'communications'),
 ('comm_central_water', 'Центральний водопровід', 'communications'),
 ('comm_waste', 'Вивіз відходів', 'communications'),
-('comm_well', 'Скважина', 'communications'),
 ('comm_asphalt', 'Асфальтована дорога', 'communications'),
 ('comm_electricity', 'Електрика', 'communications'),
 ('comm_no', 'Без комунікацій', 'communications'),
@@ -303,7 +347,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('infra_pharmacy', 'Аптека', 'infra'),
 ('infra_school', 'Школа', 'infra'),
 ('infra_hospital', 'Лікарня, поліклініка', 'infra'),
-('infra_well_room', 'Бювет', 'infra'),
+('infra_water_machine', 'Автомат з водою', 'infra'),
 ('infra_center', 'Центр міста', 'infra'),
 ('infra_bus_stop', 'Зупинка транспорту', 'infra'),
 ('infra_restaurant', 'Ресторан, кафе', 'infra'),
@@ -330,11 +374,79 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('incl_stairs_handrails', 'Поручні на сходах', 'inclusive'),
 ('incl_tactile_strips', 'Тактильні смуги на підлозі', 'inclusive'),
 ('incl_street_entry', 'Вхід в рівень з вулицею', 'inclusive'),
-('incl_voice_alerts', 'Голосові сповіщення у ліфті', 'inclusive');
+('incl_voice_alerts', 'Голосові сповіщення у ліфті', 'inclusive'),
 
--- Примітка: 'search_characteristics' з 'add_listing.html' використовують ті ж
--- system_key, що й характеристики житла (наприклад, 'fridge', 'wifi', 'ac'),
--- тому ми не дублюємо їх. Ваша логіка на бекенді просто буде шукати
--- оголошення, які мають ці 'char_id'.
+-- Категорія: Університети (Приклад для Києва)
+('uni_kpi', 'НТУУ "КПІ"', 'university_kyiv'),
+('uni_knu', 'КНУ ім. Шевченка', 'university_kyiv'),
+('uni_nmu', 'НМУ ім. Богомольця', 'university_kyiv'),
+('uni_knteu', 'КНТЕУ', 'university_kyiv'),
+('uni_knukim', 'КНУКіМ', 'university_kyiv'),
+('uni_kneu', 'КНЕУ ім. Гетьмана', 'university_kyiv'),
+('uni_nau', 'НАУ', 'university_kyiv'),
+('uni_naukma', 'НаУКМА', 'university_kyiv'),
+('uni_npu', 'НПУ ім. Драгоманова', 'university_kyiv'),
+('uni_knuba', 'КНУБА (КІСІ)', 'university_kyiv'),
+('uni_nubip', 'НУБіП України', 'university_kyiv'),
+
+-- Університети Львова
+('uni_lnu', 'ЛНУ ім. Франка', 'university_lviv'),
+('uni_lp', 'НУ "Львівська політехніка"', 'university_lviv'),
+('uni_lnmu', 'ЛНМУ ім. Данила Галицького', 'university_lviv'),
+('uni_lute', 'Львівський торговельно-економічний університет', 'university_lviv'),
+('uni_lnuvmb', 'ЛНУ ветеринарної медицини ім. Ґжицького', 'university_lviv'),
+('uni_lnau', 'Львівський національний аграрний університет', 'university_lviv'),
+
+-- Університети Харкова
+('uni_khnu', 'ХНУ ім. Каразіна', 'university_kharkiv'),
+('uni_khpi', 'НТУ "ХПІ"', 'university_kharkiv'),
+('uni_khnmu', 'ХНМУ', 'university_kharkiv'),
+('uni_nlu', 'НЮУ ім. Ярослава Мудрого', 'university_kharkiv'),
+('uni_khnure', 'ХНУРЕ', 'university_kharkiv'),
+('uni_khname', 'ХНУМГ ім. Бекетова', 'university_kharkiv'),
+('uni_khnau', 'ХНАУ ім. Докучаєва', 'university_kharkiv'),
+
+-- Університети Одеси
+('uni_onu', 'ОНУ ім. Мечникова', 'university_odesa'),
+('uni_onpu', 'НУ "Одеська політехніка"', 'university_odesa'),
+('uni_onmedu', 'ОНМедУ', 'university_odesa'),
+('uni_oneu', 'ОНЕУ', 'university_odesa'),
+('uni_pdau', 'Південноукраїнський національний педагогічний університет', 'university_odesa'),
+
+-- Університети Дніпра
+('uni_dnu', 'ДНУ ім. Гончара', 'university_dnipro'),
+('uni_ntudp', 'НТУ "Дніпровська політехніка"', 'university_dnipro'),
+('uni_dsmu', 'ДДМУ', 'university_dnipro'),
+('uni_udhtu', 'УДХТУ', 'university_dnipro'),
+
+-- Університети Чернівців
+('uni_chnu', 'ЧНУ ім. Федьковича', 'university_chernivtsi'),
+('uni_bsmu', 'Буковинський державний медичний університет', 'university_chernivtsi'),
+
+-- Університети Сум
+('uni_sumdu', 'Сумський державний університет (СумДУ)', 'university_sumy'),
+('uni_snau', 'Сумський національний аграрний університет (СНАУ)', 'university_sumy'),
+
+-- Університети Запоріжжя
+('uni_znu', 'Запорізький національний університет (ЗНУ)', 'university_zaporizhzhia'),
+('uni_nuzp', 'НУ "Запорізька політехніка"', 'university_zaporizhzhia'),
+
+-- Університети Вінниці
+('uni_vntu', 'ВНТУ', 'university_vinnytsia'),
+('uni_vnmu', 'ВНМУ ім. Пирогова', 'university_vinnytsia'),
+('uni_vdpu', 'ВДПУ ім. Коцюбинського', 'university_vinnytsia'),
+
+-- Інші великі міста
+('uni_pnu', 'Прикарпатський національний університет ім. Стефаника', 'university_ivano-frankivsk'),
+('uni_ifntung', 'ІФНТУНГ', 'university_ivano-frankivsk'),
+('uni_tnpu', 'ТНПУ ім. Гнатюка', 'university_ternopil'),
+('uni_tnmu', 'ТНМУ ім. Горбачевського', 'university_ternopil'),
+('uni_ztu', 'Державний університет "Житомирська політехніка"', 'university_zhytomyr'),
+('uni_chdtu', 'Черкаський державний технологічний університет', 'university_cherkasy'),
+('uni_chdnu', 'Черкаський національний університет ім. Хмельницького', 'university_cherkasy'),
+('uni_kntu', 'ЦНТУ (м. Кропивницький)', 'university_kropyvnytskyi'),
+('uni_dgtu', 'ДДТУ (м. Кам''янське)', 'university_kamianske'),
+('uni_pdtu', 'ПДТУ (м. Маріуполь - тимчасово переміщений)', 'university_mariupol')
+;
 
 COMMIT;

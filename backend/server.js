@@ -375,6 +375,57 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/listings', authenticateToken, async (req, res) => {
     const user_id = req.user.userId;
     const { characteristics, ...listingData } = req.body;
+// --- 1. Місто ---
+    if (listingData.city === 'other' && listingData.city_other) {
+        // Значення 'other' вибрано і текст введено - нічого не робимо
+    } else {
+        // В іншому випадку (або вибрано не 'other', або поле _other пусте) - очищуємо
+        listingData.city_other = null;
+    }
+
+// --- 2. Тип будинку ---
+    if (listingData.building_type === 'other' && listingData.building_type_other) {
+        // (Ваш приклад використовував 'other_building', я використовую 'other' для уніфікації)
+    } else {
+        listingData.building_type_other = null;
+    }
+
+// --- 3. Тип стін ---
+    if (listingData.wall_type === 'other' && listingData.wall_type_other) {
+    } else {
+        listingData.wall_type_other = null;
+    }
+
+// --- 4. Планування ---
+    if (listingData.planning === 'other' && listingData.planning_other) {
+    } else {
+        listingData.planning_other = null;
+    }
+
+// --- 5. Тип опалення ---
+    if (listingData.heating_type === 'other' && listingData.heating_type_other) {
+    } else {
+        listingData.heating_type_other = null;
+    }
+
+// --- 6. Тип ремонту ---
+    if (listingData.renovation_type === 'other' && listingData.renovation_type_other) {
+    } else {
+        listingData.renovation_type_other = null;
+    }
+
+// --- 7. Тип житла (пошук) ---
+    if (listingData.housing_type_search === 'other' && listingData.housing_type_search_other) {
+    } else {
+        listingData.housing_type_search_other = null;
+    }
+
+// --- 8. Університет (пошук) ---
+    if (listingData.target_university === 'other' && listingData.target_university_other) {
+    } else {
+        listingData.target_university_other = null;
+    }
+
     const allowedKeys = [
         'listing_type', 'title', 'description', 'city', 'main_photo_url', 'price',
         'building_type', 'rooms', 'floor', 'total_floors', 'total_area', 'kitchen_area',
@@ -385,7 +436,10 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
         'my_gender', 'my_age', 'my_group_size', 'my_group_count', 'my_smoking',
         'my_drinking', 'my_guests', 'about_me_description', 'roommate_gender',
         'roommate_age_min', 'roommate_age_max', 'roommate_smoking', 'roommate_drinking',
-        'roommate_guests', 'roommate_description'
+        'roommate_guests', 'roommate_description', 'address','latitude', 'longitude', 'study_conditions',
+        'building_type_other', 'wall_type_other', 'planning_other', 'heating_type_other',
+        'renovation_type_other', 'pet_policy', 'owner_rules', 'search_pet_policy', 'housing_type_search_other',
+        'target_university_other'
     ];
     const columns = ['user_id'];
     const values = [user_id];
@@ -534,6 +588,54 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+// --- 1. Місто ---
+        if (listingData.city === 'other' && listingData.city_other) {
+        } else {
+            listingData.city_other = null;
+        }
+
+// --- 2. Тип будинку ---
+        if (listingData.building_type === 'other' && listingData.building_type_other) {
+        } else {
+            listingData.building_type_other = null;
+        }
+
+// --- 3. Тип стін ---
+        if (listingData.wall_type === 'other' && listingData.wall_type_other) {
+        } else {
+            listingData.wall_type_other = null;
+        }
+
+// --- 4. Планування ---
+        if (listingData.planning === 'other' && listingData.planning_other) {
+        } else {
+            listingData.planning_other = null;
+        }
+
+// --- 5. Тип опалення ---
+        if (listingData.heating_type === 'other' && listingData.heating_type_other) {
+        } else {
+            listingData.heating_type_other = null;
+        }
+
+// --- 6. Тип ремонту ---
+        if (listingData.renovation_type === 'other' && listingData.renovation_type_other) {
+        } else {
+            listingData.renovation_type_other = null;
+        }
+
+// --- 7. Тип житла (пошук) ---
+        if (listingData.housing_type_search === 'other' && listingData.housing_type_search_other) {
+        } else {
+            listingData.housing_type_search_other = null;
+        }
+
+// --- 8. Університет (пошук) ---
+        if (listingData.target_university === 'other' && listingData.target_university_other) {
+        } else {
+            listingData.target_university_other = null;
+        }
+
         // 1. Оновлюємо основні дані оголошення
         const allowedKeys = [
             'listing_type', 'title', 'description', 'city', 'price', 'building_type', 'rooms', 'floor',
@@ -544,7 +646,11 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
             'target_uni_distance', 'ready_to_share', 'my_gender', 'my_age', 'my_group_size',
             'my_group_count', 'my_smoking', 'my_drinking', 'my_guests', 'about_me_description',
             'roommate_gender', 'roommate_age_min', 'roommate_age_max', 'roommate_smoking',
-            'roommate_drinking', 'roommate_guests', 'roommate_description'
+            'roommate_drinking', 'roommate_guests', 'roommate_description', 'address',
+            'latitude', 'longitude', 'study_conditions', 'building_type_other',
+            'wall_type_other', 'planning_other', 'heating_type_other', 'renovation_type_other',
+            'pet_policy', 'owner_rules', 'search_pet_policy', 'housing_type_search_other',
+            'target_university_other'
         ];
 
         const setClauses = [];
