@@ -9,7 +9,28 @@
     <style>
         /* Стилі для карти (приклад) */
         #map { height: 300px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .hidden-other-input { display: none; margin-top: 10px; } /* Стиль для прихованого поля "Інше" */
+        .hidden-other-input { display: none; margin-top: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem;} /* Стиль для прихованого поля "Інше" */
+        /* Стилі для опції "Інше" в характеристиках */
+        .checkbox-option-item.other-characteristic-option {
+            /* Можна додати стилі, якщо потрібно виділити */
+            /* Ensure it aligns well within flex container */
+            width: 100%; /* Make 'Other' checkbox take full width to push input below */
+        }
+
+        .characteristics-other-text {
+            display: none; /* Сховано за замовчуванням */
+        }
+
+        .checkbox-options {
+            /* Дозволяємо полю вводу займати всю ширину */
+            flex-wrap: wrap;
+        }
+        /* Style for the 'Other' checkbox item itself if needed */
+        .checkbox-option-item {
+            display: inline-flex; /* Align label and checkbox */
+            align-items: center; /* Vertically align */
+            margin-bottom: 5px; /* Add some space */
+        }
     </style>
 </head>
 
@@ -53,7 +74,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="city">Місто *</label>
-                <select id="city" name="city" required>
+                <select id="city" name="city" required onchange="toggleOtherCityInput(this)">
                     <option value="" disabled selected>Виберіть місто</option>
                     <option value="Бердянськ">Бердянськ</option>
                     <option value="Біла Церква">Біла Церква</option>
@@ -96,7 +117,10 @@
                     <option value="Херсон">Херсон</option>
                     <option value="Черкаси">Черкаси</option>
                     <option value="Чернігів">Чернігів</option>
+                    <option value="other">Інше</option> <!-- Added Other option -->
                 </select>
+                <!-- Input field for other city -->
+                <input type="text" id="city_other_text" name="city_other_text" placeholder="Введіть інше місто" class="hidden-other-input">
             </div>
 
             <div class="form-group" id="priceGroup" style="display: none;">
@@ -189,7 +213,11 @@
             <div id="studentParams" style="display: none;">
                 <div class="form-group">
                     <label for="target_university">Бажаний Університет (або район)</label>
-                    <input type="text" id="target_university" name="target_university" placeholder="Наприклад, НТУУ 'КПІ'">
+                    <select id="target_university" name="target_university" class="other-option-select">
+                        <option value="" selected>Будь-який</option>
+                        <option value="other">Інший (вказати)</option>
+                    </select>
+                    <input type="text" id="target_university_other_text" name="target_university_other_text" placeholder="Введіть інший ВНЗ або район" class="hidden-other-input characteristics-other-text">
                 </div>
                 <div class="form-group">
                     <label>Бажана віддаленість від університету</label>
@@ -222,7 +250,13 @@
                         <input type="checkbox" id="search_tech_dryer" name="search_characteristics" value="hair_dryer"><label for="search_tech_dryer">Фен</label>
                         <input type="checkbox" id="search_tech_dishwasher" name="search_characteristics" value="dishwasher"><label for="search_tech_dishwasher">Посудомийна машина</label>
                         <input type="checkbox" id="search_tech_drying_machine" name="search_characteristics" value="drying_machine"><label for="search_tech_drying_machine">Сушильна машина</label>
+                        <!-- Other option for search tech -->
+                        <div class="checkbox-option-item other-characteristic-option">
+                            <input type="checkbox" id="search_tech_other_check" name="characteristics_other_trigger" value="search_tech_other" onchange="toggleOtherInput(this, 'search_tech_other_text')">
+                            <label for="search_tech_other_check">Інше</label>
+                        </div>
                     </div>
+                    <input type="text" id="search_tech_other_text" name="search_tech_other_text" placeholder="Введіть іншу побутову техніку" class="hidden-other-input characteristics-other-text">
                 </div>
 
                 <div class="form-group">
@@ -233,7 +267,13 @@
                         <input type="checkbox" id="search_media_fast_inet" name="search_characteristics" value="fast_internet"><label for="search_media_fast_inet">Швидкісний інтернет</label>
                         <input type="checkbox" id="search_media_satellite" name="search_characteristics" value="satellite_tv"><label for="search_media_satellite">Супутникове ТБ</label>
                         <input type="checkbox" id="search_media_tv" name="search_characteristics" value="tv"><label for="search_media_tv">Телевізор</label>
+                        <!-- Other option for search media -->
+                        <div class="checkbox-option-item other-characteristic-option">
+                            <input type="checkbox" id="search_media_other_check" name="characteristics_other_trigger" value="search_media_other" onchange="toggleOtherInput(this, 'search_media_other_text')">
+                            <label for="search_media_other_check">Інше</label>
+                        </div>
                     </div>
+                    <input type="text" id="search_media_other_text" name="search_media_other_text" placeholder="Введіть інше мультимедіа" class="hidden-other-input characteristics-other-text">
                 </div>
 
                 <div class="form-group">
@@ -261,22 +301,27 @@
                         <input type="checkbox" id="search_comfort_smart_home" name="search_characteristics" value="smart_home"><label for="search_comfort_smart_home">Технологія "розумний будинок"</label>
                         <input type="checkbox" id="search_comfort_fire_alarm" name="search_characteristics" value="fire_alarm"><label for="search_comfort_fire_alarm">Пожежна сигналізація</label>
                         <input type="checkbox" id="search_comfort_generator" name="search_characteristics" value="generator"><label for="search_comfort_generator">Автономний електрогенератор</label>
+                        <!-- Other option for search comfort -->
+                        <div class="checkbox-option-item other-characteristic-option">
+                            <input type="checkbox" id="search_comfort_other_check" name="characteristics_other_trigger" value="search_comfort_other" onchange="toggleOtherInput(this, 'search_comfort_other_text')">
+                            <label for="search_comfort_other_check">Інше</label>
+                        </div>
                     </div>
+                    <input type="text" id="search_comfort_other_text" name="search_comfort_other_text" placeholder="Введіть інший комфорт" class="hidden-other-input characteristics-other-text">
                 </div>
 
                 <div class="form-group">
-                    <label>Бажана політика щодо тварин</label>
+                    <label>Бажана політика щодо тварин у житлі</label>
                     <div class="radio-options">
                         <input type="radio" id="search_pet_policy_any" name="search_pet_policy" value="any" checked><label for="search_pet_policy_any">Неважливо</label>
-                        <input type="radio" id="search_pet_policy_no" name="search_pet_policy" value="no"><label for="search_pet_policy_no">Категорично без тварин</label>
-                        <input type="radio" id="search_pet_policy_allowed" name="search_pet_policy" value="allowed"><label for="search_pet_policy_allowed">Дозволено (будь-яких)</label>
-                        <input type="radio" id="search_pet_policy_cat" name="search_pet_policy" value="cat"><label for="search_pet_policy_cat">Дозволено котика</label>
-                        <input type="radio" id="search_pet_policy_dog" name="search_pet_policy" value="dog"><label for="search_pet_policy_dog">Дозволено песика</label>
+                        <input type="radio" id="search_pet_policy_no" name="search_pet_policy" value="no"><label for="search_pet_policy_no">Без тварин</label>
+                        <input type="radio" id="search_pet_policy_yes" name="search_pet_policy" value="yes"><label for="search_pet_policy_yes">Дозволено</label>
                     </div>
-                    <div class="checkbox-options" id="search_allowed_pets_details" style="display: none; margin-top: 10px; padding-left: 20px;">
-                        <input type="checkbox" id="search_pet_cat_detail" name="search_characteristics" value="pet_cat"><label for="search_pet_cat_detail">Котик</label>
-                        <input type="checkbox" id="search_pet_dog_detail" name="search_characteristics" value="pet_mid_dog"><label for="search_pet_dog_detail">Песик</label>
-                        <input type="checkbox" id="search_pet_other_detail" name="search_characteristics" value="pet_other"><label for="search_pet_other_detail">Інша тваринка</label>
+                    <div class="checkbox-options" id="search_pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
+                        <p class="form-description" style="width: 100%; margin-bottom: 5px;">Вкажіть бажаних тварин:</p>
+                        <input type="checkbox" id="search_pet_cat" name="search_characteristics" value="pet_cat"><label for="search_pet_cat">Кіт</label>
+                        <input type="checkbox" id="search_pet_dog" name="search_characteristics" value="pet_mid_dog"><label for="search_pet_dog">Собака</label> <input type="checkbox" id="search_pet_other" name="search_characteristics" value="pet_other"><label for="search_pet_other">Інша тваринка</label>
+                        <input type="checkbox" id="search_pet_multiple" name="search_characteristics" value="pet_multiple"><label for="search_pet_multiple">Декілька тварин</label>
                     </div>
                 </div>
 
@@ -288,7 +333,13 @@
                         <input type="checkbox" id="search_blackout_elevator" name="search_characteristics" value="blackout_elevator"><label for="search_blackout_elevator">Працює ліфт</label>
                         <input type="checkbox" id="search_blackout_backup_power" name="search_characteristics" value="blackout_backup_power"><label for="search_blackout_backup_power">Підключене резервне живлення</label>
                         <input type="checkbox" id="search_blackout_water" name="search_characteristics" value="blackout_water"><label for="search_blackout_water">Працює водопостачання</label>
+                        <!-- Other option for search blackout -->
+                        <div class="checkbox-option-item other-characteristic-option">
+                            <input type="checkbox" id="search_blackout_other_check" name="characteristics_other_trigger" value="search_blackout_other" onchange="toggleOtherInput(this, 'search_blackout_other_text')">
+                            <label for="search_blackout_other_check">Інше</label>
+                        </div>
                     </div>
+                    <input type="text" id="search_blackout_other_text" name="search_blackout_other_text" placeholder="Введіть іншу автономність" class="hidden-other-input characteristics-other-text">
                 </div>
 
                 <div class="form-group">
@@ -313,7 +364,13 @@
                         <input type="checkbox" id="search_infra_park" name="search_characteristics" value="infra_park"><label for="search_infra_park">Парк, зелена зона</label>
                         <input type="checkbox" id="search_infra_train_station" name="search_characteristics" value="infra_train_station"><label for="search_infra_train_station">Залізнична станція</label>
                         <input type="checkbox" id="search_infra_playground" name="search_characteristics" value="infra_playground"><label for="search_infra_playground">Дитячий майданчик</label>
+                        <!-- Other option for search infra -->
+                        <div class="checkbox-option-item other-characteristic-option">
+                            <input type="checkbox" id="search_infra_other_check" name="characteristics_other_trigger" value="search_infra_other" onchange="toggleOtherInput(this, 'search_infra_other_text')">
+                            <label for="search_infra_other_check">Інше</label>
+                        </div>
                     </div>
+                    <input type="text" id="search_infra_other_text" name="search_infra_other_text" placeholder="Введіть іншу інфраструктуру" class="hidden-other-input characteristics-other-text">
                 </div>
 
                 <div class="form-group">
@@ -331,7 +388,13 @@
                         <input type="checkbox" id="search_incl_tactile_strips" name="search_characteristics" value="incl_tactile_strips"><label for="search_incl_tactile_strips">Тактильні смуги на підлозі</label>
                         <input type="checkbox" id="search_incl_street_entry" name="search_characteristics" value="incl_street_entry"><label for="search_incl_street_entry">Вхід в рівень з вулицею</label>
                         <input type="checkbox" id="search_incl_voice_alerts" name="search_characteristics" value="incl_voice_alerts"><label for="search_incl_voice_alerts">Голосові сповіщення у ліфті</label>
+                        <!-- Other option for search inclusivity -->
+                        <div class="checkbox-option-item other-characteristic-option">
+                            <input type="checkbox" id="search_incl_other_check" name="characteristics_other_trigger" value="search_incl_other" onchange="toggleOtherInput(this, 'search_incl_other_text')">
+                            <label for="search_incl_other_check">Інше</label>
+                        </div>
                     </div>
+                    <input type="text" id="search_incl_other_text" name="search_incl_other_text" placeholder="Введіть іншу інклюзивність" class="hidden-other-input characteristics-other-text">
                 </div>
             </div>
 
@@ -344,595 +407,681 @@
                 </div>
             </div>
 
-        </div> <div id="aboutMe" style="display: none; border-top: 2px solid #28a745; padding-top: 20px; margin-top: 10px;">
+        </div>
 
-        <h2 style="margin-bottom: 20px; text-align: center; color: #28a745;">Про себе</h2>
+        <div id="aboutMe" style="display: none; border-top: 2px solid #28a745; padding-top: 20px; margin-top: 10px;">
+            <h2 style="margin-bottom: 20px; text-align: center; color: #28a745;">Про себе</h2>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label>Моя стать</label> <div class="radio-options">
-                <input type="radio" id="my_gender_female" name="my_gender" value="female"><label for="my_gender_female">Жіноча</label>
-                <input type="radio" id="my_gender_male" name="my_gender" value="male"><label for="my_gender_male">Чоловіча</label>
-                <input type="radio" id="my_gender_other" name="my_gender" value="other"><label for="my_gender_other">Інша</label> </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Моя стать</label>
+                    <div class="radio-options">
+                        <input type="radio" id="my_gender_female" name="my_gender" value="female"><label for="my_gender_female">Жіноча</label>
+                        <input type="radio" id="my_gender_male" name="my_gender" value="male"><label for="my_gender_male">Чоловіча</label>
+                        <input type="radio" id="my_gender_other" name="my_gender" value="other"><label for="my_gender_other">Інша</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="my_age">Мій вік</label>
+                    <input type="number" id="my_age" name="my_age" placeholder="21" min="16" max="110">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="my_age">Мій вік</label> <input type="number" id="my_age" name="my_age" placeholder="21" min="16" max="110">
-            </div>
-        </div>
 
-        <div class="form-group" id="myGroupSizeGroup" style="display: none;">
-            <label>Для скількох людей шукаєте житло?</label>
-            <div class="radio-options">
-                <input type="radio" id="group_size_1" name="my_group_size" value="1" checked><label for="group_size_1">Лише для себе</label>
-                <input type="radio" id="group_size_more" name="my_group_size" value="more"><label for="group_size_more">Для себе та друзів</label>
-            </div>
-            <select id="my_group_count" name="my_group_count" style="display: none; margin-top: 10px;">
-                <option value="2" selected>Ми (2)</option>
-                <option value="3">Ми (3)</option>
-                <option value="4">Ми (4)</option>
-                <option value="5">Ми (5+)</option> </select>
-        </div>
-
-        <div class="form-group">
-            <label>Паління</label>
-            <div class="radio-options">
-                <input type="radio" id="my_smoke_no" name="my_smoking" value="no" checked><label for="my_smoke_no">Не палю</label>
-                <input type="radio" id="my_smoke_yes" name="my_smoking" value="yes"><label for="my_smoke_yes">Палю</label>
-                <input type="radio" id="my_smoke_outside" name="my_smoking" value="outside"><label for="my_smoke_outside">Палю (лише на вулиці)</label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Алкоголь</label> <div class="radio-options">
-            <input type="radio" id="my_drink_no" name="my_drinking" value="no" checked><label for="my_drink_no">Не вживаю</label>
-            <input type="radio" id="my_drink_rarely" name="my_drinking" value="rarely"><label for="my_drink_rarely">Рідко вживаю</label>
-            <input type="radio" id="my_drink_yes" name="my_drinking" value="yes"><label for="my_drink_yes">Вживаю</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Гості</label>
-            <div class="radio-options">
-                <input type="radio" id="my_guests_no" name="my_guests" value="no" checked><label for="my_guests_no">Без гостей</label>
-                <input type="radio" id="my_guests_rarely" name="my_guests" value="rarely"><label for="my_guests_rarely">Рідко</label>
-                <input type="radio" id="my_guests_sometimes" name="my_guests" value="sometimes"><label for="my_guests_sometimes">Іноді</label>
-                <input type="radio" id="my_guests_often" name="my_guests" value="often"><label for="my_guests_often">Часто</label> </div>
-        </div>
-
-        <div class="form-group">
-            <label>Мої тварини</label>
-            <p class="form-description">Виберіть, якщо у вас є тварини, з якими ви плануєте жити.</p>
-            <div class="checkbox-options">
-                <input type="checkbox" id="my_pet_cat" name="characteristics" value="my_pet_cat"><label for="my_pet_cat">Маю кота</label>
-                <input type="checkbox" id="my_pet_dog" name="characteristics" value="my_pet_dog"><label for="my_pet_dog">Маю собаку</label>
-                <input type="checkbox" id="my_pet_other" name="characteristics" value="my_pet_other"><label for="my_pet_other">Маю іншу тваринку</label>
-                <input type="checkbox" id="my_pet_multiple" name="characteristics" value="my_pet_multiple"><label for="my_pet_multiple">Маю декілька тварин</label> <input type="checkbox" id="my_pet_no_check" name="characteristics" value="my_pet_no" checked><label for="my_pet_no_check">Не маю тварин</label> </div>
-        </div>
-
-        <div class="form-group">
-            <label>Особистість (про себе)</label> <div class="checkbox-options">
-            <input type="checkbox" id="my_pers_introvert" name="characteristics" value="my_introvert"><label for="my_pers_introvert">Інтроверт</label>
-            <input type="checkbox" id="my_pers_extrovert" name="characteristics" value="my_extrovert"><label for="my_pers_extrovert">Екстраверт</label>
-            <input type="checkbox" id="my_pers_ambivert" name="characteristics" value="my_ambivert"><label for="my_pers_ambivert">Амбіверт</label>
-            <input type="checkbox" id="my_pers_tidy" name="characteristics" value="my_tidy"><label for="my_pers_tidy">Охайний/а</label>
-            <input type="checkbox" id="my_pers_creative" name="characteristics" value="my_creative"><label for="my_pers_creative">Творчий/а</label>
-            <input type="checkbox" id="my_pers_sporty" name="characteristics" value="my_sporty"><label for="my_pers_sporty">Спортивний/а</label>
-            <input type="checkbox" id="my_pers_calm" name="characteristics" value="my_calm"><label for="my_pers_calm">Спокійний/а</label>
-            <input type="checkbox" id="my_pers_communicative" name="characteristics" value="my_communicative"><label for="my_pers_communicative">Комунікабельний/а</label>
-            <input type="checkbox" id="my_pers_responsible" name="characteristics" value="my_responsible"><label for="my_pers_responsible">Відповідальний/а</label>
-            <input type="checkbox" id="my_pers_optimist" name="characteristics" value="my_optimist"><label for="my_pers_optimist">Оптиміст/ка</label>
-            <input type="checkbox" id="my_pers_pessimist" name="characteristics" value="my_pessimist"><label for="my_pers_pessimist">Песиміст/ка</label>
-            <input type="checkbox" id="my_pers_realist" name="characteristics" value="my_realist"><label for="my_pers_realist">Реаліст/ка</label>
-            <input type="checkbox" id="my_pers_humorous" name="characteristics" value="my_humorous"><label for="my_pers_humorous">З почуттям гумору</label>
-            <input type="checkbox" id="my_pers_independent" name="characteristics" value="my_independent"><label for="my_pers_independent">Незалежний/а</label>
-            <input type="checkbox" id="my_pers_flexible" name="characteristics" value="my_flexible"><label for="my_pers_flexible">Гнучкий/а</label>
-            <input type="checkbox" id="my_pers_punctual" name="characteristics" value="my_punctual"><label for="my_pers_punctual">Пунктуальний/а</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Спосіб життя (про себе)</label> <div class="checkbox-options">
-            <input type="checkbox" id="my_life_early_bird" name="characteristics" value="my_early_bird"><label for="my_life_early_bird">"Жайворонок"</label>
-            <input type="checkbox" id="my_life_night_owl" name="characteristics" value="my_night_owl"><label for="my_life_night_owl">"Сова"</label>
-            <input type="checkbox" id="my_life_student" name="characteristics" value="my_student"><label for="my_life_student">Вчуся</label>
-            <input type="checkbox" id="my_life_worker" name="characteristics" value="my_worker"><label for="my_life_worker">Працюю</label>
-            <input type="checkbox" id="my_life_study_home" name="characteristics" value="my_study_home"><label for="my_life_study_home">Вчуся вдома</label>
-            <input type="checkbox" id="my_life_work_home" name="characteristics" value="my_work_home"><label for="my_life_work_home">Працюю вдома</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Інтереси (про себе)</label> <div class="checkbox-options">
-            <input type="checkbox" id="my_int_music" name="characteristics" value="my_music"><label for="my_int_music">Музика</label>
-            <input type="checkbox" id="my_int_gaming" name="characteristics" value="my_gaming"><label for="my_int_gaming">Ігри</label>
-            <input type="checkbox" id="my_int_cooking" name="characteristics" value="my_cooking"><label for="my_int_cooking">Кулінарія</label>
-            <input type="checkbox" id="my_int_movies" name="characteristics" value="my_movies"><label for="my_int_movies">Кіно</label>
-            <input type="checkbox" id="my_int_travel" name="characteristics" value="my_travel"><label for="my_int_travel">Подорожі</label>
-            <input type="checkbox" id="my_int_reading" name="characteristics" value="my_reading"><label for="my_int_reading">Читання</label>
-            <input type="checkbox" id="my_int_sports" name="characteristics" value="my_sports"><label for="my_int_sports">Спорт</label>
-            <input type="checkbox" id="my_int_art" name="characteristics" value="my_art"><label for="my_int_art">Мистецтво</label>
-            <input type="checkbox" id="my_int_photography" name="characteristics" value="my_photography"><label for="my_int_photography">Фотографія</label>
-            <input type="checkbox" id="my_int_dancing" name="characteristics" value="my_dancing"><label for="my_int_dancing">Танці</label>
-            <input type="checkbox" id="my_int_volunteering" name="characteristics" value="my_volunteering"><label for="my_int_volunteering">Волонтерство</label>
-            <input type="checkbox" id="my_int_board_games" name="characteristics" value="my_board_games"><label for="my_int_board_games">Настільні ігри</label>
-            <input type="checkbox" id="my_int_it" name="characteristics" value="my_it"><label for="my_int_it">IT / Технології</label>
-            <input type="checkbox" id="my_int_nature" name="characteristics" value="my_nature"><label for="my_int_nature">Природа / Походи</label>
-            <input type="checkbox" id="my_int_fashion" name="characteristics" value="my_fashion"><label for="my_int_fashion">Мода</label>
-            <input type="checkbox" id="my_int_politics" name="characteristics" value="my_politics"><label for="my_int_politics">Політика</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label for="about_me_description">Додатково про себе</label>
-            <textarea id="about_me_description" name="about_me_description" rows="4" placeholder="Напишіть кількома словами про себе. Наприклад: 'Я спокійна людина, поважаю особистий простір, люблю чистоту.'"></textarea>
-        </div>
-
-    </div> <div id="roommatePreferences" style="display: none; border-top: 2px solid #fd7e14; padding-top: 20px; margin-top: 10px;">
-
-        <h2 style="margin-bottom: 20px; text-align: center; color: #fd7e14;">Вимоги до сусіда</h2>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Бажана стать</label>
-                <select id="roommate_gender" name="roommate_gender">
-                    <option value="any" selected>Будь-яка</option>
-                    <option value="female">Жіноча</option>
-                    <option value="male">Чоловіча</option>
-                    <option value="other">Інша</option> </select>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="roommate_age_min">Мін. вік</label>
-                <input type="number" id="roommate_age_min" name="roommate_age_min" placeholder="18" min="16" max="110">
-            </div>
-            <div class="form-group">
-                <label for="roommate_age_max">Макс. вік</label>
-                <input type="number" id="roommate_age_max" name="roommate_age_max" placeholder="30" min="16" max="110">
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Паління</label>
-            <div class="radio-options">
-                <input type="radio" id="smoke_any" name="roommate_smoking" value="any" checked><label for="smoke_any">Неважливо</label>
-                <input type="radio" id="smoke_no" name="roommate_smoking" value="no"><label for="smoke_no">Не палить</label>
-                <input type="radio" id="smoke_yes" name="roommate_smoking" value="yes"><label for="smoke_yes">Палить</label>
-                <input type="radio" id="smoke_outside" name="roommate_smoking" value="outside"><label for="smoke_outside">Палить (лише на вулиці)</label>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>Алкоголь</label> <div class="radio-options">
-            <input type="radio" id="drink_any" name="roommate_drinking" value="any" checked><label for="drink_any">Неважливо</label>
-            <input type="radio" id="drink_no" name="roommate_drinking" value="no"><label for="drink_no">Не вживає</label>
-            <input type="radio" id="drink_rarely" name="roommate_drinking" value="rarely"><label for="drink_rarely">Рідко вживає</label>
-            <input type="radio" id="drink_yes" name="roommate_drinking" value="yes"><label for="drink_yes">Вживає</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Гості</label>
-            <div class="radio-options">
-                <input type="radio" id="guests_any" name="roommate_guests" value="any" checked><label for="guests_any">Неважливо</label>
-                <input type="radio" id="guests_no" name="roommate_guests" value="no"><label for="guests_no">Без гостей</label>
-                <input type="radio" id="guests_rarely" name="roommate_guests" value="rarely"><label for="guests_rarely">Рідко</label>
-                <input type="radio" id="guests_sometimes" name="roommate_guests" value="sometimes"><label for="guests_sometimes">Іноді</label>
-                <input type="radio" id="guests_often" name="roommate_guests" value="often"><label for="guests_often">Часто</label> </div>
-        </div>
-
-        <div class="form-group">
-            <label>Тварини у сусіда</label>
-            <p class="form-description">Виберіть, якщо ви не проти, щоб у сусіда були тварини.</p>
-            <div class="checkbox-options">
-                <input type="checkbox" id="mate_has_cat" name="characteristics" value="mate_has_cat"><label for="mate_has_cat">З котом</label>
-                <input type="checkbox" id="mate_has_dog" name="characteristics" value="mate_has_dog"><label for="mate_has_dog">З собакою</label>
-                <input type="checkbox" id="mate_has_other" name="characteristics" value="mate_has_other"><label for="mate_has_other">З іншою тваринкою</label>
-                <input type="checkbox" id="mate_has_multiple" name="characteristics" value="mate_has_multiple"><label for="mate_has_multiple">З декількома тваринами</label> <input type="checkbox" id="mate_no_pet_check" name="characteristics" value="mate_no_pet" checked><label for="mate_no_pet_check">Бажано без тварин</label> </div>
-        </div>
-
-        <div class="form-group">
-            <label>Особистість (кого шукаєте)</label> <div class="checkbox-options">
-            <input type="checkbox" id="pers_introvert" name="characteristics" value="mate_introvert"><label for="pers_introvert">Інтроверт</label>
-            <input type="checkbox" id="pers_extrovert" name="characteristics" value="mate_extrovert"><label for="pers_extrovert">Екстраверт</label>
-            <input type="checkbox" id="pers_ambivert" name="characteristics" value="mate_ambivert"><label for="pers_ambivert">Амбіверт</label>
-            <input type="checkbox" id="pers_tidy" name="characteristics" value="mate_tidy"><label for="pers_tidy">Охайний/а</label>
-            <input type="checkbox" id="pers_creative" name="characteristics" value="mate_creative"><label for="pers_creative">Творчий/а</label>
-            <input type="checkbox" id="pers_sporty" name="characteristics" value="mate_sporty"><label for="pers_sporty">Спортивний/а</label>
-            <input type="checkbox" id="mate_pers_calm" name="characteristics" value="mate_calm"><label for="mate_pers_calm">Спокійний/а</label>
-            <input type="checkbox" id="mate_pers_communicative" name="characteristics" value="mate_communicative"><label for="mate_pers_communicative">Комунікабельний/а</label>
-            <input type="checkbox" id="mate_pers_responsible" name="characteristics" value="mate_responsible"><label for="mate_pers_responsible">Відповідальний/а</label>
-            <input type="checkbox" id="mate_pers_optimist" name="characteristics" value="mate_optimist"><label for="mate_pers_optimist">Оптиміст/ка</label>
-            <input type="checkbox" id="mate_pers_pessimist" name="characteristics" value="mate_pessimist"><label for="mate_pers_pessimist">Песиміст/ка</label>
-            <input type="checkbox" id="mate_pers_realist" name="characteristics" value="mate_realist"><label for="mate_pers_realist">Реаліст/ка</label>
-            <input type="checkbox" id="mate_pers_humorous" name="characteristics" value="mate_humorous"><label for="mate_pers_humorous">З почуттям гумору</label>
-            <input type="checkbox" id="mate_pers_independent" name="characteristics" value="mate_independent"><label for="mate_pers_independent">Незалежний/а</label>
-            <input type="checkbox" id="mate_pers_flexible" name="characteristics" value="mate_flexible"><label for="mate_pers_flexible">Гнучкий/а</label>
-            <input type="checkbox" id="mate_pers_punctual" name="characteristics" value="mate_punctual"><label for="mate_pers_punctual">Пунктуальний/а</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Спосіб життя (кого шукаєте)</label> <div class="checkbox-options">
-            <input type="checkbox" id="life_early_bird" name="characteristics" value="mate_early_bird"><label for="life_early_bird">"Жайворонок"</label>
-            <input type="checkbox" id="life_night_owl" name="characteristics" value="mate_night_owl"><label for="life_night_owl">"Сова"</label>
-            <input type="checkbox" id="mate_life_student" name="characteristics" value="mate_student"><label for="mate_life_student">Вчиться</label>
-            <input type="checkbox" id="mate_life_worker" name="characteristics" value="mate_worker"><label for="mate_life_worker">Працює</label>
-            <input type="checkbox" id="mate_life_study_home" name="characteristics" value="mate_study_home"><label for="mate_life_study_home">Вчиться вдома</label>
-            <input type="checkbox" id="mate_life_work_home" name="characteristics" value="mate_work_home"><label for="mate_life_work_home">Працює вдома</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Інтереси (кого шукаєте)</label> <div class="checkbox-options">
-            <input type="checkbox" id="int_music" name="characteristics" value="mate_music"><label for="int_music">Музика</label>
-            <input type="checkbox" id="int_gaming" name="characteristics" value="mate_gaming"><label for="int_gaming">Ігри</label>
-            <input type="checkbox" id="int_cooking" name="characteristics" value="mate_cooking"><label for="int_cooking">Кулінарія</label>
-            <input type="checkbox" id="int_movies" name="characteristics" value="mate_movies"><label for="int_movies">Кіно</label>
-            <input type="checkbox" id="int_travel" name="characteristics" value="mate_travel"><label for="int_travel">Подорожі</label>
-            <input type="checkbox" id="int_reading" name="characteristics" value="mate_reading"><label for="int_reading">Читання</label>
-            <input type="checkbox" id="mate_int_sports" name="characteristics" value="mate_sports"><label for="mate_int_sports">Спорт</label>
-            <input type="checkbox" id="mate_int_art" name="characteristics" value="mate_art"><label for="mate_int_art">Мистецтво</label>
-            <input type="checkbox" id="mate_int_photography" name="characteristics" value="mate_photography"><label for="mate_int_photography">Фотографія</label>
-            <input type="checkbox" id="mate_int_dancing" name="characteristics" value="mate_dancing"><label for="mate_int_dancing">Танці</label>
-            <input type="checkbox" id="mate_int_volunteering" name="characteristics" value="mate_volunteering"><label for="mate_int_volunteering">Волонтерство</label>
-            <input type="checkbox" id="mate_int_board_games" name="characteristics" value="mate_board_games"><label for="mate_int_board_games">Настільні ігри</label>
-            <input type="checkbox" id="mate_int_it" name="characteristics" value="mate_it"><label for="mate_int_it">IT / Технології</label>
-            <input type="checkbox" id="mate_int_nature" name="characteristics" value="mate_nature"><label for="mate_int_nature">Природа / Походи</label>
-            <input type="checkbox" id="mate_int_fashion" name="characteristics" value="mate_fashion"><label for="mate_int_fashion">Мода</label>
-            <input type="checkbox" id="mate_int_politics" name="characteristics" value="mate_politics"><label for="mate_int_politics">Політика</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label for="roommate_description">Додаткові побажання</label>
-            <textarea id="roommate_description" name="roommate_description" rows="4" placeholder="Напишіть кількома словами, кого ви шукаєте. Наприклад: 'Шукаю спокійного сусіда/сусідку, що поважає особистий простір.'"></textarea>
-        </div>
-
-    </div> <div id="listingDetails" style="display: none; border-top: 2px solid var(--primary-color); padding-top: 20px; margin-top: 10px;">
-        <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary-color);">Характеристики житла</h2>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="building_type">Тип будинку</label>
-                <select id="building_type" name="building_type" class="other-option-select">
-                    <option value="" disabled selected>Обрати</option>
-                    <option value="tsar_building">Царський будинок</option>
-                    <option value="austria_building">Австрійський будинок</option>
-                    <option value="polish_building">Польський будинок</option>
-                    <option value="stalinka">Сталінка</option>
-                    <option value="hrushchovka">Хрущовка</option>
-                    <option value="cheshka">Чешка</option>
-                    <option value="panel">Панелька</option>
-                    <option value="sovmin">Совмін</option>
-                    <option value="gostinka">Гостинка</option>
-                    <option value="gurtogitok">Гуртожиток</option>
-                    <option value="private_house">Приватний будинок</option> <option value="housing_80_90">Житловий фонд 80-90-і</option>
-                    <option value="housing_91_2000">Житловий фонд 91-2000-і</option>
-                    <option value="housing_2001_2010">Житловий фонд 2001-2010-і</option>
-                    <option value="housing_since_2011">Житловий фонд від 2011 р.</option>
-                    <option value="new_building">Новобудова</option>
-                    <option value="other_building">Інший тип</option>
+            <div class="form-group" id="myGroupSizeGroup" style="display: none;">
+                <label>Для скількох людей шукаєте житло?</label>
+                <div class="radio-options">
+                    <input type="radio" id="group_size_1" name="my_group_size" value="1" checked><label for="group_size_1">Лише для себе</label>
+                    <input type="radio" id="group_size_more" name="my_group_size" value="more"><label for="group_size_more">Для себе та друзів</label>
+                </div>
+                <select id="my_group_count" name="my_group_count" style="display: none; margin-top: 10px;">
+                    <option value="2" selected>Ми (2)</option>
+                    <option value="3">Ми (3)</option>
+                    <option value="4">Ми (4)</option>
+                    <option value="5">Ми (5+)</option>
                 </select>
-                <input type="text" name="building_type_other" placeholder="Вкажіть інший тип будинку" class="hidden-other-input"> </div>
-            <div class="form-group">
-                <label for="rooms">Кількість кімнат</label> <select id="rooms" name="rooms">
-                <option value="" disabled selected>Обрати</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4+">4+</option>
-            </select>
             </div>
+
+            <div class="form-group">
+                <label>Паління</label>
+                <div class="radio-options">
+                    <input type="radio" id="my_smoke_no" name="my_smoking" value="no" checked><label for="my_smoke_no">Не палю</label>
+                    <input type="radio" id="my_smoke_yes" name="my_smoking" value="yes"><label for="my_smoke_yes">Палю</label>
+                    <input type="radio" id="my_smoke_outside" name="my_smoking" value="outside"><label for="my_smoke_outside">Палю (лише на вулиці)</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Алкоголь</label>
+                <div class="radio-options">
+                    <input type="radio" id="my_drink_no" name="my_drinking" value="no" checked><label for="my_drink_no">Не вживаю</label>
+                    <input type="radio" id="my_drink_rarely" name="my_drinking" value="rarely"><label for="my_drink_rarely">Рідко вживаю</label>
+                    <input type="radio" id="my_drink_yes" name="my_drinking" value="yes"><label for="my_drink_yes">Вживаю</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Гості</label>
+                <div class="radio-options">
+                    <input type="radio" id="my_guests_no" name="my_guests" value="no" checked><label for="my_guests_no">Без гостей</label>
+                    <input type="radio" id="my_guests_rarely" name="my_guests" value="rarely"><label for="my_guests_rarely">Рідко</label>
+                    <input type="radio" id="my_guests_sometimes" name="my_guests" value="sometimes"><label for="my_guests_sometimes">Іноді</label>
+                    <input type="radio" id="my_guests_often" name="my_guests" value="often"><label for="my_guests_often">Часто</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Чи є у вас тварини?</label>
+                <div class="radio-options">
+                    <input type="radio" id="my_pets_yes" name="my_pets_policy" value="yes"><label for="my_pets_yes">Так</label>
+                    <input type="radio" id="my_pets_no" name="my_pets_policy" value="no" checked><label for="my_pets_no">Ні</label>
+                </div>
+                <div class="checkbox-options" id="my_pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
+                    <p class="form-description" style="width: 100%; margin-bottom: 5px;">Вкажіть, які саме:</p>
+                    <input type="checkbox" id="my_pet_cat" name="characteristics" value="my_pet_cat"><label for="my_pet_cat">Кіт</label>
+                    <input type="checkbox" id="my_pet_dog" name="characteristics" value="my_pet_dog"><label for="my_pet_dog">Собака</label>
+                    <input type="checkbox" id="my_pet_other" name="characteristics" value="my_pet_other"><label for="my_pet_other">Інша тваринка</label>
+                    <input type="checkbox" id="my_pet_multiple" name="characteristics" value="my_pet_multiple"><label for="my_pet_multiple">Декілька тварин</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Особистість (про себе)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="my_pers_introvert" name="characteristics" value="my_introvert"><label for="my_pers_introvert">Інтроверт</label>
+                    <input type="checkbox" id="my_pers_extrovert" name="characteristics" value="my_extrovert"><label for="my_pers_extrovert">Екстраверт</label>
+                    <input type="checkbox" id="my_pers_ambivert" name="characteristics" value="my_ambivert"><label for="my_pers_ambivert">Амбіверт</label>
+                    <input type="checkbox" id="my_pers_tidy" name="characteristics" value="my_tidy"><label for="my_pers_tidy">Охайний/а</label>
+                    <input type="checkbox" id="my_pers_creative" name="characteristics" value="my_creative"><label for="my_pers_creative">Творчий/а</label>
+                    <input type="checkbox" id="my_pers_calm" name="characteristics" value="my_calm"><label for="my_pers_calm">Спокійний/а</label>
+                    <input type="checkbox" id="my_pers_communicative" name="characteristics" value="my_communicative"><label for="my_pers_communicative">Комунікабельний/а</label>
+                    <input type="checkbox" id="my_pers_responsible" name="characteristics" value="my_responsible"><label for="my_pers_responsible">Відповідальний/а</label>
+                    <input type="checkbox" id="my_pers_humorous" name="characteristics" value="my_humorous"><label for="my_pers_humorous">З почуттям гумору</label>
+                    <!-- Removed: optimist, pessimist, realist, sporty, independent, flexible, punctual -->
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="my_pers_other_check" name="characteristics_other_trigger" value="my_personality_other" onchange="toggleOtherInput(this, 'my_pers_other_text')">
+                        <label for="my_pers_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="my_pers_other_text" name="my_personality_other_text" placeholder="Введіть іншу характеристику" class="hidden-other-input characteristics-other-text">
+            </div>
+
+            <div class="form-group">
+                <label>Спосіб життя (про себе)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="my_life_early_bird" name="characteristics" value="my_early_bird"><label for="my_life_early_bird">Жайворонок</label> <!-- Removed quotes -->
+                    <input type="checkbox" id="my_life_night_owl" name="characteristics" value="my_night_owl"><label for="my_life_night_owl">Сова</label> <!-- Removed quotes -->
+                    <input type="checkbox" id="my_life_student" name="characteristics" value="my_student"><label for="my_life_student">Вчуся</label>
+                    <input type="checkbox" id="my_life_worker" name="characteristics" value="my_worker"><label for="my_life_worker">Працюю</label>
+                    <input type="checkbox" id="my_life_study_home" name="characteristics" value="my_study_home"><label for="my_life_study_home">Вчуся вдома</label>
+                    <input type="checkbox" id="my_life_work_home" name="characteristics" value="my_work_home"><label for="my_life_work_home">Працюю вдома</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="my_life_other_check" name="characteristics_other_trigger" value="my_lifestyle_other" onchange="toggleOtherInput(this, 'my_life_other_text')">
+                        <label for="my_life_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="my_life_other_text" name="my_lifestyle_other_text" placeholder="Введіть інший спосіб життя" class="hidden-other-input characteristics-other-text">
+            </div>
+
+            <div class="form-group">
+                <label>Інтереси (про себе)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="my_int_music" name="characteristics" value="my_music"><label for="my_int_music">Музика</label>
+                    <input type="checkbox" id="my_int_gaming" name="characteristics" value="my_gaming"><label for="my_int_gaming">Ігри</label>
+                    <input type="checkbox" id="my_int_cooking" name="characteristics" value="my_cooking"><label for="my_int_cooking">Кулінарія</label>
+                    <input type="checkbox" id="my_int_movies" name="characteristics" value="my_movies"><label for="my_int_movies">Кіно</label>
+                    <input type="checkbox" id="my_int_travel" name="characteristics" value="my_travel"><label for="my_int_travel">Подорожі</label>
+                    <input type="checkbox" id="my_int_reading" name="characteristics" value="my_reading"><label for="my_int_reading">Читання</label>
+                    <input type="checkbox" id="my_int_sports" name="characteristics" value="my_sports"><label for="my_int_sports">Спорт</label>
+                    <input type="checkbox" id="my_int_art" name="characteristics" value="my_art"><label for="my_int_art">Мистецтво</label>
+                    <input type="checkbox" id="my_int_photography" name="characteristics" value="my_photography"><label for="my_int_photography">Фотографія</label>
+                    <input type="checkbox" id="my_int_dancing" name="characteristics" value="my_dancing"><label for="my_int_dancing">Танці</label>
+                    <input type="checkbox" id="my_int_volunteering" name="characteristics" value="my_volunteering"><label for="my_int_volunteering">Волонтерство</label>
+                    <input type="checkbox" id="my_int_board_games" name="characteristics" value="my_board_games"><label for="my_int_board_games">Настільні ігри</label>
+                    <input type="checkbox" id="my_int_it" name="characteristics" value="my_it"><label for="my_int_it">IT / Технології</label>
+                    <input type="checkbox" id="my_int_nature" name="characteristics" value="my_nature"><label for="my_int_nature">Природа / Походи</label>
+                    <input type="checkbox" id="my_int_fashion" name="characteristics" value="my_fashion"><label for="my_int_fashion">Мода</label>
+                    <input type="checkbox" id="my_int_politics" name="characteristics" value="my_politics"><label for="my_int_politics">Політика</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="my_int_other_check" name="characteristics_other_trigger" value="my_interests_other" onchange="toggleOtherInput(this, 'my_int_other_text')">
+                        <label for="my_int_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="my_int_other_text" name="my_interests_other_text" placeholder="Введіть інший інтерес" class="hidden-other-input characteristics-other-text">
+            </div>
+
+            <div class="form-group">
+                <label for="about_me_description">Додатково про себе</label>
+                <textarea id="about_me_description" name="about_me_description" rows="4" placeholder="Напишіть кількома словами про себе. Наприклад: 'Я спокійна людина, поважаю особистий простір, люблю чистоту.'"></textarea>
+            </div>
+
         </div>
 
-        <div class="form-group" id="maxOccupantsGroup" style="display: none;">
-            <label for="max_occupants">Макс. кількість мешканців</label> <select id="max_occupants" name="max_occupants">
-            <option value="" disabled selected>Виберіть</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5+">5 і більше</option>
-        </select>
+        <div id="roommatePreferences" style="display: none; border-top: 2px solid #fd7e14; padding-top: 20px; margin-top: 10px;">
+            <h2 style="margin-bottom: 20px; text-align: center; color: #fd7e14;">Вимоги до сусіда</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Бажана стать</label>
+                    <select id="roommate_gender" name="roommate_gender">
+                        <option value="any" selected>Будь-яка</option>
+                        <option value="female">Жіноча</option>
+                        <option value="male">Чоловіча</option>
+                        <option value="other">Інша</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="roommate_age_min">Мін. вік</label>
+                    <input type="number" id="roommate_age_min" name="roommate_age_min" placeholder="18" min="0" max="110">
+                </div>
+                <div class="form-group">
+                    <label for="roommate_age_max">Макс. вік</label>
+                    <input type="number" id="roommate_age_max" name="roommate_age_max" placeholder="30" min="0" max="110">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Паління</label>
+                <div class="radio-options">
+                    <input type="radio" id="smoke_any" name="roommate_smoking" value="any" checked><label for="smoke_any">Неважливо</label>
+                    <input type="radio" id="smoke_no" name="roommate_smoking" value="no"><label for="smoke_no">Не палить</label>
+                    <input type="radio" id="smoke_yes" name="roommate_smoking" value="yes"><label for="smoke_yes">Палить</label>
+                    <input type="radio" id="smoke_outside" name="roommate_smoking" value="outside"><label for="smoke_outside">Палить (лише на вулиці)</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Алкоголь</label>
+                <div class="radio-options">
+                    <input type="radio" id="drink_any" name="roommate_drinking" value="any" checked><label for="drink_any">Неважливо</label>
+                    <input type="radio" id="drink_no" name="roommate_drinking" value="no"><label for="drink_no">Не вживає</label>
+                    <input type="radio" id="drink_rarely" name="roommate_drinking" value="rarely"><label for="drink_rarely">Рідко вживає</label>
+                    <input type="radio" id="drink_yes" name="roommate_drinking" value="yes"><label for="drink_yes">Вживає</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Гості</label>
+                <div class="radio-options">
+                    <input type="radio" id="guests_any" name="roommate_guests" value="any" checked><label for="guests_any">Неважливо</label>
+                    <input type="radio" id="guests_no" name="roommate_guests" value="no"><label for="guests_no">Без гостей</label>
+                    <input type="radio" id="guests_rarely" name="roommate_guests" value="rarely"><label for="guests_rarely">Рідко</label>
+                    <input type="radio" id="guests_sometimes" name="roommate_guests" value="sometimes"><label for="guests_sometimes">Іноді</label>
+                    <input type="radio" id="guests_often" name="roommate_guests" value="often"><label for="guests_often">Часто</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Чи згодні ви жити з сусідом, у якого є тварини?</label>
+                <div class="radio-options">
+                    <input type="radio" id="mate_pets_yes" name="mate_pets_policy" value="yes"><label for="mate_pets_yes">Так</label>
+                    <input type="radio" id="mate_pets_no" name="mate_pets_policy" value="no" checked><label for="mate_pets_no">Ні</label>
+                    <input type="radio" id="mate_pets_maybe" name="mate_pets_policy" value="maybe"><label for="mate_pets_maybe">Можливо</label>
+                </div>
+                <div class="checkbox-options" id="mate_pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
+                    <p class="form-description" style="width: 100%; margin-bottom: 5px;">Вкажіть, яких тварин ви готові розглянути:</p>
+                    <input type="checkbox" id="mate_has_cat" name="characteristics" value="mate_has_cat"><label for="mate_has_cat">Кіт</label>
+                    <input type="checkbox" id="mate_has_dog" name="characteristics" value="mate_has_dog"><label for="mate_has_dog">Собака</label>
+                    <input type="checkbox" id="mate_has_other" name="characteristics" value="mate_has_other"><label for="mate_has_other">Інша тваринка</label>
+                    <input type="checkbox" id="mate_has_multiple" name="characteristics" value="mate_has_multiple"><label for="mate_has_multiple">Декілька тварин</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Особистість (кого шукаєте)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="pers_introvert" name="characteristics" value="mate_introvert"><label for="pers_introvert">Інтроверт</label>
+                    <input type="checkbox" id="pers_extrovert" name="characteristics" value="mate_extrovert"><label for="pers_extrovert">Екстраверт</label>
+                    <input type="checkbox" id="pers_ambivert" name="characteristics" value="mate_ambivert"><label for="pers_ambivert">Амбіверт</label>
+                    <input type="checkbox" id="pers_tidy" name="characteristics" value="mate_tidy"><label for="pers_tidy">Охайний/а</label>
+                    <input type="checkbox" id="pers_creative" name="characteristics" value="mate_creative"><label for="pers_creative">Творчий/а</label>
+                    <input type="checkbox" id="mate_pers_calm" name="characteristics" value="mate_calm"><label for="mate_pers_calm">Спокійний/а</label>
+                    <input type="checkbox" id="mate_pers_communicative" name="characteristics" value="mate_communicative"><label for="mate_pers_communicative">Комунікабельний/а</label>
+                    <input type="checkbox" id="mate_pers_responsible" name="characteristics" value="mate_responsible"><label for="mate_pers_responsible">Відповідальний/а</label>
+                    <input type="checkbox" id="mate_pers_humorous" name="characteristics" value="mate_humorous"><label for="mate_pers_humorous">З почуттям гумору</label>
+                    <!-- Removed: optimist, pessimist, realist, sporty, independent, flexible, punctual -->
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="pers_other_check" name="characteristics_other_trigger" value="mate_personality_other" onchange="toggleOtherInput(this, 'pers_other_text')">
+                        <label for="pers_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="pers_other_text" name="mate_personality_other_text" placeholder="Введіть іншу характеристику" class="hidden-other-input characteristics-other-text">
+            </div>
+
+            <div class="form-group">
+                <label>Спосіб життя (кого шукаєте)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="life_early_bird" name="characteristics" value="mate_early_bird"><label for="life_early_bird">Жайворонок</label>
+                    <input type="checkbox" id="life_night_owl" name="characteristics" value="mate_night_owl"><label for="life_night_owl">Сова</label>
+                    <input type="checkbox" id="mate_life_student" name="characteristics" value="mate_student"><label for="mate_life_student">Вчиться</label>
+                    <input type="checkbox" id="mate_life_worker" name="characteristics" value="mate_worker"><label for="mate_life_worker">Працює</label>
+                    <input type="checkbox" id="mate_life_study_home" name="characteristics" value="mate_study_home"><label for="mate_life_study_home">Вчиться вдома</label>
+                    <input type="checkbox" id="mate_life_work_home" name="characteristics" value="mate_work_home"><label for="mate_life_work_home">Працює вдома</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="life_other_check" name="characteristics_other_trigger" value="mate_lifestyle_other" onchange="toggleOtherInput(this, 'life_other_text')">
+                        <label for="life_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="life_other_text" name="mate_lifestyle_other_text" placeholder="Введіть інший спосіб життя" class="hidden-other-input characteristics-other-text">
+            </div>
+
+            <div class="form-group">
+                <label>Інтереси (кого шукаєте)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="int_music" name="characteristics" value="mate_music"><label for="int_music">Музика</label>
+                    <input type="checkbox" id="int_gaming" name="characteristics" value="mate_gaming"><label for="int_gaming">Ігри</label>
+                    <input type="checkbox" id="int_cooking" name="characteristics" value="mate_cooking"><label for="int_cooking">Кулінарія</label>
+                    <input type="checkbox" id="int_movies" name="characteristics" value="mate_movies"><label for="int_movies">Кіно</label>
+                    <input type="checkbox" id="int_travel" name="characteristics" value="mate_travel"><label for="int_travel">Подорожі</label>
+                    <input type="checkbox" id="int_reading" name="characteristics" value="mate_reading"><label for="int_reading">Читання</label>
+                    <input type="checkbox" id="mate_int_sports" name="characteristics" value="mate_sports"><label for="mate_int_sports">Спорт</label>
+                    <input type="checkbox" id="mate_int_art" name="characteristics" value="mate_art"><label for="mate_int_art">Мистецтво</label>
+                    <input type="checkbox" id="mate_int_photography" name="characteristics" value="mate_photography"><label for="mate_int_photography">Фотографія</label>
+                    <input type="checkbox" id="mate_int_dancing" name="characteristics" value="mate_dancing"><label for="mate_int_dancing">Танці</label>
+                    <input type="checkbox" id="mate_int_volunteering" name="characteristics" value="mate_volunteering"><label for="mate_int_volunteering">Волонтерство</label>
+                    <input type="checkbox" id="mate_int_board_games" name="characteristics" value="mate_board_games"><label for="mate_int_board_games">Настільні ігри</label>
+                    <input type="checkbox" id="mate_int_it" name="characteristics" value="mate_it"><label for="mate_int_it">IT / Технології</label>
+                    <input type="checkbox" id="mate_int_nature" name="characteristics" value="mate_nature"><label for="mate_int_nature">Природа / Походи</label>
+                    <input type="checkbox" id="mate_int_fashion" name="characteristics" value="mate_fashion"><label for="mate_int_fashion">Мода</label>
+                    <input type="checkbox" id="mate_int_politics" name="characteristics" value="mate_politics"><label for="mate_int_politics">Політика</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="int_other_check" name="characteristics_other_trigger" value="mate_interests_other" onchange="toggleOtherInput(this, 'int_other_text')">
+                        <label for="int_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="int_other_text" name="mate_interests_other_text" placeholder="Введіть інший інтерес" class="hidden-other-input characteristics-other-text">
+            </div>
+
+            <div class="form-group">
+                <label for="roommate_description">Додаткові побажання</label>
+                <textarea id="roommate_description" name="roommate_description" rows="4" placeholder="Напишіть кількома словами, кого ви шукаєте. Наприклад: 'Шукаю спокійного сусіда/сусідку, що поважає особистий простір.'"></textarea>
+            </div>
+
         </div>
 
-        <div id="findMateGroups" style="display: none;">
-            <div class="form-group">
-                <label for="current_occupants">Скільки людей *вже* проживає?</label> <select id="current_occupants" name="current_occupants">
-                <option value="" disabled selected>Виберіть</option>
-                <option value="1">1 (лише я)</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5+">5 і більше</option>
-            </select>
-            </div>
-            <div class="form-group">
-                <label for="seeking_roommates">Скільки сусідів шукаєте?</label> <select id="seeking_roommates" name="seeking_roommates">
-                <option value="" disabled selected>Виберіть</option>
-                <option value="1">1 сусіда</option>
-                <option value="2">2 сусідів</option>
-                <option value="3">3 сусідів</option>
-                <option value="4+">4 і більше</option>
-            </select>
-            </div>
-        </div>
+        <div id="listingDetails" style="display: none; border-top: 2px solid var(--primary-color); padding-top: 20px; margin-top: 10px;">
+            <h2 style="margin-bottom: 20px; text-align: center; color: var(--primary-color);">Характеристики житла</h2>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="floor">Поверх</label> <input type="number" id="floor" name="floor" placeholder="5" min="0" max="100">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="building_type">Тип будинку</label>
+                    <select id="building_type" name="building_type" class="other-option-select">
+                        <option value="" disabled selected>Обрати</option>
+                        <option value="tsar_building">Царський будинок</option>
+                        <option value="austria_building">Австрійський будинок</option>
+                        <option value="polish_building">Польський будинок</option>
+                        <option value="stalinka">Сталінка</option>
+                        <option value="hrushchovka">Хрущовка</option>
+                        <option value="cheshka">Чешка</option>
+                        <option value="panel">Панелька</option>
+                        <option value="sovmin">Совмін</option>
+                        <option value="gostinka">Гостинка</option>
+                        <option value="gurtogitok">Гуртожиток</option>
+                        <option value="private_house">Приватний будинок</option>
+                        <option value="housing_80_90">Житловий фонд 80-90-і</option>
+                        <option value="housing_91_2000">Житловий фонд 91-2000-і</option>
+                        <option value="housing_2001_2010">Житловий фонд 2001-2010-і</option>
+                        <option value="housing_since_2011">Житловий фонд від 2011 р.</option>
+                        <option value="new_building">Новобудова</option>
+                        <option value="other">Інший тип</option>
+                    </select>
+                    <input type="text" name="building_type_other" placeholder="Вкажіть інший тип будинку" class="hidden-other-input">
+                </div>
+                <div class="form-group">
+                    <label for="rooms">Кількість кімнат</label>
+                    <select id="rooms" name="rooms">
+                        <option value="" disabled selected>Обрати</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4+">4+</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="total_floors">Поверховість</label> <input type="number" id="total_floors" name="total_floors" placeholder="9" min="1" max="100">
-            </div>
-        </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="total_area">Загальна площа (м²)</label> <input type="number" id="total_area" name="total_area" placeholder="42" min="1" max="10000">
+            <div class="form-group" id="maxOccupantsGroup" style="display: none;">
+                <label for="max_occupants">Макс. кількість мешканців</label>
+                <select id="max_occupants" name="max_occupants">
+                    <option value="" disabled selected>Виберіть</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5+">5 і більше</option>
+                </select>
             </div>
-            <div class="form-group">
-                <label for="kitchen_area">Площа кухні (м²)</label> <input type="number" id="kitchen_area" name="kitchen_area" placeholder="9" min="0" max="1000">
-            </div>
-        </div>
 
-        <div class="form-row">
+            <div id="findMateGroups" style="display: none;">
+                <div class="form-group">
+                    <label for="current_occupants">Скільки людей вже проживає?</label>
+                    <select id="current_occupants" name="current_occupants">
+                        <option value="" disabled selected>Виберіть</option>
+                        <option value="1">1 (лише я)</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5+">5 і більше</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="seeking_roommates">Скільки сусідів шукаєте?</label>
+                    <select id="seeking_roommates" name="seeking_roommates">
+                        <option value="" disabled selected>Виберіть</option>
+                        <option value="1">1 сусіда</option>
+                        <option value="2">2 сусідів</option>
+                        <option value="3">3 сусідів</option>
+                        <option value="4+">4 і більше</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="floor">Поверх</label>
+                    <input type="number" id="floor" name="floor" placeholder="5" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="total_floors">Поверховість</label>
+                    <input type="number" id="total_floors" name="total_floors" placeholder="9" min="1" max="100">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="total_area">Загальна площа (м²)</label>
+                    <input type="number" id="total_area" name="total_area" placeholder="42" min="0" max="10000">
+                </div>
+                <div class="form-group">
+                    <label for="kitchen_area">Площа кухні (м²)</label>
+                    <input type="number" id="kitchen_area" name="kitchen_area" placeholder="9" min="0" max="1000">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="wall_type">Тип стін</label>
+                    <select id="wall_type" name="wall_type" class="other-option-select">
+                        <option value="" selected>Обрати</option>
+                        <option value="brick">Цегляний</option>
+                        <option value="panel">Панельний</option>
+                        <option value="monolithic">Монолітний</option>
+                        <option value="slag_block">Шлакоблочний</option>
+                        <option value="wooden">Дерев'яний</option>
+                        <option value="gas_block">Газоблок</option>
+                        <option value="sip_panel">СІП панель</option>
+                        <option value="other">Інше</option>
+                    </select>
+                    <input type="text" name="wall_type_other" placeholder="Вкажіть інший тип стін" class="hidden-other-input">
+                </div>
+                <div class="form-group">
+                    <label for="planning">Планування</label>
+                    <select id="planning" name="planning" class="other-option-select">
+                        <option value="" selected>Обрати</option>
+                        <option value="separate">Роздільна</option>
+                        <option value="adjacent_walkthrough">Суміжна, прохідна</option>
+                        <option value="studio">Студія</option>
+                        <option value="penthouse">Пентхаус</option>
+                        <option value="multi_level">Багаторівнева</option>
+                        <option value="small_family_hostel">Малосімейка, гостинка</option>
+                        <option value="smart_apartment">Смарт-квартира</option>
+                        <option value="free_planning">Вільне планування</option>
+                        <option value="two_sided">Двостороння</option>
+                        <option value="other">Інше</option>
+                    </select>
+                    <input type="text" name="planning_other" placeholder="Вкажіть інше планування" class="hidden-other-input">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="bathroom_type">Санвузол</label>
+                    <select id="bathroom_type" name="bathroom_type">
+                        <option value="" selected>Обрати</option>
+                        <option value="separate">Роздільний</option>
+                        <option value="combined">Суміжний</option>
+                        <option value="two_or_more">2 і більше</option>
+                        <option value="none">Санвузол відсутній</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="heating_type">Опалення</label>
+                    <select id="heating_type" name="heating_type" class="other-option-select">
+                        <option value="" selected>Обрати</option>
+                        <option value="central">Централізоване</option>
+                        <option value="own_boiler">Власна котельня</option>
+                        <option value="individual_gas">Індивідуальне газове</option>
+                        <option value="individual_electric">Індивідуальне електро</option>
+                        <option value="solid_fuel">Твердопаливне</option>
+                        <option value="heat_pump">Тепловий насос</option>
+                        <option value="combined">Комбіноване</option>
+                        <option value="other">Інше</option>
+                    </select>
+                    <input type="text" name="heating_type_other" placeholder="Вкажіть інший тип опалення" class="hidden-other-input">
+                </div>
+            </div>
+
             <div class="form-group">
-                <label for="wall_type">Тип стін</label>
-                <select id="wall_type" name="wall_type" class="other-option-select">
-                    <option value="" selected>Обрати (необов'язково)</option>
-                    <option value="brick">Цегляний</option>
-                    <option value="panel">Панельний</option>
-                    <option value="monolithic">Монолітний</option>
-                    <option value="slag_block">Шлакоблочний</option>
-                    <option value="wooden">Дерев'яний</option>
-                    <option value="gas_block">Газоблок</option>
-                    <option value="sip_panel">СІП панель</option>
+                <label for="renovation_type">Ремонт</label>
+                <select id="renovation_type" name="renovation_type" class="other-option-select">
+                    <option value="" selected>Обрати</option>
+                    <option value="design">Авторський проєкт</option>
+                    <option value="good">Євроремонт</option>
+                    <option value="cosmetic">Косметичний</option>
+                    <option value="no_renovation">Без ремонту</option>
                     <option value="other">Інше</option>
                 </select>
-                <input type="text" name="wall_type_other" placeholder="Вкажіть інший тип стін" class="hidden-other-input">
+                <input type="text" name="renovation_type_other" placeholder="Вкажіть інший тип ремонту" class="hidden-other-input">
             </div>
+
             <div class="form-group">
-                <label for="planning">Планування</label>
-                <select id="planning" name="planning" class="other-option-select">
-                    <option value="" selected>Обрати (необов'язково)</option>
-                    <option value="separate">Роздільна</option>
-                    <option value="adjacent_walkthrough">Суміжна, прохідна</option>
-                    <option value="studio">Студія</option>
-                    <option value="penthouse">Пентхаус</option>
-                    <option value="multi_level">Багаторівнева</option>
-                    <option value="small_family_hostel">Малосімейка, гостинка</option>
-                    <option value="smart_apartment">Смарт-квартира</option>
-                    <option value="free_planning">Вільне планування</option>
-                    <option value="two_sided">Двостороння</option>
-                    <option value="other">Інше</option>
-                </select>
-                <input type="text" name="planning_other" placeholder="Вкажіть інше планування" class="hidden-other-input">
+                <label>Меблювання</label>
+                <div class="radio-options">
+                    <input type="radio" id="furnishing_yes" name="furnishing" value="yes">
+                    <label for="furnishing_yes">З меблями</label>
+                    <input type="radio" id="furnishing_no" name="furnishing" value="no">
+                    <label for="furnishing_no">Без меблів</label>
+                </div>
             </div>
-        </div>
 
-        <div class="form-row">
             <div class="form-group">
-                <label for="bathroom_type">Санвузол</label>
-                <select id="bathroom_type" name="bathroom_type">
-                    <option value="" selected>Обрати (необов'язково)</option>
-                    <option value="separate">Роздільний</option>
-                    <option value="combined">Суміжний</option>
-                    <option value="two_or_more">2 і більше</option>
-                    <option value="none">Санвузол відсутній</option>
-                </select>
+                <label>Побутова техніка</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="tech_fridge" name="characteristics" value="fridge"><label for="tech_fridge">Холодильник</label>
+                    <input type="checkbox" id="tech_stove" name="characteristics" value="stove"><label for="tech_stove">Плита</label>
+                    <input type="checkbox" id="tech_washer" name="characteristics" value="washing_machine"><label for="tech_washer">Пральна машина</label>
+                    <input type="checkbox" id="tech_hob" name="characteristics" value="hob"><label for="tech_hob">Варильна панель</label>
+                    <input type="checkbox" id="tech_oven" name="characteristics" value="oven"><label for="tech_oven">Духова шафа</label>
+                    <input type="checkbox" id="tech_microwave" name="characteristics" value="microwave"><label for="tech_microwave">Мікрохвильова піч</label>
+                    <input type="checkbox" id="tech_vacuum" name="characteristics" value="vacuum"><label for="tech_vacuum">Пилосос</label>
+                    <input type="checkbox" id="tech_kettle" name="characteristics" value="kettle"><label for="tech_kettle">Електрочайник</label>
+                    <input type="checkbox" id="tech_multi" name="characteristics" value="multicooker"><label for="tech_multi">Мультиварка</label>
+                    <input type="checkbox" id="tech_coffee" name="characteristics" value="coffee_machine"><label for="tech_coffee">Кавомашина</label>
+                    <input type="checkbox" id="tech_iron" name="characteristics" value="iron"><label for="tech_iron">Праска</label>
+                    <input type="checkbox" id="tech_dryer" name="characteristics" value="hair_dryer"><label for="tech_dryer">Фен</label>
+                    <input type="checkbox" id="tech_dishwasher" name="characteristics" value="dishwasher"><label for="tech_dishwasher">Посудомийна машина</label>
+                    <input type="checkbox" id="tech_drying_machine" name="characteristics" value="drying_machine"><label for="tech_drying_machine">Сушильна машина</label>
+                    <input type="checkbox" id="tech_no" name="characteristics" value="no_appliances"><label for="tech_no">Без побутової техніки</label>
+                    <!-- Other option for tech -->
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="tech_other_check" name="characteristics_other_trigger" value="tech_other" onchange="toggleOtherInput(this, 'tech_other_text')">
+                        <label for="tech_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="tech_other_text" name="tech_other_text" placeholder="Введіть іншу побутову техніку" class="hidden-other-input characteristics-other-text">
             </div>
+
             <div class="form-group">
-                <label for="heating_type">Опалення</label>
-                <select id="heating_type" name="heating_type" class="other-option-select">
-                    <option value="" selected>Обрати (необов'язково)</option>
-                    <option value="central">Централізоване</option>
-                    <option value="own_boiler">Власна котельня</option>
-                    <option value="individual_gas">Індивідуальне газове</option>
-                    <option value="individual_electric">Індивідуальне електро</option>
-                    <option value="solid_fuel">Твердопаливне</option>
-                    <option value="heat_pump">Тепловий насос</option>
-                    <option value="combined">Комбіноване</option>
-                    <option value="other">Інше</option>
-                </select>
-                <input type="text" name="heating_type_other" placeholder="Вкажіть інший тип опалення" class="hidden-other-input">
+                <label>Мультимедіа</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="media_wifi" name="characteristics" value="wifi"><label for="media_wifi">Wi-Fi</label>
+                    <input type="checkbox" id="media_cable_tv" name="characteristics" value="cable_tv"><label for="media_cable_tv">Кабельне, цифрове ТБ</label>
+                    <input type="checkbox" id="media_fast_inet" name="characteristics" value="fast_internet"><label for="media_fast_inet">Швидкісний інтернет</label>
+                    <input type="checkbox" id="media_satellite" name="characteristics" value="satellite_tv"><label for="media_satellite">Супутникове ТБ</label>
+                    <input type="checkbox" id="media_tv" name="characteristics" value="tv"><label for="media_tv">Телевізор</label>
+                    <input type="checkbox" id="media_no" name="characteristics" value="no_media"><label for="media_no">Без мультимедіа</label>
+                    <!-- Other option for media -->
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="media_other_check" name="characteristics_other_trigger" value="media_other" onchange="toggleOtherInput(this, 'media_other_text')">
+                        <label for="media_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="media_other_text" name="media_other_text" placeholder="Введіть інше мультимедіа" class="hidden-other-input characteristics-other-text">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label for="renovation_type">Ремонт</label>
-            <select id="renovation_type" name="renovation_type" class="other-option-select">
-                <option value="" selected>Обрати (необов'язково)</option>
-                <option value="design">Авторський проєкт</option>
-                <option value="good">Євроремонт</option>
-                <option value="cosmetic">Косметичний</option>
-                <option value="no_renovation">Без ремонту</option> <option value="other">Інше</option>
-            </select>
-            <input type="text" name="renovation_type_other" placeholder="Вкажіть інший тип ремонту" class="hidden-other-input">
-        </div>
-
-        <div class="form-group">
-            <label>Меблювання</label> <div class="radio-options">
-            <input type="radio" id="furnishing_yes" name="furnishing" value="yes">
-            <label for="furnishing_yes">З меблями</label>
-            <input type="radio" id="furnishing_no" name="furnishing" value="no">
-            <label for="furnishing_no">Без меблів</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Побутова техніка</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="tech_fridge" name="characteristics" value="fridge"><label for="tech_fridge">Холодильник</label>
-                <input type="checkbox" id="tech_stove" name="characteristics" value="stove"><label for="tech_stove">Плита</label>
-                <input type="checkbox" id="tech_washer" name="characteristics" value="washing_machine"><label for="tech_washer">Пральна машина</label>
-                <input type="checkbox" id="tech_hob" name="characteristics" value="hob"><label for="tech_hob">Варильна панель</label>
-                <input type="checkbox" id="tech_oven" name="characteristics" value="oven"><label for="tech_oven">Духова шафа</label>
-                <input type="checkbox" id="tech_microwave" name="characteristics" value="microwave"><label for="tech_microwave">Мікрохвильова піч</label>
-                <input type="checkbox" id="tech_vacuum" name="characteristics" value="vacuum"><label for="tech_vacuum">Пилосос</label>
-                <input type="checkbox" id="tech_kettle" name="characteristics" value="kettle"><label for="tech_kettle">Електрочайник</label>
-                <input type="checkbox" id="tech_multi" name="characteristics" value="multicooker"><label for="tech_multi">Мультиварка</label>
-                <input type="checkbox" id="tech_coffee" name="characteristics" value="coffee_machine"><label for="tech_coffee">Кавомашина</label>
-                <input type="checkbox" id="tech_iron" name="characteristics" value="iron"><label for="tech_iron">Праска</label>
-                <input type="checkbox" id="tech_dryer" name="characteristics" value="hair_dryer"><label for="tech_dryer">Фен</label>
-                <input type="checkbox" id="tech_dishwasher" name="characteristics" value="dishwasher"><label for="tech_dishwasher">Посудомийна машина</label>
-                <input type="checkbox" id="tech_drying_machine" name="characteristics" value="drying_machine"><label for="tech_drying_machine">Сушильна машина</label>
-                <input type="checkbox" id="tech_no" name="characteristics" value="no_appliances"><label for="tech_no">Без побутової техніки</label>
+            <div class="form-group">
+                <label>Комфорт</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="comfort_ac" name="characteristics" value="ac"><label for="comfort_ac">Кондиціонер</label>
+                    <input type="checkbox" id="comfort_cctv" name="characteristics" value="cctv"><label for="comfort_cctv">Відеоспостереження</label>
+                    <input type="checkbox" id="comfort_floor_heating" name="characteristics" value="floor_heating"><label for="comfort_floor_heating">Підігрів підлоги</label>
+                    <input type="checkbox" id="comfort_concierge" name="characteristics" value="concierge"><label for="comfort_concierge">Консьєрж</label>
+                    <input type="checkbox" id="comfort_security" name="characteristics" value="security"><label for="comfort_security">Охорона території</label>
+                    <input type="checkbox" id="comfort_parking" name="characteristics" value="parking"><label for="comfort_parking">Паркувальне місце</label>
+                    <input type="checkbox" id="comfort_kitchen_furniture" name="characteristics" value="kitchen_furniture"><label for="comfort_kitchen_furniture">Меблі на кухні</label>
+                    <input type="checkbox" id="comfort_guest_parking" name="characteristics" value="guest_parking"><label for="comfort_guest_parking">Гостьовий паркінг</label>
+                    <input type="checkbox" id="comfort_wardrobe" name="characteristics" value="wardrobe"><label for="comfort_wardrobe">Гардероб</label>
+                    <input type="checkbox" id="comfort_underground_parking" name="characteristics" value="underground_parking"><label for="comfort_underground_parking">Підземний паркінг</label>
+                    <input type="checkbox" id="comfort_balcony" name="characteristics" value="balcony"><label for="comfort_balcony">Балкон, лоджія</label>
+                    <input type="checkbox" id="comfort_garage" name="characteristics" value="garage"><label for="comfort_garage">Гараж</label>
+                    <input type="checkbox" id="comfort_terrace" name="characteristics" value="terrace"><label for="comfort_terrace">Тераса</label>
+                    <input type="checkbox" id="comfort_elevator" name="characteristics" value="elevator"><label for="comfort_elevator">Ліфт</label>
+                    <input type="checkbox" id="comfort_panoramic" name="characteristics" value="panoramic_windows"><label for="comfort_panoramic">Панорамні вікна</label>
+                    <input type="checkbox" id="comfort_cargo_elevator" name="characteristics" value="cargo_elevator"><label for="comfort_cargo_elevator">Грузовий ліфт</label>
+                    <input type="checkbox" id="comfort_bars" name="characteristics" value="window_bars"><label for="comfort_bars">Грати на вікнах</label>
+                    <input type="checkbox" id="comfort_storage" name="characteristics" value="storage_room"><label for="comfort_storage">Госп. приміщення, комора</label>
+                    <input type="checkbox" id="comfort_alarm" name="characteristics" value="alarm"><label for="comfort_alarm">Сигналізація</label>
+                    <input type="checkbox" id="comfort_smart_home" name="characteristics" value="smart_home"><label for="comfort_smart_home">Технологія "розумний будинок"</label>
+                    <input type="checkbox" id="comfort_fire_alarm" name="characteristics" value="fire_alarm"><label for="comfort_fire_alarm">Пожежна сигналізація</label>
+                    <input type="checkbox" id="comfort_generator" name="characteristics" value="generator"><label for="comfort_generator">Автономний електрогенератор</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="comfort_other_check" name="characteristics_other_trigger" value="comfort_other" onchange="toggleOtherInput(this, 'comfort_other_text')">
+                        <label for="comfort_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="comfort_other_text" name="comfort_other_text" placeholder="Введіть інший комфорт" class="hidden-other-input characteristics-other-text">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>Мультимедіа</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="media_wifi" name="characteristics" value="wifi"><label for="media_wifi">Wi-Fi</label>
-                <input type="checkbox" id="media_cable_tv" name="characteristics" value="cable_tv"><label for="media_cable_tv">Кабельне, цифрове ТБ</label>
-                <input type="checkbox" id="media_fast_inet" name="characteristics" value="fast_internet"><label for="media_fast_inet">Швидкісний інтернет</label>
-                <input type="checkbox" id="media_satellite" name="characteristics" value="satellite_tv"><label for="media_satellite">Супутникове ТБ</label>
-                <input type="checkbox" id="media_tv" name="characteristics" value="tv"><label for="media_tv">Телевізор</label>
-                <input type="checkbox" id="media_no" name="characteristics" value="no_media"><label for="media_no">Без мультимедіа</label>
+            <div class="form-group">
+                <label>Домашні улюбленці (чи дозволено у квартирі)</label>
+                <div class="radio-options">
+                    <input type="radio" id="pet_allowed_yes" name="pet_policy" value="yes"><label for="pet_allowed_yes">Так</label>
+                    <input type="radio" id="pet_allowed_no" name="pet_policy" value="no" checked><label for="pet_allowed_no">Ні</label>
+                </div>
+                <div class="checkbox-options" id="pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
+                    <input type="checkbox" id="pet_cat" name="characteristics" value="pet_cat"><label for="pet_cat">Котик</label>
+                    <input type="checkbox" id="pet_dog" name="characteristics" value="pet_mid_dog"><label for="pet_dog">Собачка</label>
+                    <input type="checkbox" id="pet_other" name="characteristics" value="pet_other"><label for="pet_other">Інша тваринка</label>
+                    <input type="checkbox" id="pet_multiple" name="characteristics" value="pet_multiple"><label for="pet_multiple">Декілька тварин</label>
+                </div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>Комфорт</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="comfort_ac" name="characteristics" value="ac"><label for="comfort_ac">Кондиціонер</label>
-                <input type="checkbox" id="comfort_cctv" name="characteristics" value="cctv"><label for="comfort_cctv">Відеоспостереження</label>
-                <input type="checkbox" id="comfort_floor_heating" name="characteristics" value="floor_heating"><label for="comfort_floor_heating">Підігрів підлоги</label>
-                <input type="checkbox" id="comfort_concierge" name="characteristics" value="concierge"><label for="comfort_concierge">Консьєрж</label>
-                <input type="checkbox" id="comfort_security" name="characteristics" value="security"><label for="comfort_security">Охорона території</label>
-                <input type="checkbox" id="comfort_parking" name="characteristics" value="parking"><label for="comfort_parking">Паркувальне місце</label>
-                <input type="checkbox" id="comfort_kitchen_furniture" name="characteristics" value="kitchen_furniture"><label for="comfort_kitchen_furniture">Меблі на кухні</label>
-                <input type="checkbox" id="comfort_guest_parking" name="characteristics" value="guest_parking"><label for="comfort_guest_parking">Гостьовий паркінг</label>
-                <input type="checkbox" id="comfort_wardrobe" name="characteristics" value="wardrobe"><label for="comfort_wardrobe">Гардероб</label>
-                <input type="checkbox" id="comfort_underground_parking" name="characteristics" value="underground_parking"><label for="comfort_underground_parking">Підземний паркінг</label>
-                <input type="checkbox" id="comfort_balcony" name="characteristics" value="balcony"><label for="comfort_balcony">Балкон, лоджія</label>
-                <input type="checkbox" id="comfort_garage" name="characteristics" value="garage"><label for="comfort_garage">Гараж</label>
-                <input type="checkbox" id="comfort_terrace" name="characteristics" value="terrace"><label for="comfort_terrace">Тераса</label>
-                <input type="checkbox" id="comfort_elevator" name="characteristics" value="elevator"><label for="comfort_elevator">Ліфт</label>
-                <input type="checkbox" id="comfort_panoramic" name="characteristics" value="panoramic_windows"><label for="comfort_panoramic">Панорамні вікна</label>
-                <input type="checkbox" id="comfort_cargo_elevator" name="characteristics" value="cargo_elevator"><label for="comfort_cargo_elevator">Грузовий ліфт</label>
-                <input type="checkbox" id="comfort_bars" name="characteristics" value="window_bars"><label for="comfort_bars">Грати на вікнах</label>
-                <input type="checkbox" id="comfort_storage" name="characteristics" value="storage_room"><label for="comfort_storage">Госп. приміщення, комора</label>
-                <input type="checkbox" id="comfort_alarm" name="characteristics" value="alarm"><label for="comfort_alarm">Сигналізація</label>
-                <input type="checkbox" id="comfort_smart_home" name="characteristics" value="smart_home"><label for="comfort_smart_home">Технологія "розумний будинок"</label>
-                <input type="checkbox" id="comfort_fire_alarm" name="characteristics" value="fire_alarm"><label for="comfort_fire_alarm">Пожежна сигналізація</label>
-                <input type="checkbox" id="comfort_generator" name="characteristics" value="generator"><label for="comfort_generator">Автономний електрогенератор</label>
+
+            <div class="form-group">
+                <label>Автономність при блекауті</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="blackout_internet" name="characteristics" value="blackout_internet"><label for="blackout_internet">Працює інтернет</label>
+                    <input type="checkbox" id="blackout_heating" name="characteristics" value="blackout_heating"><label for="blackout_heating">Працює опалення</label>
+                    <input type="checkbox" id="blackout_elevator" name="characteristics" value="blackout_elevator"><label for="blackout_elevator">Працює ліфт</label>
+                    <input type="checkbox" id="blackout_backup_power" name="characteristics" value="blackout_backup_power"><label for="blackout_backup_power">Підключене резервне живлення</label>
+                    <input type="checkbox" id="blackout_water" name="characteristics" value="blackout_water"><label for="blackout_water">Працює водопостачання</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="blackout_other_check" name="characteristics_other_trigger" value="blackout_other" onchange="toggleOtherInput(this, 'blackout_other_text')">
+                        <label for="blackout_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="blackout_other_text" name="blackout_other_text" placeholder="Введіть іншу автономність при блекауті" class="hidden-other-input characteristics-other-text">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>Домашні улюбленці (чи дозволено у квартирі)</label>
-            <div class="radio-options">
-                <input type="radio" id="pet_allowed_yes" name="pet_policy" value="yes"><label for="pet_allowed_yes">Так</label>
-                <input type="radio" id="pet_allowed_no" name="pet_policy" value="no" checked><label for="pet_allowed_no">Ні</label>
+            <div class="form-group ownerRulesGroup" style="display: none;">
+                <label for="owner_rules">Правила від власника</label>
+                <textarea id="owner_rules" name="owner_rules" rows="3" placeholder="Наприклад: Заборонені вечірки, тихі години після 22:00, чи можна гостям залишатися на ніч..."></textarea>
             </div>
-            <div class="checkbox-options" id="pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
-                <input type="checkbox" id="pet_cat" name="characteristics" value="pet_cat"><label for="pet_cat">Котик</label>
-                <input type="checkbox" id="pet_dog" name="characteristics" value="pet_mid_dog"><label for="pet_dog">Собачка</label>
-                <input type="checkbox" id="pet_other" name="characteristics" value="pet_other"><label for="pet_other">Інша тваринка</label>
-                <input type="checkbox" id="pet_multiple" name="characteristics" value="pet_multiple"><label for="pet_multiple">Декілька тварин</label>
+
+            <div class="form-group">
+                <label>Комунікації</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="comm_gas" name="characteristics" value="comm_gas"><label for="comm_gas">Газ</label>
+                    <input type="checkbox" id="comm_central_water" name="characteristics" value="comm_central_water"><label for="comm_central_water">Центральний водопровід</label>
+                    <input type="checkbox" id="comm_waste" name="characteristics" value="comm_waste"><label for="comm_waste">Вивіз відходів</label>
+                    <input type="checkbox" id="comm_asphalt" name="characteristics" value="comm_asphalt"><label for="comm_asphalt">Асфальтована дорога</label>
+                    <input type="checkbox" id="comm_electricity" name="characteristics" value="comm_electricity"><label for="comm_electricity">Електрика</label>
+                    <input type="checkbox" id="comm_no" name="characteristics" value="comm_no"><label for="comm_no">Без комунікацій</label>
+                    <input type="checkbox" id="comm_central_sewer" name="characteristics" value="comm_central_sewer"><label for="comm_central_sewer">Центральна каналізація</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="comm_other_check" name="characteristics_other_trigger" value="comm_other" onchange="toggleOtherInput(this, 'comm_other_text')">
+                        <label for="comm_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="comm_other_text" name="comm_other_text" placeholder="Введіть інші комунікації" class="hidden-other-input characteristics-other-text">
             </div>
-        </div>
 
-
-        <div class="form-group">
-            <label>Автономність при блекауті</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="blackout_internet" name="characteristics" value="blackout_internet"><label for="blackout_internet">Працює інтернет</label>
-                <input type="checkbox" id="blackout_heating" name="characteristics" value="blackout_heating"><label for="blackout_heating">Працює опалення</label>
-                <input type="checkbox" id="blackout_elevator" name="characteristics" value="blackout_elevator"><label for="blackout_elevator">Працює ліфт</label>
-                <input type="checkbox" id="blackout_backup_power" name="characteristics" value="blackout_backup_power"><label for="blackout_backup_power">Підключене резервне живлення</label>
-                <input type="checkbox" id="blackout_water" name="characteristics" value="blackout_water"><label for="blackout_water">Працює водопостачання</label>
+            <div class="form-group">
+                <label>Інфраструктура (до 500 метрів)</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="infra_kindergarten" name="characteristics" value="infra_kindergarten"><label for="infra_kindergarten">Дитячий садок</label>
+                    <input type="checkbox" id="infra_pharmacy" name="characteristics" value="infra_pharmacy"><label for="infra_pharmacy">Аптека</label>
+                    <input type="checkbox" id="infra_school" name="characteristics" value="infra_school"><label for="infra_school">Школа</label>
+                    <input type="checkbox" id="infra_hospital" name="characteristics" value="infra_hospital"><label for="infra_hospital">Лікарня, поліклініка</label>
+                    <input type="checkbox" id="infra_water_machine" name="characteristics" value="infra_water_machine"><label for="infra_water_machine">Автомат з водою</label>
+                    <input type="checkbox" id="infra_center" name="characteristics" value="infra_center"><label for="infra_center">Центр міста</label>
+                    <input type="checkbox" id="infra_bus_stop" name="characteristics" value="infra_bus_stop"><label for="infra_bus_stop">Зупинка транспорту</label>
+                    <input type="checkbox" id="infra_restaurant" name="characteristics" value="infra_restaurant"><label for="infra_restaurant">Ресторан, кафе</label>
+                    <input type="checkbox" id="infra_metro" name="characteristics" value="infra_metro"><label for="infra_metro">Метро</label>
+                    <input type="checkbox" id="infra_cinema" name="characteristics" value="infra_cinema"><label for="infra_cinema">Кінотеатр, театр</label>
+                    <input type="checkbox" id="infra_market" name="characteristics" value="infra_market"><label for="infra_market">Ринок</label>
+                    <input type="checkbox" id="infra_post" name="characteristics" value="infra_post"><label for="infra_post">Відділення пошти</label>
+                    <input type="checkbox" id="infra_shop" name="characteristics" value="infra_shop"><label for="infra_shop">Магазин, кіоск</label>
+                    <input type="checkbox" id="infra_bank" name="characteristics" value="infra_bank"><label for="infra_bank">Відділення банку, банкомат</label>
+                    <input type="checkbox" id="infra_mall" name="characteristics" value="infra_mall"><label for="infra_mall">Супермаркет, ТРЦ</label>
+                    <input type="checkbox" id="infra_bus_station" name="characteristics" value="infra_bus_station"><label for="infra_bus_station">Автовокзал</label>
+                    <input type="checkbox" id="infra_park" name="characteristics" value="infra_park"><label for="infra_park">Парк, зелена зона</label>
+                    <input type="checkbox" id="infra_train_station" name="characteristics" value="infra_train_station"><label for="infra_train_station">Залізнична станція</label>
+                    <input type="checkbox" id="infra_playground" name="characteristics" value="infra_playground"><label for="infra_playground">Дитячий майданчик</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="infra_other_check" name="characteristics_other_trigger" value="infra_other" onchange="toggleOtherInput(this, 'infra_other_text')">
+                        <label for="infra_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="infra_other_text" name="infra_other_text" placeholder="Введіть іншу інфраструктуру" class="hidden-other-input characteristics-other-text">
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>Додатково (Правила)</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="rules_families" name="characteristics" value="rules_families"><label for="rules_families">Тільки сім'ям</label>
-                <input type="checkbox" id="rules_with_owners" name="characteristics" value="rules_with_owners"><label for="rules_with_owners">З господарями</label>
-                <input type="checkbox" id="rules_kids" name="characteristics" value="rules_kids"><label for="rules_kids">Можна з дітьми</label>
-                <input type="checkbox" id="rules_students" name="characteristics" value="rules_students"><label for="rules_students">Можна студентам</label>
-                <input type="checkbox" id="rules_smoking" name="characteristics" value="rules_smoking"><label for="rules_smoking">Можна курити</label>
+            <div class="form-group">
+                <label>Інклюзивність</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="incl_ramp_short" name="characteristics" value="incl_ramp_short"><label for="incl_ramp_short">Пандус довжиною до 2,4 м.</label>
+                    <input type="checkbox" id="incl_wide_doors_entry" name="characteristics" value="incl_wide_doors_entry"><label for="incl_wide_doors_entry">Широкі двері в під'їзді (від 0,9 м.)</label>
+                    <input type="checkbox" id="incl_ramp_long" name="characteristics" value="incl_ramp_long"><label for="incl_ramp_long">Пандус довжиною понад 2,4 м.</label>
+                    <input type="checkbox" id="incl_wide_doors_elevator" name="characteristics" value="incl_wide_doors_elevator"><label for="incl_wide_doors_elevator">Двері ліфту шириною від 0,9 м.</label>
+                    <input type="checkbox" id="incl_ramp_platform" name="characteristics" value="incl_ramp_platform"><label for="incl_ramp_platform">Пандус має майданчик для відпочинку</label>
+                    <input type="checkbox" id="incl_elevator_size" name="characteristics" value="incl_elevator_size"><label for="incl_elevator_size">Ліфт розміром не менше 1,1х1,4 м.</label>
+                    <input type="checkbox" id="incl_ramp_handrails" name="characteristics" value="incl_ramp_handrails"><label for="incl_ramp_handrails">Поручні на пандусі</label>
+                    <input type="checkbox" id="incl_contrast_marks" name="characteristics" value="incl_contrast_marks"><label for="incl_contrast_marks">Наявність контрастних маркувань</label>
+                    <input type="checkbox" id="incl_stairs_handrails" name="characteristics" value="incl_stairs_handrails"><label for="incl_stairs_handrails">Поручні на сходах</label>
+                    <input type="checkbox" id="incl_tactile_strips" name="characteristics" value="incl_tactile_strips"><label for="incl_tactile_strips">Тактильні смуги на підлозі</label>
+                    <input type="checkbox" id="incl_street_entry" name="characteristics" value="incl_street_entry"><label for="incl_street_entry">Вхід в рівень з вулицею</label>
+                    <input type="checkbox" id="incl_voice_alerts" name="characteristics" value="incl_voice_alerts"><label for="incl_voice_alerts">Голосові сповіщення у ліфті</label>
+                    <div class="checkbox-option-item other-characteristic-option">
+                        <input type="checkbox" id="incl_other_check" name="characteristics_other_trigger" value="incl_other" onchange="toggleOtherInput(this, 'incl_other_text')">
+                        <label for="infra_other_check">Інше</label>
+                    </div>
+                </div>
+                <input type="text" id="incl_other_text" name="incl_other_text" placeholder="Введіть іншу інклюзивність" class="hidden-other-input characteristics-other-text">
             </div>
-        </div>
 
-        <div class="form-group ownerRulesGroup" style="display: none;">
-            <label for="owner_rules">Правила від власника (необов'язково)</label>
-            <textarea id="owner_rules" name="owner_rules" rows="3" placeholder="Наприклад: Заборонені вечірки, тихі години після 22:00, чи можна гостям залишатися на ніч..."></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Комунікації</label> <div class="checkbox-options">
-            <input type="checkbox" id="comm_gas" name="characteristics" value="comm_gas"><label for="comm_gas">Газ</label>
-            <input type="checkbox" id="comm_central_water" name="characteristics" value="comm_central_water"><label for="comm_central_water">Центральний водопровід</label>
-            <input type="checkbox" id="comm_waste" name="characteristics" value="comm_waste"><label for="comm_waste">Вивіз відходів</label>
-            <input type="checkbox" id="comm_asphalt" name="characteristics" value="comm_asphalt"><label for="comm_asphalt">Асфальтована дорога</label>
-            <input type="checkbox" id="comm_electricity" name="characteristics" value="comm_electricity"><label for="comm_electricity">Електрика</label>
-            <input type="checkbox" id="comm_no" name="characteristics" value="comm_no"><label for="comm_no">Без комунікацій</label>
-            <input type="checkbox" id="comm_central_sewer" name="characteristics" value="comm_central_sewer"><label for="comm_central_sewer">Центральна каналізація</label>
-        </div>
-        </div>
-
-        <div class="form-group">
-            <label>Інфраструктура (до 500 метрів)</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="infra_kindergarten" name="characteristics" value="infra_kindergarten"><label for="infra_kindergarten">Дитячий садок</label>
-                <input type="checkbox" id="infra_pharmacy" name="characteristics" value="infra_pharmacy"><label for="infra_pharmacy">Аптека</label>
-                <input type="checkbox" id="infra_school" name="characteristics" value="infra_school"><label for="infra_school">Школа</label>
-                <input type="checkbox" id="infra_hospital" name="characteristics" value="infra_hospital"><label for="infra_hospital">Лікарня, поліклініка</label>
-                <input type="checkbox" id="infra_water_machine" name="characteristics" value="infra_water_machine"><label for="infra_water_machine">Автомат з водою</label>
-                <input type="checkbox" id="infra_center" name="characteristics" value="infra_center"><label for="infra_center">Центр міста</label>
-                <input type="checkbox" id="infra_bus_stop" name="characteristics" value="infra_bus_stop"><label for="infra_bus_stop">Зупинка транспорту</label>
-                <input type="checkbox" id="infra_restaurant" name="characteristics" value="infra_restaurant"><label for="infra_restaurant">Ресторан, кафе</label>
-                <input type="checkbox" id="infra_metro" name="characteristics" value="infra_metro"><label for="infra_metro">Метро</label>
-                <input type="checkbox" id="infra_cinema" name="characteristics" value="infra_cinema"><label for="infra_cinema">Кінотеатр, театр</label>
-                <input type="checkbox" id="infra_market" name="characteristics" value="infra_market"><label for="infra_market">Ринок</label>
-                <input type="checkbox" id="infra_post" name="characteristics" value="infra_post"><label for="infra_post">Відділення пошти</label>
-                <input type="checkbox" id="infra_shop" name="characteristics" value="infra_shop"><label for="infra_shop">Магазин, кіоск</label>
-                <input type="checkbox" id="infra_bank" name="characteristics" value="infra_bank"><label for="infra_bank">Відділення банку, банкомат</label>
-                <input type="checkbox" id="infra_mall" name="characteristics" value="infra_mall"><label for="infra_mall">Супермаркет, ТРЦ</label>
-                <input type="checkbox" id="infra_bus_station" name="characteristics" value="infra_bus_station"><label for="infra_bus_station">Автовокзал</label>
-                <input type="checkbox" id="infra_park" name="characteristics" value="infra_park"><label for="infra_park">Парк, зелена зона</label>
-                <input type="checkbox" id="infra_train_station" name="characteristics" value="infra_train_station"><label for="infra_train_station">Залізнична станція</label>
-                <input type="checkbox" id="infra_playground" name="characteristics" value="infra_playground"><label for="infra_playground">Дитячий майданчик</label>
+            <div class="form-group nearbyUniversitiesGroup" style="display: none;">
+                <label>Університети поруч</label>
+                <p class="form-description">Виберіть ВНЗ, що знаходяться близько до житла.</p>
+                <div class="checkbox-options" id="nearbyUniversitiesCheckboxes">
+                    <p style="color: var(--text-light)">Спочатку виберіть місто.</p>
+                </div>
+                <input type="text" id="university_other_text" name="university_other_text" placeholder="Введіть інший навчальний заклад" class="hidden-other-input">
             </div>
+
+        <div class="form-group" id="studyConditionsGroup" style="display: none;">
+            <label for="study_conditions">Умови для навчання</label>
+            <textarea id="study_conditions" name="study_conditions" rows="3" placeholder="Наприклад: Є окремий робочий стіл, тихий район, швидкісний інтернет..."></textarea>
         </div>
-
-        <div class="form-group">
-            <label>Інклюзивність</label>
-            <div class="checkbox-options">
-                <input type="checkbox" id="incl_ramp_short" name="characteristics" value="incl_ramp_short"><label for="incl_ramp_short">Пандус довжиною до 2,4 м.</label>
-                <input type="checkbox" id="incl_wide_doors_entry" name="characteristics" value="incl_wide_doors_entry"><label for="incl_wide_doors_entry">Широкі двері в під'їзді (від 0,9 м.)</label>
-                <input type="checkbox" id="incl_ramp_long" name="characteristics" value="incl_ramp_long"><label for="incl_ramp_long">Пандус довжиною понад 2,4 м.</label>
-                <input type="checkbox" id="incl_wide_doors_elevator" name="characteristics" value="incl_wide_doors_elevator"><label for="incl_wide_doors_elevator">Двері ліфту шириною від 0,9 м.</label>
-                <input type="checkbox" id="incl_ramp_platform" name="characteristics" value="incl_ramp_platform"><label for="incl_ramp_platform">Пандус має майданчик для відпочинку</label>
-                <input type="checkbox" id="incl_elevator_size" name="characteristics" value="incl_elevator_size"><label for="incl_elevator_size">Ліфт розміром не менше 1,1х1,4 м.</label>
-                <input type="checkbox" id="incl_ramp_handrails" name="characteristics" value="incl_ramp_handrails"><label for="incl_ramp_handrails">Поручні на пандусі</label>
-                <input type="checkbox" id="incl_contrast_marks" name="characteristics" value="incl_contrast_marks"><label for="incl_contrast_marks">Наявність контрастних маркувань</label>
-                <input type="checkbox" id="incl_stairs_handrails" name="characteristics" value="incl_stairs_handrails"><label for="incl_stairs_handrails">Поручні на сходах</label>
-                <input type="checkbox" id="incl_tactile_strips" name="characteristics" value="incl_tactile_strips"><label for="incl_tactile_strips">Тактильні смуги на підлозі</label>
-                <input type="checkbox" id="incl_street_entry" name="characteristics" value="incl_street_entry"><label for="incl_street_entry">Вхід в рівень з вулицею</label>
-                <input type="checkbox" id="incl_voice_alerts" name="characteristics" value="incl_voice_alerts"><label for="incl_voice_alerts">Голосові сповіщення у ліфті</label>
-            </div>
-        </div>
-
-        <div class="form-group nearbyUniversitiesGroup" style="display: none;">
-            <label>Університети поруч (необов'язково)</label>
-            <p class="form-description">Виберіть ВНЗ, що знаходяться близько до житла.</p>
-            <div class="checkbox-options" id="nearbyUniversitiesCheckboxes">
-                <p style="color: var(--text-light)">Спочатку виберіть місто.</p>
-            </div>
-        </div>
-
-
-    </div> <div class="form-group" id="studyConditionsGroup" style="display: none;">
-        <label for="study_conditions">Умови для навчання (необов'язково)</label>
-        <textarea id="study_conditions" name="study_conditions" rows="3" placeholder="Наприклад: Є окремий робочий стіл, тихий район, швидкісний інтернет..."></textarea>
-    </div>
-
 
         <button type="submit" class="submit-listing-btn">Опублікувати оголошення</button>
     </form>

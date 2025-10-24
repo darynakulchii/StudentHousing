@@ -15,6 +15,31 @@ const DEFAULT_LISTING_IMAGE = {
 };
 
 
+// *** ДОДАНО: Глобальна функція для перемикання полів "Інше" ***
+window.toggleOtherInput = (checkboxElement, inputId) => {
+    const inputElement = document.getElementById(inputId);
+    if (inputElement) {
+        inputElement.style.display = checkboxElement.checked ? 'block' : 'none';
+        inputElement.classList.toggle('hidden-other-input', !checkboxElement.checked);
+        if (!checkboxElement.checked) {
+            inputElement.value = ''; // Очищаємо поле, якщо чекбокс знято
+        }
+    }
+};
+
+window.toggleOtherCityInput = (selectElement) => {
+    const inputElement = document.getElementById('city_other_text');
+    if (inputElement) {
+        const isOther = selectElement.value === 'other';
+        inputElement.style.display = isOther ? 'block' : 'none';
+        inputElement.classList.toggle('hidden-other-input', !isOther);
+        if (!isOther) {
+            inputElement.value = ''; // Очищаємо поле, якщо вибрано не "Інше"
+        }
+    }
+};
+
+
 // =================================================================================
 // 0.1. ДОПОМІЖНІ ФУНКЦІЇ ДЛЯ АВТЕНТИФІКАЦІЇ
 // =================================================================================
@@ -298,6 +323,19 @@ const loadNavigation = async () => {
             toggleFilters('close');
             toggleNotifications('close');
         });
+
+        // Перевірка авторизації для кнопки "Додати оголошення" в мобільному меню
+        const addListingLinkMobile = placeholder.querySelector('.sidebar-nav a[href="add_listing.html"]');
+        if (addListingLinkMobile) {
+            addListingLinkMobile.addEventListener('click', (e) => {
+                if (!MY_USER_ID) { // MY_USER_ID визначається на початку app.js
+                    e.preventDefault(); // Зупиняємо перехід за посиланням
+                    alert('Будь ласка, увійдіть, щоб додати оголошення.');
+                    window.location.href = 'login.html'; // Перенаправляємо на сторінку входу
+                }
+                // Якщо MY_USER_ID існує, перехід відбувається за замовчуванням
+            });
+        }
 
     } catch (error) {
         console.error('Error loading navigation:', error);
@@ -679,9 +717,11 @@ const setupProfileEventListeners = () => {
     if (logoutButton) {
         logoutButton.addEventListener('click', (e) => {
             e.preventDefault();
-            removeToken();
-            alert('Ви вийшли з системи.');
-            window.location.href = 'index.html';
+            if (confirm('Ви впевнені, що хочете вийти з облікового запису?')) {
+                removeToken();
+                alert('Ви вийшли з системи.');
+                window.location.href = 'index.html';
+            }
         });
     }
 
@@ -2095,30 +2135,75 @@ const updateFormState = (formElement) => {
 
     const populateUniversities = (city) => {
         const unis = universitiesData[city] || [];
-        if (universitiesCheckboxesContainer) universitiesCheckboxesContainer.innerHTML = '';
-        if (targetUniversitySelect) targetUniversitySelect.innerHTML = '<option value="" selected>Будь-який</option><option value="other">Інший (вказати)</option>';
+        const universitiesCheckboxesContainer = formElement.querySelector('#nearbyUniversitiesCheckboxes');
+        const universityOtherTextInputForCheckboxes = formElement.querySelector('#university_other_text'); // Для чекбоксів "Університети поруч"
+        const targetUniversitySelect = formElement.querySelector('#target_university'); // Select для "Бажаний Університет"
+        const targetUniversityOtherTextInput = formElement.querySelector('#target_university_other_text'); // Text input для select
 
-        if (unis.length === 0) {
-            if (universitiesCheckboxesContainer) universitiesCheckboxesContainer.innerHTML = '<p style="color: var(--text-light)">Університети для цього міста не вказані.</p>';
-            return;
+        // --- 1. Обробка Select "Бажаний Університет" ---
+        if (targetUniversitySelect) {
+            const currentSelectedValue = targetUniversitySelect.value; // Зберігаємо поточне значення (для редагування)
+            // Повністю очищуємо select
+            targetUniversitySelect.innerHTML = '';
+
+            // Додаємо опцію "Будь-який"
+            const anyOption = document.createElement('option');
+            anyOption.value = '';
+            anyOption.textContent = 'Будь-який';
+            targetUniversitySelect.appendChild(anyOption);
+
+            // Додаємо університети зі списку
+            if (unis.length > 0) {
+                unis.forEach(uni => {
+                    const option = document.createElement('option');
+                    option.value = uni.value; // Використовуємо системний ключ
+                    option.textContent = uni.text;
+                    targetUniversitySelect.appendChild(option);
+                });
+            }
+
+            // Додаємо опцію "Інший"
+            const otherOption = document.createElement('option');
+            otherOption.value = 'other';
+            otherOption.textContent = 'Інший (вказати)';
+            targetUniversitySelect.appendChild(otherOption);
+
+            // Відновлюємо вибране значення, якщо воно було
+            if (currentSelectedValue && targetUniversitySelect.querySelector(`option[value="${currentSelectedValue}"]`)) {
+                targetUniversitySelect.value = currentSelectedValue;
+            } else {
+                anyOption.selected = true; // Інакше робимо "Будь-який" активним
+            }
+
+
+            // Показуємо/ховаємо текстове поле "Інше" для select
+            if (targetUniversityOtherTextInput) {
+                targetUniversityOtherTextInput.style.display = targetUniversitySelect.value === 'other' ? 'block' : 'none';
+                targetUniversityOtherTextInput.classList.toggle('hidden-other-input', targetUniversitySelect.value !== 'other');
+            }
         }
 
-        unis.forEach(uni => {
-            if (universitiesCheckboxesContainer) {
-                const div = document.createElement('div');
-                div.className = 'checkbox-option-item';
-                div.innerHTML = `<input type="checkbox" id="uni_${formElement.id}_${uni.value}" name="characteristics" value="${uni.value}"><label for="uni_${formElement.id}_${uni.value}">${uni.text}</label>`;
-                universitiesCheckboxesContainer.appendChild(div);
+        // --- 2. Обробка Checkboxes "Університети поруч" ---
+        if (universitiesCheckboxesContainer) {
+            universitiesCheckboxesContainer.innerHTML = ''; // Очищуємо
+
+            if (unis.length === 0) {
+                universitiesCheckboxesContainer.innerHTML = '<p style="color: var(--text-light)">Університети для цього міста не вказані.</p>';
+            } else {
+                unis.forEach(uni => {
+                    const div = document.createElement('div');
+                    div.className = 'checkbox-option-item';
+                    div.innerHTML = `<input type="checkbox" id="uni_${formElement.id}_${uni.value}" name="characteristics" value="${uni.value}"><label for="uni_${formElement.id}_${uni.value}">${uni.text}</label>`;
+                    universitiesCheckboxesContainer.appendChild(div);
+                });
             }
-            if (targetUniversitySelect) {
-                const option = document.createElement('option');
-                option.value = uni.value;
-                option.textContent = uni.text;
-                targetUniversitySelect.appendChild(option);
-            }
-        });
-        if (targetUniversitySelect) { // Move 'Other' to end
-            targetUniversitySelect.appendChild(targetUniversitySelect.querySelector('option[value="other"]'));
+        }
+
+        // --- 3. Поле "Інше" для Checkboxes "Університети поруч" ---
+        // (Завжди видиме, коли видима вся секція nearbyUniversitiesGroup)
+        if (universityOtherTextInputForCheckboxes) {
+            universityOtherTextInputForCheckboxes.style.display = 'block';
+            universityOtherTextInputForCheckboxes.classList.remove('hidden-other-input');
         }
     };
 
@@ -2147,7 +2232,7 @@ const updateFormState = (formElement) => {
     const isFindHome = selectedType === 'find_home';
 
     setVisible(photoGroup, true); // Завжди показуємо секцію фото (якщо вона є)
-    setVisible(studyConditionsGroup, true); // Завжди показуємо умови навчання
+    setVisible(studyConditionsGroup, !!selectedType);
 
     if (isRentOut || isFindMate) {
         setVisible(priceGroup, true);
@@ -2156,19 +2241,11 @@ const updateFormState = (formElement) => {
         setVisible(listingDetails, true);
         setVisible(nearbyUniversitiesGroup, true); // Університети поруч
         if (citySelect) populateUniversities(selectedCity); // Заповнюємо університети
-        // Required для rent_out/find_mate (базові + ціна)
-        // setRequired(roomsSelect, true); // Зробимо необов'язковими для гнучкості
-        // setRequired(floorInput, true);
-        // setRequired(totalFloorsInput, true);
-        // setRequired(totalAreaInput, true);
-        // setRequired(kitchenAreaInput, true); // Може бути 0 для кімнати
-        // setRequired(furnishingRadios, true);
     }
 
     if (isRentOut) {
         setVisible(maxOccupantsGroup, true);
-        setVisible(ownerRulesGroup, true); // Правила власника
-        // setRequired(maxOccupantsSelect, true); // Необов'язково
+        setVisible(ownerRulesGroup, true);
     }
 
     if (isFindMate) {
@@ -2178,10 +2255,6 @@ const updateFormState = (formElement) => {
         setVisible(isStudentGroup, true); // "Чи студент?"
         const isStudent = formElement.querySelector('input[name="is_student"]:checked')?.value;
         setVisible(studentParams, isStudent === 'yes');
-        // setRequired(currentOccupantsSelect, true); // Необов'язково
-        // setRequired(seekingRoommatesSelect, true); // Необов'язково
-        // setRequired(myGenderRadios, true); // Обов'язково
-        // setRequired(myAgeInput, true); // Обов'язково
     }
 
     if (isFindHome) {
@@ -2197,10 +2270,6 @@ const updateFormState = (formElement) => {
         const myGroupSize = formElement.querySelector('input[name="my_group_size"]:checked')?.value;
         setVisible(myGroupCountSelect, myGroupSize === 'more');
         setVisible(targetRoommatesTotalGroup, true); // "Бажана к-ть людей у квартирі"
-        // Required для find_home (тільки базові)
-        // setRequired(targetPriceMaxInput, true); // Необов'язково
-        // setRequired(myGenderRadios, true); // Обов'язково
-        // setRequired(myAgeInput, true); // Обов'язково
         if (citySelect) populateUniversities(selectedCity); // Заповнюємо університети (для target_university)
     }
 
@@ -2268,7 +2337,83 @@ const setupAddListingFormLogic = () => {
             }
         });
     });
-    // Initial state for pet policy
+
+    // 1. Мої тварини
+    const myPetsPolicyRadios = form.querySelectorAll('input[name="my_pets_policy"]');
+    const myPetDetailsDiv = form.querySelector('#my_pet_details');
+    // const noPetCheckbox = form.querySelector('input[name="characteristics"][value="my_pet_no"]'); // Знайдемо його всередині
+
+    myPetsPolicyRadios?.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const noPetCheckbox = form.querySelector('input[name="characteristics"][value="my_pet_no"]'); // Знаходимо тут
+            if (myPetDetailsDiv) {
+                myPetDetailsDiv.style.display = e.target.value === 'yes' ? 'block' : 'none';
+                if (e.target.value === 'no') {
+                    myPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                    if (noPetCheckbox) noPetCheckbox.checked = true; // Позначаємо "Не маю тварин"
+                } else {
+                    if (noPetCheckbox) noPetCheckbox.checked = false; // Знімаємо позначку "Не маю тварин"
+                }
+            }
+        });
+    });
+    // Ініціалізація стану "Мої тварини"
+    const initialMyPetsPolicy = form.querySelector('input[name="my_pets_policy"]:checked');
+    if (myPetDetailsDiv && initialMyPetsPolicy) {
+        myPetDetailsDiv.style.display = initialMyPetsPolicy.value === 'yes' ? 'block' : 'none';
+        const noPetCheckboxInitial = form.querySelector('input[name="characteristics"][value="my_pet_no"]');
+        if (noPetCheckboxInitial) noPetCheckboxInitial.checked = (initialMyPetsPolicy.value === 'no');
+    }
+
+
+    // 2. Тварини у сусіда
+    const matePetsPolicyRadios = form.querySelectorAll('input[name="mate_pets_policy"]');
+    const matePetDetailsDiv = form.querySelector('#mate_pet_details');
+    // const noMatePetCheckbox = form.querySelector('input[name="characteristics"][value="mate_no_pet"]'); // Знайдемо його всередині
+
+    matePetsPolicyRadios?.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const noMatePetCheckbox = form.querySelector('input[name="characteristics"][value="mate_no_pet"]'); // Знаходимо тут
+            if (matePetDetailsDiv) {
+                matePetDetailsDiv.style.display = (e.target.value === 'yes' || e.target.value === 'maybe') ? 'block' : 'none';
+                if (e.target.value === 'no') {
+                    matePetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                    if (noMatePetCheckbox) noMatePetCheckbox.checked = true; // Позначаємо "Бажано без тварин"
+                } else {
+                    if (noMatePetCheckbox) noMatePetCheckbox.checked = false; // Знімаємо позначку "Бажано без тварин"
+                }
+            }
+        });
+    });
+    // Ініціалізація стану "Тварини у сусіда"
+    const initialMatePetsPolicy = form.querySelector('input[name="mate_pets_policy"]:checked');
+    if (matePetDetailsDiv && initialMatePetsPolicy) {
+        matePetDetailsDiv.style.display = (initialMatePetsPolicy.value === 'yes' || initialMatePetsPolicy.value === 'maybe') ? 'block' : 'none';
+        const noMatePetCheckboxInitial = form.querySelector('input[name="characteristics"][value="mate_no_pet"]');
+        if (noMatePetCheckboxInitial) noMatePetCheckboxInitial.checked = (initialMatePetsPolicy.value === 'no');
+    }
+
+
+    // 3. Бажана політика щодо тварин (у фільтрах пошуку)
+    const searchPetPolicyRadios = form.querySelectorAll('input[name="search_pet_policy"]');
+    const searchPetDetailsDiv = form.querySelector('#search_pet_details'); // Використовуємо новий ID
+    searchPetPolicyRadios?.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (searchPetDetailsDiv) {
+                searchPetDetailsDiv.style.display = e.target.value === 'yes' ? 'block' : 'none';
+                if (e.target.value !== 'yes') {
+                    searchPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                }
+            }
+        });
+    });
+    // Ініціалізація стану "Бажана політика"
+    const initialSearchPetPolicy = form.querySelector('input[name="search_pet_policy"]:checked');
+    if (searchPetDetailsDiv && initialSearchPetPolicy) {
+        searchPetDetailsDiv.style.display = initialSearchPetPolicy.value === 'yes' ? 'block' : 'none';
+    }
+
+
     const initialPetPolicy = form.querySelector('input[name="pet_policy"]:checked');
     if (petDetailsDiv && initialPetPolicy) {
         petDetailsDiv.style.display = initialPetPolicy.value === 'yes' ? 'flex' : 'none';
@@ -2305,6 +2450,25 @@ const setupAddListingFormLogic = () => {
             }
         });
     });
+
+    // Логіка для select "Бажаний університет"
+    const targetUniversitySelect = form.querySelector('#target_university');
+    const targetUniversityOtherTextInput = form.querySelector('#target_university_other_text');
+
+    targetUniversitySelect?.addEventListener('change', (e) => {
+        if (targetUniversityOtherTextInput) {
+            targetUniversityOtherTextInput.style.display = e.target.value === 'other' ? 'block' : 'none';
+            targetUniversityOtherTextInput.classList.toggle('hidden-other-input', e.target.value !== 'other');
+            if (e.target.value !== 'other') {
+                targetUniversityOtherTextInput.value = ''; // Очищуємо поле, якщо вибрано не "Інше"
+            }
+        }
+    });
+    // Ініціалізація стану поля "Інше" при завантаженні (важливо для редагування)
+    if (targetUniversitySelect && targetUniversityOtherTextInput) {
+        targetUniversityOtherTextInput.style.display = targetUniversitySelect.value === 'other' ? 'block' : 'none';
+        targetUniversityOtherTextInput.classList.toggle('hidden-other-input', targetUniversitySelect.value !== 'other');
+    }
 
     // --- Ініціалізація стану форми при завантаженні ---
     updateFormState(form);
