@@ -4,7 +4,6 @@
 
 // Імпортуємо необхідне з інших модулів
 import { MY_USER_ID, getAuthHeaders } from './auth.js';
-import { DEFAULT_AVATAR_URL } from '../app.js'; // Імпортуємо константу з app.js
 
 // --- Глобальні змінні модуля (UI елементи та стан) ---
 export let mobileMenuWindow, filterSidebar, notificationSidebar, overlay, notificationBadge;

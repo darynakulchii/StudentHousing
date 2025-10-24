@@ -52,8 +52,6 @@ window.toggleOtherCityInput = (selectElement) => {
 // 1. ГЛОБАЛЬНІ ЗМІННІ ТА ФУНКЦІЇ ІНТЕРФЕЙСУ (Навігація, Сповіщення)
 // =================================================================================
 
-export let mobileMenuWindow, filterSidebar, notificationSidebar, overlay, notificationBadge;
-export let currentNotificationCount = 0;
 let currentUserFavoriteIds = new Set(); // Зберігає ID обраних оголошень
 
 const fetchFavoriteIds = async () => {

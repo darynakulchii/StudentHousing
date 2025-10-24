@@ -4,9 +4,8 @@
 
 import { getAuthHeaders, MY_USER_ID } from './auth.js'; // Імпортуємо необхідне з auth.js
 // Імпортуємо функції для оновлення UI сповіщень з app.js (або ui.js, якщо буде створено)
-import { notificationSidebar } from '../app.js';
 import {updateNotificationCount, incrementNotificationCount} from './navigation.js';
-import {prependNotification, markNotificationsAsRead} from './navigation.js';
+import {prependNotification, markNotificationsAsRead, notificationSidebar} from './navigation.js';
 
 // --- Глобальні змінні для чату ---
 let socket;
