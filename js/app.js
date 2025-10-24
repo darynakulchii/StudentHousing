@@ -911,6 +911,94 @@ const handleSettingsSubmission = () => {
     });
 };
 
+// --- Логіка login_settings.html (НОВА) ---
+const handleLoginSettings = () => {
+    const changeEmailForm = document.getElementById('changeEmailForm');
+    const changePasswordForm = document.getElementById('changePasswordForm');
+
+    if (!MY_USER_ID) {
+        alert('Будь ласка, увійдіть, щоб змінити налаштування.');
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Обробник форми зміни Email
+    if (changeEmailForm) {
+        changeEmailForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(changeEmailForm);
+            const data = Object.fromEntries(formData.entries());
+
+            const submitButton = changeEmailForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Зміна...';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/profile/change-email', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Email успішно оновлено!');
+                    changeEmailForm.reset();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Невідома помилка');
+                }
+            } catch (error) {
+                alert(`Помилка: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Змінити Email';
+            }
+        });
+    }
+
+    // Обробник форми зміни Паролю
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(changePasswordForm);
+            const data = Object.fromEntries(formData.entries());
+
+            if (data.new_password !== data.confirm_new_password) {
+                alert('Помилка: Нові паролі не співпадають.');
+                return;
+            }
+
+            const submitButton = changePasswordForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Зміна...';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/profile/change-password', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        old_password: data.old_password,
+                        new_password: data.new_password
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Пароль успішно оновлено!');
+                    changePasswordForm.reset();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Невідома помилка');
+                }
+            } catch (error) {
+                alert(`Помилка: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Змінити Пароль';
+            }
+        });
+    }
+};
+
 const setupProfileEventListeners = () => {
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
@@ -977,7 +1065,7 @@ const setupProfileEventListeners = () => {
         window.location.href = 'my_listings.html';
     });
     document.getElementById('btnLoginPassword')?.addEventListener('click', () => {
-        alert('Розділ "Зміна логіну та пароля" в розробці.');
+        window.location.href = 'login_settings.html';
     });
     document.getElementById('btnSettings')?.addEventListener('click', () => {
         window.location.href = 'settings.html';
@@ -2850,7 +2938,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await handleListingSubmission();
         }
 
-        // === ОНОВЛЕНО БЛОК ДЛЯ РЕДАГУВАННЯ ===
         if (path.endsWith('edit_listing.html')) {
             const urlParams = new URLSearchParams(window.location.search);
             const listingId = urlParams.get('id');
@@ -2868,7 +2955,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 await handleListingUpdateSubmission();
             }
         }
-        // === КІНЕЦЬ ОНОВЛЕНОГО БЛОКУ ===
 
         if (path.endsWith('listing_detail.html')) {
             await fetchAndDisplayListingDetail();
@@ -2899,10 +2985,54 @@ document.addEventListener('DOMContentLoaded', () => {
             await loadSettingsData();
             handleSettingsSubmission();
 
-            // Тут може бути логіка для "Видалити акаунт", якщо вона є
-            document.getElementById('btnDeleteAccount')?.addEventListener('click', () => {
-                alert('Функція видалення акаунту в розробці.');
-            });
+            // === ЛОГІКА ВИДАЛЕННЯ АКАУНТУ ===
+            const deleteButton = document.getElementById('btnDeleteAccount');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', async (e) => {
+                    e.preventDefault();
+
+                    // 1. Перше підтвердження
+                    if (!confirm('Ви *справді* хочете видалити свій акаунт? Цю дію неможливо скасувати.')) {
+                        return;
+                    }
+
+                    // 2. Друге підтвердження (пароль)
+                    const userPassword = prompt('Будь ласка, введіть ваш поточний пароль для підтвердження:');
+                    if (!userPassword) {
+                        alert('Видалення скасовано.');
+                        return;
+                    }
+
+                    deleteButton.disabled = true;
+                    deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Видалення...';
+
+                    try {
+                        const response = await fetch('http://localhost:3000/api/profile', {
+                            method: 'DELETE',
+                            headers: getAuthHeaders(), // Використовуємо getAuthHeaders()
+                            body: JSON.stringify({ password: userPassword })
+                        });
+
+                        if (response.ok) {
+                            alert('Ваш акаунт було успішно видалено.');
+                            removeToken(); // Видаляємо токен
+                            window.location.href = 'index.html'; // Перенаправляємо на головну
+                        } else {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Невідома помилка');
+                        }
+
+                    } catch (error) {
+                        alert(`Помилка видалення: ${error.message}`);
+                        deleteButton.disabled = false;
+                        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Видалити мій акаунт';
+                    }
+                });
+            }
+        }
+
+        if (path.endsWith('login_settings.html')) {
+            handleLoginSettings();
         }
 
         if (path.endsWith('user_profile.html')) {

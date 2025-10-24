@@ -802,7 +802,117 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// 8.3 ОТРИМАННЯ ПУБЛІЧНИХ ДАНИХ ПРОФІЛЮ (НОВИЙ ЕНДПОІНТ)
+// 8.3 ЗМІНА EMAIL (НОВИЙ МАРШРУТ)
+app.post('/api/profile/change-email', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { email, current_password } = req.body;
+
+    if (!email || !current_password) {
+        return res.status(400).json({ error: 'Потрібно вказати новий email та поточний пароль' });
+    }
+
+    try {
+        const userQuery = await pool.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+        const user = userQuery.rows[0];
+
+        // 1. Перевіряємо поточний пароль
+        const isMatch = await bcrypt.compare(current_password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Неправильний поточний пароль' });
+        }
+
+        // 2. Пароль вірний, оновлюємо email
+        const updateQuery = 'UPDATE users SET email = $1 WHERE user_id = $2 RETURNING user_id, email';
+        const result = await pool.query(updateQuery, [email, userId]);
+
+        res.json({ message: 'Email успішно оновлено', user: result.rows[0] });
+
+    } catch (err) {
+        if (err.code === '23505') { // unique_violation
+            res.status(409).json({ error: 'Користувач з таким email вже існує.' });
+        } else {
+            console.error('Помилка зміни email:', err);
+            res.status(500).json({ error: 'Помилка сервера' });
+        }
+    }
+});
+
+// 8.4 ЗМІНА ПАРОЛЯ (НОВИЙ МАРШРУТ)
+app.post('/api/profile/change-password', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { old_password, new_password } = req.body;
+
+    if (!old_password || !new_password) {
+        return res.status(400).json({ error: 'Потрібно вказати старий та новий пароль' });
+    }
+
+    try {
+        const userQuery = await pool.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+        const user = userQuery.rows[0];
+
+        // 1. Перевіряємо старий пароль
+        const isMatch = await bcrypt.compare(old_password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Неправильний старий пароль' });
+        }
+
+        // 2. Пароль вірний, хешуємо та оновлюємо
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(new_password, salt);
+
+        const updateQuery = 'UPDATE users SET password_hash = $1 WHERE user_id = $2';
+        await pool.query(updateQuery, [hashedPassword, userId]);
+
+        res.json({ message: 'Пароль успішно оновлено' });
+
+    } catch (err) {
+        console.error('Помилка зміни паролю:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 8.5 ВИДАЛЕННЯ АКАУНТУ (НОВИЙ МАРШРУТ)
+app.delete('/api/profile', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { password } = req.body;
+
+    if (!password) {
+        return res.status(400).json({ error: 'Необхідно ввести поточний пароль для видалення' });
+    }
+
+    try {
+        const userQuery = await pool.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено' });
+        }
+        const user = userQuery.rows[0];
+
+        // 1. Перевіряємо пароль
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Неправильний пароль' });
+        }
+
+        // 2. Пароль вірний, видаляємо користувача.
+        // Завдяки 'ON DELETE CASCADE' у вашій schema.sql,
+        // всі пов'язані оголошення, повідомлення, обране тощо будуть видалені автоматично.
+        await pool.query('DELETE FROM users WHERE user_id = $1', [userId]);
+
+        res.json({ message: 'Акаунт успішно видалено' });
+
+    } catch (err) {
+        console.error('Помилка видалення акаунту:', err);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+// 8.6 ОТРИМАННЯ ПУБЛІЧНИХ ДАНИХ ПРОФІЛЮ (НОВИЙ ЕНДПОІНТ)
 app.get('/api/users/:id/public-profile', async (req, res) => {
     const userId = req.params.id;
     try {
@@ -824,7 +934,7 @@ app.get('/api/users/:id/public-profile', async (req, res) => {
     }
 });
 
-// 8.4 ОТРИМАННЯ АКТИВНИХ ОГОЛОШЕНЬ КОРИСТУВАЧА (НОВИЙ ЕНДПОІНТ)
+// 8.6 ОТРИМАННЯ АКТИВНИХ ОГОЛОШЕНЬ КОРИСТУВАЧА (НОВИЙ ЕНДПОІНТ)
 app.get('/api/users/:id/listings', async (req, res) => {
     const userId = req.params.id;
     try {
