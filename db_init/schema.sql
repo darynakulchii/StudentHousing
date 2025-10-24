@@ -42,7 +42,7 @@ CREATE TABLE "listings" (
                             "title" VARCHAR(255) NOT NULL,
                             "description" TEXT,
                             "city" VARCHAR(100) NOT NULL,
-                            "city_other" VARCHAR(255) NOT NULL,
+                            "city_other" VARCHAR(255),
                             "main_photo_url" VARCHAR(500),
                             "address" VARCHAR(255),          -- Нове поле адреси
                             "latitude" DECIMAL(9, 6),        -- Нове поле координат
