@@ -102,12 +102,13 @@
                     <option value="Мелітополь">Мелітополь</option>
                     <option value="Миколаїв">Миколаїв</option>
                     <option value="Мукачево">Мукачево</option>
+                    <option value="Миргород">Миргород</option>
                     <option value="Одеса">Одеса</option>
                     <option value="Павлоград">Павлоград</option>
                     <option value="Полтава">Полтава</option>
                     <option value="Рівне">Рівне</option>
                     <option value="Севастополь">Севастополь</option>
-                    <option value="Сєвєродонецьк">Сєвєродонецьк</option>
+                    <option value="Сіверськодонецьк ">Сіверськодонецьк</option>
                     <option value="Сімферополь">Сімферополь</option>
                     <option value="Слов'янськ">Слов'янськ</option>
                     <option value="Суми">Суми</option>
@@ -117,9 +118,8 @@
                     <option value="Херсон">Херсон</option>
                     <option value="Черкаси">Черкаси</option>
                     <option value="Чернігів">Чернігів</option>
-                    <option value="other">Інше</option> <!-- Added Other option -->
+                    <option value="other">Інше</option>
                 </select>
-                <!-- Input field for other city -->
                 <input type="text" id="city_other_text" name="city_other_text" placeholder="Введіть інше місто" class="hidden-other-input">
             </div>
 
@@ -250,7 +250,6 @@
                         <input type="checkbox" id="search_tech_dryer" name="search_characteristics" value="hair_dryer"><label for="search_tech_dryer">Фен</label>
                         <input type="checkbox" id="search_tech_dishwasher" name="search_characteristics" value="dishwasher"><label for="search_tech_dishwasher">Посудомийна машина</label>
                         <input type="checkbox" id="search_tech_drying_machine" name="search_characteristics" value="drying_machine"><label for="search_tech_drying_machine">Сушильна машина</label>
-                        <!-- Other option for search tech -->
                         <div class="checkbox-option-item other-characteristic-option">
                             <input type="checkbox" id="search_tech_other_check" name="characteristics_other_trigger" value="search_tech_other" onchange="toggleOtherInput(this, 'search_tech_other_text')">
                             <label for="search_tech_other_check">Інше</label>
@@ -267,7 +266,6 @@
                         <input type="checkbox" id="search_media_fast_inet" name="search_characteristics" value="fast_internet"><label for="search_media_fast_inet">Швидкісний інтернет</label>
                         <input type="checkbox" id="search_media_satellite" name="search_characteristics" value="satellite_tv"><label for="search_media_satellite">Супутникове ТБ</label>
                         <input type="checkbox" id="search_media_tv" name="search_characteristics" value="tv"><label for="search_media_tv">Телевізор</label>
-                        <!-- Other option for search media -->
                         <div class="checkbox-option-item other-characteristic-option">
                             <input type="checkbox" id="search_media_other_check" name="characteristics_other_trigger" value="search_media_other" onchange="toggleOtherInput(this, 'search_media_other_text')">
                             <label for="search_media_other_check">Інше</label>
@@ -301,7 +299,6 @@
                         <input type="checkbox" id="search_comfort_smart_home" name="search_characteristics" value="smart_home"><label for="search_comfort_smart_home">Технологія "розумний будинок"</label>
                         <input type="checkbox" id="search_comfort_fire_alarm" name="search_characteristics" value="fire_alarm"><label for="search_comfort_fire_alarm">Пожежна сигналізація</label>
                         <input type="checkbox" id="search_comfort_generator" name="search_characteristics" value="generator"><label for="search_comfort_generator">Автономний електрогенератор</label>
-                        <!-- Other option for search comfort -->
                         <div class="checkbox-option-item other-characteristic-option">
                             <input type="checkbox" id="search_comfort_other_check" name="characteristics_other_trigger" value="search_comfort_other" onchange="toggleOtherInput(this, 'search_comfort_other_text')">
                             <label for="search_comfort_other_check">Інше</label>
@@ -333,7 +330,6 @@
                         <input type="checkbox" id="search_blackout_elevator" name="search_characteristics" value="blackout_elevator"><label for="search_blackout_elevator">Працює ліфт</label>
                         <input type="checkbox" id="search_blackout_backup_power" name="search_characteristics" value="blackout_backup_power"><label for="search_blackout_backup_power">Підключене резервне живлення</label>
                         <input type="checkbox" id="search_blackout_water" name="search_characteristics" value="blackout_water"><label for="search_blackout_water">Працює водопостачання</label>
-                        <!-- Other option for search blackout -->
                         <div class="checkbox-option-item other-characteristic-option">
                             <input type="checkbox" id="search_blackout_other_check" name="characteristics_other_trigger" value="search_blackout_other" onchange="toggleOtherInput(this, 'search_blackout_other_text')">
                             <label for="search_blackout_other_check">Інше</label>
@@ -364,7 +360,6 @@
                         <input type="checkbox" id="search_infra_park" name="search_characteristics" value="infra_park"><label for="search_infra_park">Парк, зелена зона</label>
                         <input type="checkbox" id="search_infra_train_station" name="search_characteristics" value="infra_train_station"><label for="search_infra_train_station">Залізнична станція</label>
                         <input type="checkbox" id="search_infra_playground" name="search_characteristics" value="infra_playground"><label for="search_infra_playground">Дитячий майданчик</label>
-                        <!-- Other option for search infra -->
                         <div class="checkbox-option-item other-characteristic-option">
                             <input type="checkbox" id="search_infra_other_check" name="characteristics_other_trigger" value="search_infra_other" onchange="toggleOtherInput(this, 'search_infra_other_text')">
                             <label for="search_infra_other_check">Інше</label>
@@ -388,7 +383,6 @@
                         <input type="checkbox" id="search_incl_tactile_strips" name="search_characteristics" value="incl_tactile_strips"><label for="search_incl_tactile_strips">Тактильні смуги на підлозі</label>
                         <input type="checkbox" id="search_incl_street_entry" name="search_characteristics" value="incl_street_entry"><label for="search_incl_street_entry">Вхід в рівень з вулицею</label>
                         <input type="checkbox" id="search_incl_voice_alerts" name="search_characteristics" value="incl_voice_alerts"><label for="search_incl_voice_alerts">Голосові сповіщення у ліфті</label>
-                        <!-- Other option for search inclusivity -->
                         <div class="checkbox-option-item other-characteristic-option">
                             <input type="checkbox" id="search_incl_other_check" name="characteristics_other_trigger" value="search_incl_other" onchange="toggleOtherInput(this, 'search_incl_other_text')">
                             <label for="search_incl_other_check">Інше</label>
@@ -496,7 +490,6 @@
                     <input type="checkbox" id="my_pers_communicative" name="characteristics" value="my_communicative"><label for="my_pers_communicative">Комунікабельний/а</label>
                     <input type="checkbox" id="my_pers_responsible" name="characteristics" value="my_responsible"><label for="my_pers_responsible">Відповідальний/а</label>
                     <input type="checkbox" id="my_pers_humorous" name="characteristics" value="my_humorous"><label for="my_pers_humorous">З почуттям гумору</label>
-                    <!-- Removed: optimist, pessimist, realist, sporty, independent, flexible, punctual -->
                     <div class="checkbox-option-item other-characteristic-option">
                         <input type="checkbox" id="my_pers_other_check" name="characteristics_other_trigger" value="my_personality_other" onchange="toggleOtherInput(this, 'my_pers_other_text')">
                         <label for="my_pers_other_check">Інше</label>
@@ -640,7 +633,6 @@
                     <input type="checkbox" id="mate_pers_communicative" name="characteristics" value="mate_communicative"><label for="mate_pers_communicative">Комунікабельний/а</label>
                     <input type="checkbox" id="mate_pers_responsible" name="characteristics" value="mate_responsible"><label for="mate_pers_responsible">Відповідальний/а</label>
                     <input type="checkbox" id="mate_pers_humorous" name="characteristics" value="mate_humorous"><label for="mate_pers_humorous">З почуттям гумору</label>
-                    <!-- Removed: optimist, pessimist, realist, sporty, independent, flexible, punctual -->
                     <div class="checkbox-option-item other-characteristic-option">
                         <input type="checkbox" id="pers_other_check" name="characteristics_other_trigger" value="mate_personality_other" onchange="toggleOtherInput(this, 'pers_other_text')">
                         <label for="pers_other_check">Інше</label>
@@ -902,7 +894,6 @@
                     <input type="checkbox" id="tech_dishwasher" name="characteristics" value="dishwasher"><label for="tech_dishwasher">Посудомийна машина</label>
                     <input type="checkbox" id="tech_drying_machine" name="characteristics" value="drying_machine"><label for="tech_drying_machine">Сушильна машина</label>
                     <input type="checkbox" id="tech_no" name="characteristics" value="no_appliances"><label for="tech_no">Без побутової техніки</label>
-                    <!-- Other option for tech -->
                     <div class="checkbox-option-item other-characteristic-option">
                         <input type="checkbox" id="tech_other_check" name="characteristics_other_trigger" value="tech_other" onchange="toggleOtherInput(this, 'tech_other_text')">
                         <label for="tech_other_check">Інше</label>
@@ -920,7 +911,6 @@
                     <input type="checkbox" id="media_satellite" name="characteristics" value="satellite_tv"><label for="media_satellite">Супутникове ТБ</label>
                     <input type="checkbox" id="media_tv" name="characteristics" value="tv"><label for="media_tv">Телевізор</label>
                     <input type="checkbox" id="media_no" name="characteristics" value="no_media"><label for="media_no">Без мультимедіа</label>
-                    <!-- Other option for media -->
                     <div class="checkbox-option-item other-characteristic-option">
                         <input type="checkbox" id="media_other_check" name="characteristics_other_trigger" value="media_other" onchange="toggleOtherInput(this, 'media_other_text')">
                         <label for="media_other_check">Інше</label>

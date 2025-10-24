@@ -38,12 +38,72 @@ export const universitiesData = {
         { value: 'uni_onmedu', text: 'ОНМедУ' },
         { value: 'uni_oneu', text: 'ОНЕУ' },
         { value: 'uni_pdau', text: 'Південноукраїнський національний педагогічний університет' },
+        { value: 'uni_onmu', text: 'Одеський національний морський університет' },
     ],
     'Дніпро': [
         { value: 'uni_dnu', text: 'ДНУ ім. Гончара' },
         { value: 'uni_ntudp', text: 'НТУ "Дніпровська політехніка"' },
         { value: 'uni_dsmu', text: 'ДДМУ' },
         { value: 'uni_udhtu', text: 'УДХТУ' },
+        { value: 'uni_umsf', text: 'Університет митної справи та фінансів' },
     ],
-    // Додайте інші міста та їх університети за потребою
+    'Вінниця': [
+        { value: 'uni_vnmu', text: 'ВНМУ ім. Пирогова' },
+        { value: 'uni_vntu', text: 'ВНТУ' },
+        { value: 'uni_donnu_vin', text: 'ДонНУ ім. Стуса (м. Вінниця)' },
+        { value: 'uni_vdpu', text: 'ВДПУ ім. Коцюбинського' },
+    ],
+    'Запоріжжя': [
+        { value: 'uni_znu', text: 'ЗНУ' },
+        { value: 'uni_zp', text: 'НУ "Запорізька політехніка"' },
+        { value: 'uni_zdmfu', text: 'ЗДМФУ' },
+    ],
+    'Івано-Франківськ': [
+        { value: 'uni_pnu', text: 'ПНУ ім. Стефаника' },
+        { value: 'uni_ifntung', text: 'ІФНТУНГ' },
+        { value: 'uni_ifnmu', text: 'ІФНМУ' },
+    ],
+    'Чернівці': [
+        { value: 'uni_chnu', text: 'ЧНУ ім. Федьковича' },
+        { value: 'uni_bdmu', text: 'БДМУ' },
+        { value: 'uni_chtei', text: 'ЧТЕІ ДТЕУ' },
+    ],
+    'Полтава': [
+        { value: 'uni_nupp', text: 'НУ "Полтавська політехніка"' },
+        { value: 'uni_pnpu', text: 'ПНПУ ім. Короленка' },
+        { value: 'uni_pdau_poltava', text: 'Полтавський державний аграрний університет' },
+    ],
+    'Суми': [
+        { value: 'uni_sumdu', text: 'СумДУ' },
+        { value: 'uni_snau', text: 'СНАУ' },
+        { value: 'uni_sumdpu', text: 'СумДПУ ім. Макаренка' },
+    ],
+    'Ужгород': [
+        { value: 'uni_uzhnu', text: 'УжНУ' },
+    ],
+    'Тернопіль': [
+        { value: 'uni_zunu', text: 'ЗУНУ' },
+        { value: 'uni_tnmu', text: 'ТНМУ ім. Горбачевського' },
+        { value: 'uni_tnpu', text: 'ТНПУ ім. Гнатюка' },
+    ],
+    'Рівне': [
+        { value: 'uni_nuvhp', text: 'НУВГП' },
+        { value: 'uni_rdhu', text: 'РДГУ' },
+    ],
+    'Луцьк': [
+        { value: 'uni_vnu', text: 'ВНУ ім. Лесі Українки' },
+        { value: 'uni_lntu', text: 'ЛНТУ' },
+    ],
+    'Хмельницький': [
+        { value: 'uni_khnu_km', text: 'ХНУ (Хмельницький)' },
+    ],
+    'Чернігів': [
+        { value: 'uni_nu_chp', text: 'НУ "Чернігівська політехніка"' },
+        { value: 'uni_nu_chc', text: 'НУ "Чернігівський колегіум" ім. Шевченка' },
+    ],
+    'Миколаїв': [
+        { value: 'uni_chnu_mk', text: 'ЧНУ ім. Петра Могили' },
+        { value: 'uni_nuk', text: 'НУК ім. Макарова' },
+        { value: 'uni_mnau', text: 'Миколаївський національний аграрний університет' },
+    ],
 };

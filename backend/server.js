@@ -438,8 +438,13 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
         'roommate_age_min', 'roommate_age_max', 'roommate_smoking', 'roommate_drinking',
         'roommate_guests', 'roommate_description', 'address','latitude', 'longitude', 'study_conditions',
         'building_type_other', 'wall_type_other', 'planning_other', 'heating_type_other',
-        'renovation_type_other', 'pet_policy', 'owner_rules', 'search_pet_policy', 'housing_type_search_other',
-        'target_university_other'
+        'renovation_type_other', 'pet_policy', 'owner_rules', 'search_pet_policy',
+        'city_other', 'housing_type_search_other', 'target_university_other',
+        'tech_other_text', 'media_other_text', 'comfort_other_text',
+        'my_personality_other_text', 'my_lifestyle_other_text', 'my_interests_other_text',
+        'mate_personality_other_text', 'mate_lifestyle_other_text', 'mate_interests_other_text',
+        'comm_other_text', 'infra_other_text', 'incl_other_text', 'blackout_other_text',
+        'university_other_text'
     ];
     const columns = ['user_id'];
     const values = [user_id];
@@ -636,21 +641,25 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
             listingData.target_university_other = null;
         }
 
-        // 1. Оновлюємо основні дані оголошення
         const allowedKeys = [
-            'listing_type', 'title', 'description', 'city', 'price', 'building_type', 'rooms', 'floor',
-            'total_floors', 'total_area', 'kitchen_area', 'wall_type', 'planning', 'bathroom_type',
-            'heating_type', 'renovation_type', 'furnishing', 'max_occupants', 'current_occupants',
-            'seeking_roommates', 'target_price_min', 'target_price_max', 'housing_type_search',
-            'target_rooms', 'target_roommates_max', 'is_student', 'target_university',
-            'target_uni_distance', 'ready_to_share', 'my_gender', 'my_age', 'my_group_size',
-            'my_group_count', 'my_smoking', 'my_drinking', 'my_guests', 'about_me_description',
-            'roommate_gender', 'roommate_age_min', 'roommate_age_max', 'roommate_smoking',
-            'roommate_drinking', 'roommate_guests', 'roommate_description', 'address',
-            'latitude', 'longitude', 'study_conditions', 'building_type_other',
-            'wall_type_other', 'planning_other', 'heating_type_other', 'renovation_type_other',
-            'pet_policy', 'owner_rules', 'search_pet_policy', 'housing_type_search_other',
-            'target_university_other'
+            'listing_type', 'title', 'description', 'city', 'main_photo_url', 'price',
+            'building_type', 'rooms', 'floor', 'total_floors', 'total_area', 'kitchen_area',
+            'wall_type', 'planning', 'bathroom_type', 'heating_type', 'renovation_type', 'furnishing',
+            'max_occupants', 'current_occupants', 'seeking_roommates', 'target_price_min',
+            'target_price_max', 'housing_type_search', 'target_rooms', 'target_roommates_max',
+            'is_student', 'target_university', 'target_uni_distance', 'ready_to_share',
+            'my_gender', 'my_age', 'my_group_size', 'my_group_count', 'my_smoking',
+            'my_drinking', 'my_guests', 'about_me_description', 'roommate_gender',
+            'roommate_age_min', 'roommate_age_max', 'roommate_smoking', 'roommate_drinking',
+            'roommate_guests', 'roommate_description', 'address','latitude', 'longitude', 'study_conditions',
+            'building_type_other', 'wall_type_other', 'planning_other', 'heating_type_other',
+            'renovation_type_other', 'pet_policy', 'owner_rules', 'search_pet_policy',
+            'city_other', 'housing_type_search_other', 'target_university_other',
+            'tech_other_text', 'media_other_text', 'comfort_other_text',
+            'my_personality_other_text', 'my_lifestyle_other_text', 'my_interests_other_text',
+            'mate_personality_other_text', 'mate_lifestyle_other_text', 'mate_interests_other_text',
+            'comm_other_text', 'infra_other_text', 'incl_other_text', 'blackout_other_text',
+            'university_other_text'
         ];
 
         const setClauses = [];

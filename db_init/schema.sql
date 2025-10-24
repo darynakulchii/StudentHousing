@@ -42,34 +42,34 @@ CREATE TABLE "listings" (
                             "title" VARCHAR(255) NOT NULL,
                             "description" TEXT,
                             "city" VARCHAR(100) NOT NULL,
-                            "city_other" VARCHAR(255),
+                            "city_other" VARCHAR(255), -- Змінено з city_other_text для консистенції
                             "main_photo_url" VARCHAR(500),
-                            "address" VARCHAR(255),          -- Нове поле адреси
-                            "latitude" DECIMAL(9, 6),        -- Нове поле координат
-                            "longitude" DECIMAL(9, 6),       -- Нове поле координат
-                            "study_conditions" TEXT,         -- Нове поле умов для навчання
+                            "address" VARCHAR(255),
+                            "latitude" DECIMAL(9, 6),
+                            "longitude" DECIMAL(9, 6),
+                            "study_conditions" TEXT,
 
     -- === Поля для 'rent_out' та 'find_mate' (Характеристики житла) ===
                             "price" DECIMAL(10, 2),
                             "building_type" VARCHAR(50),
-                            "building_type_other" VARCHAR(255), -- Нове поле для іншого типу будинку
+                            "building_type_other" VARCHAR(255),
                             "rooms" VARCHAR(10),
                             "floor" INT,
                             "total_floors" INT,
                             "total_area" DECIMAL(8, 2),
                             "kitchen_area" DECIMAL(8, 2),
                             "wall_type" VARCHAR(50),
-                            "wall_type_other" VARCHAR(255),    -- Нове поле для іншого типу стін
+                            "wall_type_other" VARCHAR(255),
                             "planning" VARCHAR(50),
-                            "planning_other" VARCHAR(255),     -- Нове поле для іншого планування
+                            "planning_other" VARCHAR(255),
                             "bathroom_type" VARCHAR(50),
                             "heating_type" VARCHAR(50),
-                            "heating_type_other" VARCHAR(255), -- Нове поле для іншого опалення
+                            "heating_type_other" VARCHAR(255),
                             "renovation_type" VARCHAR(50),
-                            "renovation_type_other" VARCHAR(255), -- Нове поле для іншого ремонту
+                            "renovation_type_other" VARCHAR(255),
                             "furnishing" VARCHAR(10),
-                            "pet_policy" VARCHAR(10),          -- Нове поле політики щодо тварин ('yes', 'no')
-                            "owner_rules" TEXT,                -- Нове поле правил від власника
+                            "pet_policy" VARCHAR(10),
+                            "owner_rules" TEXT,
 
     -- Специфічно для 'rent_out'
                             "max_occupants" VARCHAR(10),
@@ -82,7 +82,7 @@ CREATE TABLE "listings" (
                             "target_price_min" INT,
                             "target_price_max" INT,
                             "housing_type_search" VARCHAR(50),
-                            "housing_type_search_other" VARCHAR(50),
+                            "housing_type_search_other" VARCHAR(255), -- Змінено назву для консистенції
                             "target_rooms" VARCHAR(10),
                             "target_roommates_max" VARCHAR(10),
                             "target_university" VARCHAR(255),
@@ -107,7 +107,24 @@ CREATE TABLE "listings" (
                             "roommate_smoking" VARCHAR(20),
                             "roommate_drinking" VARCHAR(20),
                             "roommate_guests" VARCHAR(20),
-                            "roommate_description" TEXT
+                            "roommate_description" TEXT,
+
+    -- === КОЛОНКИ для тексту "Інше" з характеристик ===
+                            "tech_other_text" VARCHAR(255),
+                            "media_other_text" VARCHAR(255),
+                            "comfort_other_text" VARCHAR(255),
+                            "my_personality_other_text" VARCHAR(255),
+                            "my_lifestyle_other_text" VARCHAR(255),
+                            "my_interests_other_text" VARCHAR(255),
+                            "mate_personality_other_text" VARCHAR(255),
+                            "mate_lifestyle_other_text" VARCHAR(255),
+                            "mate_interests_other_text" VARCHAR(255),
+                            "comm_other_text" VARCHAR(255),
+                            "infra_other_text" VARCHAR(255),
+                            "incl_other_text" VARCHAR(255),
+                            "blackout_other_text" VARCHAR(255),
+                            "university_other_text" VARCHAR(255)
+
 );
 
 -- Таблиця фотографій
@@ -374,79 +391,6 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('incl_stairs_handrails', 'Поручні на сходах', 'inclusive'),
 ('incl_tactile_strips', 'Тактильні смуги на підлозі', 'inclusive'),
 ('incl_street_entry', 'Вхід в рівень з вулицею', 'inclusive'),
-('incl_voice_alerts', 'Голосові сповіщення у ліфті', 'inclusive'),
-
--- Категорія: Університети (Приклад для Києва)
-('uni_kpi', 'НТУУ "КПІ"', 'university_kyiv'),
-('uni_knu', 'КНУ ім. Шевченка', 'university_kyiv'),
-('uni_nmu', 'НМУ ім. Богомольця', 'university_kyiv'),
-('uni_knteu', 'КНТЕУ', 'university_kyiv'),
-('uni_knukim', 'КНУКіМ', 'university_kyiv'),
-('uni_kneu', 'КНЕУ ім. Гетьмана', 'university_kyiv'),
-('uni_nau', 'НАУ', 'university_kyiv'),
-('uni_naukma', 'НаУКМА', 'university_kyiv'),
-('uni_npu', 'НПУ ім. Драгоманова', 'university_kyiv'),
-('uni_knuba', 'КНУБА (КІСІ)', 'university_kyiv'),
-('uni_nubip', 'НУБіП України', 'university_kyiv'),
-
--- Університети Львова
-('uni_lnu', 'ЛНУ ім. Франка', 'university_lviv'),
-('uni_lp', 'НУ "Львівська політехніка"', 'university_lviv'),
-('uni_lnmu', 'ЛНМУ ім. Данила Галицького', 'university_lviv'),
-('uni_lute', 'Львівський торговельно-економічний університет', 'university_lviv'),
-('uni_lnuvmb', 'ЛНУ ветеринарної медицини ім. Ґжицького', 'university_lviv'),
-('uni_lnau', 'Львівський національний аграрний університет', 'university_lviv'),
-
--- Університети Харкова
-('uni_khnu', 'ХНУ ім. Каразіна', 'university_kharkiv'),
-('uni_khpi', 'НТУ "ХПІ"', 'university_kharkiv'),
-('uni_khnmu', 'ХНМУ', 'university_kharkiv'),
-('uni_nlu', 'НЮУ ім. Ярослава Мудрого', 'university_kharkiv'),
-('uni_khnure', 'ХНУРЕ', 'university_kharkiv'),
-('uni_khname', 'ХНУМГ ім. Бекетова', 'university_kharkiv'),
-('uni_khnau', 'ХНАУ ім. Докучаєва', 'university_kharkiv'),
-
--- Університети Одеси
-('uni_onu', 'ОНУ ім. Мечникова', 'university_odesa'),
-('uni_onpu', 'НУ "Одеська політехніка"', 'university_odesa'),
-('uni_onmedu', 'ОНМедУ', 'university_odesa'),
-('uni_oneu', 'ОНЕУ', 'university_odesa'),
-('uni_pdau', 'Південноукраїнський національний педагогічний університет', 'university_odesa'),
-
--- Університети Дніпра
-('uni_dnu', 'ДНУ ім. Гончара', 'university_dnipro'),
-('uni_ntudp', 'НТУ "Дніпровська політехніка"', 'university_dnipro'),
-('uni_dsmu', 'ДДМУ', 'university_dnipro'),
-('uni_udhtu', 'УДХТУ', 'university_dnipro'),
-
--- Університети Чернівців
-('uni_chnu', 'ЧНУ ім. Федьковича', 'university_chernivtsi'),
-('uni_bsmu', 'Буковинський державний медичний університет', 'university_chernivtsi'),
-
--- Університети Сум
-('uni_sumdu', 'Сумський державний університет (СумДУ)', 'university_sumy'),
-('uni_snau', 'Сумський національний аграрний університет (СНАУ)', 'university_sumy'),
-
--- Університети Запоріжжя
-('uni_znu', 'Запорізький національний університет (ЗНУ)', 'university_zaporizhzhia'),
-('uni_nuzp', 'НУ "Запорізька політехніка"', 'university_zaporizhzhia'),
-
--- Університети Вінниці
-('uni_vntu', 'ВНТУ', 'university_vinnytsia'),
-('uni_vnmu', 'ВНМУ ім. Пирогова', 'university_vinnytsia'),
-('uni_vdpu', 'ВДПУ ім. Коцюбинського', 'university_vinnytsia'),
-
--- Інші великі міста
-('uni_pnu', 'Прикарпатський національний університет ім. Стефаника', 'university_ivano-frankivsk'),
-('uni_ifntung', 'ІФНТУНГ', 'university_ivano-frankivsk'),
-('uni_tnpu', 'ТНПУ ім. Гнатюка', 'university_ternopil'),
-('uni_tnmu', 'ТНМУ ім. Горбачевського', 'university_ternopil'),
-('uni_ztu', 'Державний університет "Житомирська політехніка"', 'university_zhytomyr'),
-('uni_chdtu', 'Черкаський державний технологічний університет', 'university_cherkasy'),
-('uni_chdnu', 'Черкаський національний університет ім. Хмельницького', 'university_cherkasy'),
-('uni_kntu', 'ЦНТУ (м. Кропивницький)', 'university_kropyvnytskyi'),
-('uni_dgtu', 'ДДТУ (м. Кам''янське)', 'university_kamianske'),
-('uni_pdtu', 'ПДТУ (м. Маріуполь - тимчасово переміщений)', 'university_mariupol')
-;
+('incl_voice_alerts', 'Голосові сповіщення у ліфті', 'inclusive');
 
 COMMIT;
