@@ -1337,6 +1337,147 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     /* Можна додати спільні стилі, якщо потрібно */
 }
 
+
+/* REPORT-BUG PAGE  */
+.report-page {
+    max-width: 800px;
+    margin: 80px auto; /* центрування по горизонталі + трохи зверху */
+    background: #fff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd; /* 🔹 рамка довкола всього */
+    color: #333;
+
+}
+
+/* Заголовок */
+.report-page h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin-bottom: 30px;
+    padding-left: 5px;
+}
+
+/* Поле опису */
+.report-form textarea {
+    width: 100%;
+    height: 120px;
+    resize: none;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 1rem;
+    margin-bottom: 40px;
+}
+
+/* Підпис */
+.problem-label {
+    display: block;
+    margin-bottom: 30px;
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--secondary-color);
+    padding-left: 5px;
+}
+
+/* Теги проблем */
+.problem-types {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: left; /* 🔹 центрує теги по центру */
+    margin-bottom: 25px;
+}
+
+.problem-tag {
+    border: 1px solid var(--border-color);
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 0.95rem;
+}
+
+.problem-tag:hover {
+    background: #eef2ff;
+    border-color: var(--border-color);
+}
+
+.problem-tag.active {
+    background: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+/* Завантаження файлів */
+.file-upload {
+    padding-left: 15px;
+    margin-bottom: 40px;
+    margin-left: 10px;
+    text-align: left; /* 🔹 вирівняно по лівому краю */
+}
+
+.file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-weight: 530;
+    font-size: 1rem;
+    transition: 0.2s;
+}
+
+.file-label:hover {
+    color: var(--secondary-color);
+}
+
+/* Кнопки */
+.report-buttons {
+    display: flex;
+    justify-content: right; /* 🔹 вправо кнопки */
+    gap: 30px; /* відстані між кнопками скасувати та надіслати */
+    margin-top: 20px;
+}
+
+.cancel-btn, .submit-btn {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.cancel-btn {
+    background: #e0e0e0;
+    color: #555;
+}
+
+.cancel-btn:hover {
+    border-color: var(--border-color);
+    background: #ccc;
+}
+
+.submit-btn {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.submit-btn:hover {
+    border-color: var(--border-color);
+    background: #5858d6;
+}
+
+/* --- /////////////// --- */
+
 /* Login/Register наслідують стилі add-listing-page */
 .login-page h1, .register-page h1 { /* Якщо додасте класи */
     text-align: center;

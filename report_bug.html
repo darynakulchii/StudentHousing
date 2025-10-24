@@ -11,11 +11,34 @@
 
     <div id="navigation-placeholder"></div>
 
-    <main class="profile-page">
+    <main class="report-page">
         <h1>Повідомити про проблему</h1>
-        <p style="text-align: center; margin-top: 50px; color: var(--text-light);">
-            Тут буде форма зворотного зв'язку для повідомлення про технічні проблеми.
-        </p>
+
+        <form id="reportForm" class="report-form">
+
+            <textarea id="problemDescription" placeholder="Коротко опишіть вашу проблему чи запитання..." required></textarea>
+
+            <label class="problem-label">Оберіть тип проблеми, що найбільше відповідає:</label>
+            <div class="problem-types">
+                <button type="button" class="problem-tag">Невідповідний контент</button>
+                <button type="button" class="problem-tag">Жорстокий контент</button>
+                <button type="button" class="problem-tag">Неправдива інформація</button>
+                <button type="button" class="problem-tag">Інше</button>
+            </div>
+
+            <div class="file-upload">
+                <label for="fileInput" class="file-label">
+                    <i class="fas fa-plus-circle"></i> Додати файли (зображення та інші файли, що описують проблему)
+                </label>
+                <input type="file" id="fileInput" multiple hidden>
+            </div>
+
+            <div class="report-buttons">
+                <button type="button" class="cancel-btn">Скасувати</button>
+                <button type="submit" class="submit-btn">Надіслати</button>
+            </div>
+        </form>
+
     </main>
 
     <script type="module" src="js/app.js"></script>
