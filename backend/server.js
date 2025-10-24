@@ -161,8 +161,16 @@ app.get('/api/listings', async (req, res) => {
 
         // === 2. Прості фільтри ===
         if (req.query.listing_type) {
-            whereClauses.push(`l.listing_type = $${paramIndex++}`);
-            params.push(req.query.listing_type);
+            const listingTypes = Array.isArray(req.query.listing_type)
+                ? req.query.listing_type
+                : [req.query.listing_type];
+
+            // Перевіряємо, чи масив не порожній після обробки
+            if (listingTypes.length > 0 && listingTypes[0] !== '') { // Додано перевірку на порожній рядок
+                const typePlaceholders = listingTypes.map(() => `$${paramIndex++}`).join(',');
+                whereClauses.push(`l.listing_type IN (${typePlaceholders})`);
+                params.push(...listingTypes);
+            }
         }
         if (req.query.city) {
             whereClauses.push(`l.city = $${paramIndex++}`);
