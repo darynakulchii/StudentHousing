@@ -2063,3 +2063,19 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* Стиль для тексту "Інше" в деталях оголошення */
+.char-other-text {
+    margin-top: 10px; /* Відступ зверху від тегів */
+    padding: 10px;
+    background-color: #f8f9fa; /* Легкий фон */
+    border-left: 3px solid var(--border-color); /* Акцент зліва */
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-dark); /* Темніший текст */
+}
+
+.char-other-text strong {
+    color: var(--secondary-color); /* Колір для слова "Інше:" */
+    margin-right: 5px;
+}

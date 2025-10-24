@@ -205,19 +205,26 @@ const fetchAndDisplayListingDetail = async () => {
             });
         }
 
-        // 3. Helper function to build HTML sections for characteristics
         const buildCharSection = (categoriesToShow) => {
             let html = '';
             for (const category of categoriesToShow) {
-                // Use categoryNames[category] for the title if available, otherwise use the category key itself
                 const sectionTitle = categoryNames[category] || category.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()); // Fallback title
-                if (characteristicsByCategory[category] && characteristicsByCategory[category].length > 0) { // Only show if characteristics exist for category
+                const characteristicsHTML = characteristicsByCategory[category] ? characteristicsByCategory[category].join('') : '';
+
+                let otherTextHTML = '';
+                const otherTextKey = category + '_other_text';
+                if (listing[otherTextKey] && listing[otherTextKey].trim() !== '') {
+                    otherTextHTML = `<p class="char-other-text"><strong>Інше:</strong> ${listing[otherTextKey].replace(/\n/g, '<br>')}</p>`;
+                }
+
+                if (characteristicsHTML || otherTextHTML) {
                     html += `
                         <div class="char-category-group">
                             <h3>${sectionTitle}</h3>
                             <div class="characteristics-list">
-                                ${characteristicsByCategory[category].join('')}
+                                ${characteristicsHTML}
                             </div>
+                            ${otherTextHTML}
                         </div>
                     `;
                 }
@@ -225,12 +232,10 @@ const fetchAndDisplayListingDetail = async () => {
             return html;
         };
 
-        // 4. Generate HTML blocks for each section
         let aboutAuthorHTML = '';
         let roommatePrefsHTML = '';
         let housingCharsHTML = '';
 
-        // -- "About Author" & "Roommate Preferences" (ONLY for find_home & find_mate)
         if (listing.listing_type === 'find_home' || listing.listing_type === 'find_mate') {
             const myCategories = ['my_personality', 'my_lifestyle', 'my_interests', 'my_pets'];
             const myCharsHTML = buildCharSection(myCategories);
@@ -275,19 +280,15 @@ const fetchAndDisplayListingDetail = async () => {
             }
         }
 
-        // -- "Housing Characteristics" (for all types, different titles)
-        // Include pets_allowed_detail for specific pet types if pet_policy is 'yes'
         const apartmentCategories = [
             'tech', 'media', 'comfort', ...(listing.pet_policy === 'yes' ? ['pets_allowed_detail'] : []),
             'blackout', 'rules', 'communications', 'infra', 'inclusive'
         ];
-        // Separately get university characteristics if they exist
         const universityChars = listing.characteristics?.filter(c => c.category.startsWith('university_'))
             .map(c => `<span class="char-tag">${c.name_ukr}</span>`).join('') || '';
 
         const apartmentCharsHTML = buildCharSection(apartmentCategories);
 
-        // Add optional fields like study conditions and owner rules
         let optionalFieldsHTML = '';
         if (listing.study_conditions) {
             optionalFieldsHTML += `<div class="char-category-group"><h3>Умови для навчання</h3><p>${listing.study_conditions.replace(/\n/g, '<br>')}</p></div>`;
@@ -295,7 +296,6 @@ const fetchAndDisplayListingDetail = async () => {
         if (listing.owner_rules && listing.listing_type === 'rent_out') { // Only for rent_out
             optionalFieldsHTML += `<div class="char-category-group"><h3>Правила від власника</h3><p>${listing.owner_rules.replace(/\n/g, '<br>')}</p></div>`;
         }
-        // Add Nearby Universities section if characteristics exist
         let nearbyUniversitiesHTML = '';
         if (universityChars && (listing.listing_type === 'rent_out' || listing.listing_type === 'find_mate')) {
             nearbyUniversitiesHTML = `
@@ -308,7 +308,6 @@ const fetchAndDisplayListingDetail = async () => {
         }
 
 
-        // Combine characteristics, optional fields, and universities
         const combinedHousingCharsHTML = apartmentCharsHTML + nearbyUniversitiesHTML + optionalFieldsHTML;
 
         if (listing.listing_type === 'find_home') {
