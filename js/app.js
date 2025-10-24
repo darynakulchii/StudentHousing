@@ -209,22 +209,21 @@ const fetchAndDisplayListingDetail = async () => {
             let html = '';
             for (const category of categoriesToShow) {
                 const sectionTitle = categoryNames[category] || category.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()); // Fallback title
-                const characteristicsHTML = characteristicsByCategory[category] ? characteristicsByCategory[category].join('') : '';
+                let characteristicsHTML = characteristicsByCategory[category] ? characteristicsByCategory[category].join('') : '';
 
-                let otherTextHTML = '';
                 const otherTextKey = category + '_other_text';
                 if (listing[otherTextKey] && listing[otherTextKey].trim() !== '') {
-                    otherTextHTML = `<p class="char-other-text"><strong>Інше:</strong> ${listing[otherTextKey].replace(/\n/g, '<br>')}</p>`;
+                    const otherTextTag = `<span class="char-tag">${listing[otherTextKey]}</span>`;
+                    characteristicsHTML += otherTextTag;
                 }
 
-                if (characteristicsHTML || otherTextHTML) {
+                if (characteristicsHTML) {
                     html += `
                         <div class="char-category-group">
                             <h3>${sectionTitle}</h3>
                             <div class="characteristics-list">
                                 ${characteristicsHTML}
                             </div>
-                            ${otherTextHTML}
                         </div>
                     `;
                 }
