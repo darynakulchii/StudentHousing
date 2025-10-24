@@ -1005,17 +1005,32 @@ const setupProfileEventListeners = () => {
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(profileForm);
-            const data = Object.fromEntries(formData.entries());
+            // Дані ТІЛЬКИ з форми
+            const dataFromForm = Object.fromEntries(formData.entries());
+            // Видаляємо непотрібні поля з даних форми (якщо вони там є)
+            //delete dataFromForm.interests;
+            //delete dataFromForm.habits;
 
-            // ОНОВЛЕНО: Видаляємо 'interests' та 'habits'
-            delete data.interests;
-            delete data.habits;
+            // === Отримуємо поточні дані ===
+            let currentProfileData = {};
+            try {
+                const profileResponse = await fetch('http://localhost:3000/api/profile', { headers: getAuthHeaders() });
+                if (!profileResponse.ok) throw new Error('Помилка отримання поточних даних профілю.');
+                currentProfileData = await profileResponse.json();
+            } catch (error) {
+                alert(`Помилка: ${error.message}`);
+                return; // Не продовжуємо, якщо не вдалося отримати дані
+            }
+
+            // Об'єднуємо поточні дані з даними форми
+            // Дані з форми мають пріоритет
+            const updatedProfileData = { ...currentProfileData, ...dataFromForm };
 
             try {
                 const response = await fetch('http://localhost:3000/api/profile', {
                     method: 'PUT',
                     headers: getAuthHeaders(),
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(updatedProfileData)
                 });
 
                 if (!response.ok) {
@@ -1026,9 +1041,12 @@ const setupProfileEventListeners = () => {
                 const result = await response.json();
                 alert(result.message);
 
+                // Оновлюємо ім'я в сайдбарі, якщо воно змінилося
                 const avatarName = document.getElementById('profileAvatarName');
-                if (avatarName) {
+                if (avatarName && (result.user.first_name !== currentProfileData.first_name || result.user.last_name !== currentProfileData.last_name)) {
                     avatarName.textContent = `${result.user.first_name || ''} ${result.user.last_name || ''}`;
+                    // Також оновлюємо аватар у хедері (на випадок зміни імені там)
+                    await setupNavLinks();
                 }
 
             } catch (error) {
@@ -1049,7 +1067,7 @@ const setupProfileEventListeners = () => {
         });
     }
 
-    // --- ФОТО: Додаємо слухача для завантаження аватара ---
+    // Слухач для завантаження аватара
     const avatarInput = document.getElementById('avatar-upload');
     if (avatarInput) {
         avatarInput.addEventListener('change', (event) => {
@@ -2305,7 +2323,8 @@ const fetchAndDisplayFavorites = async () => {
 
     if (!MY_USER_ID) {
         alert('Будь ласка, увійдіть, щоб переглянути обрані оголошення.');
-        container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Будь ласка, <a href="login.html">увійдіть</a>, щоб побачити цей розділ.</p>';
+        container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Будь ласка, <a href="../login.html">увійдіть</a>, щоб побачити цей розділ.</p>';
+        window.location.href = 'login.html';
         return;
     }
 
