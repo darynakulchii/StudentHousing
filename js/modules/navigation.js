@@ -2,7 +2,6 @@
 // NAVIGATION MODULE
 // =================================================================================
 
-// Імпортуємо необхідне з інших модулів
 import { MY_USER_ID, getAuthHeaders } from './auth.js';
 
 // --- Глобальні змінні модуля (UI елементи та стан) ---
@@ -254,7 +253,7 @@ export const initializeNavigation = async () => {
     }
 
     // Визначаємо шлях до navigation.html (припускаємо, що він в корені)
-    const navPath = '/navigation.html';
+    const navPath = './navigation.html';
 
     try {
         const response = await fetch(navPath);
@@ -329,64 +328,6 @@ export const initializeNavigation = async () => {
 
     } catch (error) {
         console.error('Error loading or initializing navigation:', error);
-        placeholder.innerHTML = '<p style="color: red; text-align: center;">Помилка завантаження навігації</p>';
-    }
-};
-
-export const loadNavigation = async () => {
-    const placeholder = document.getElementById('navigation-placeholder');
-    if (!placeholder) return;
-    // Determine path based on current location (root or subfolder)
-    const navPath = window.location.pathname.includes('/pages/') ? '../navigation.html' : 'navigation.html';
-
-    try {
-        const response = await fetch(navPath);
-        if (!response.ok) throw new Error(`Failed to fetch navigation: ${response.statusText}`);
-        placeholder.innerHTML = await response.text();
-
-        mobileMenuWindow = document.getElementById('mobileMenuWindow');
-        filterSidebar = document.getElementById('filterSidebar');
-        notificationSidebar = document.getElementById('notificationSidebar');
-        overlay = document.getElementById('overlay');
-        notificationBadge = document.getElementById('notificationBadge');
-
-        highlightActiveLink();
-        await setupNavLinks();
-
-        if (MY_USER_ID) {
-            await fetchAndDisplayNotifications();
-        } else {
-            updateNotificationCount(0);
-        }
-
-        // Setup event listeners
-        document.querySelector('.mobile-menu-toggle')?.addEventListener('click', () => toggleMenu('open'));
-        document.getElementById('btnCloseMenu')?.addEventListener('click', () => toggleMenu('close'));
-        document.querySelector('.notification-icon-container')?.addEventListener('click', () => toggleNotifications('open'));
-        document.getElementById('btnCloseNotifications')?.addEventListener('click', () => toggleNotifications('close'));
-        document.querySelector('.filter-btn')?.addEventListener('click', () => toggleFilters('open')); // Listener for filter button
-        document.getElementById('btnCloseFilters')?.addEventListener('click', () => toggleFilters('close'));
-        overlay?.addEventListener('click', () => { // Close all sidebars on overlay click
-            toggleMenu('close');
-            toggleFilters('close');
-            toggleNotifications('close');
-        });
-
-        // Перевірка авторизації для кнопки "Додати оголошення" в мобільному меню
-        const addListingLinkMobile = placeholder.querySelector('.sidebar-nav a[href="add_listing.html"]');
-        if (addListingLinkMobile) {
-            addListingLinkMobile.addEventListener('click', (e) => {
-                if (!MY_USER_ID) { // MY_USER_ID визначається на початку app.js
-                    e.preventDefault(); // Зупиняємо перехід за посиланням
-                    alert('Будь ласка, увійдіть, щоб додати оголошення.');
-                    window.location.href = 'login.html'; // Перенаправляємо на сторінку входу
-                }
-                // Якщо MY_USER_ID існує, перехід відбувається за замовчуванням
-            });
-        }
-
-    } catch (error) {
-        console.error('Error loading navigation:', error);
         placeholder.innerHTML = '<p style="color: red; text-align: center;">Помилка завантаження навігації</p>';
     }
 };

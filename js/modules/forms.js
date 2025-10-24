@@ -2,10 +2,10 @@
 // FORMS MODULE
 // =================================================================================
 
-import { getAuthHeaders, MY_USER_ID, removeToken, handleLoginSettings } from './auth.js';
+import { getAuthHeaders, MY_USER_ID } from './auth.js';
 import { universitiesData } from './universities.js';
-import { fetchAndDisplayListings } from '../app.js'; // Імпортуємо для фільтрів
-import { setupNavLinks, toggleFilters, DEFAULT_AVATAR_URL } from './navigation.js'; // Імпортуємо для оновлення аватара в хедері
+import { fetchAndDisplayListings } from '../app.js';
+import { toggleFilters } from './navigation.js';
 
 // --- Глобальні змінні для фото (специфічні для форм оголошень) ---
 let addListingSelectedFiles = [];

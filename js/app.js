@@ -3,17 +3,15 @@
 // =================================================================================
 
 // ВИКОРИСТОВУЄМО ДАНІ З МОДУЛЯ
-import { universitiesData } from './modules/universities.js';
-import { getToken, setToken, removeToken, getMyUserId, getAuthHeaders, handleLogin, handleRegistration, MY_USER_ID, handleLoginSettings } from './modules/auth.js';
-import { loadConversations, handleMessageSend, handleChatUrlParams, setupSocketIO, loadMessages } from './modules/chat.js';
+import { removeToken, getAuthHeaders, handleLogin, handleRegistration, MY_USER_ID, handleLoginSettings } from './modules/auth.js';
+import { loadConversations, handleMessageSend, handleChatUrlParams, setupSocketIO } from './modules/chat.js';
 import {
     setupAddListingFormLogic, handleListingSubmission,
-    setupEditListingFormLogic, handleListingUpdateSubmission, loadListingDataForEdit,
-    setupHomepageFilters // Додали функцію для фільтрів
+    handleListingUpdateSubmission, loadListingDataForEdit,
+    setupHomepageFilters
 } from './modules/forms.js';
-
-import { initializeNavigation, toggleFilters, setupNavLinks, loadNavigation, toggleMenu } from './modules/navigation.js';
-import {loadProfileData, handleAvatarUpload, setupProfileEventListeners, loadSettingsData, handleSettingsSubmission} from './modules/profile.js';
+import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSettingsSubmission, loadPublicProfileData} from './modules/profile.js';
+import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
 
 // --- ФОТО: Додаємо URL за замовчуванням ---
 export const DEFAULT_LISTING_IMAGE = {
@@ -744,19 +742,12 @@ const handleDeleteListing = async (listingId) => {
     }
 };
 
-
-// =================================================================================
-// 4. ЛОГІКА ФОРМ СТВОРЕННЯ/РЕДАГУВАННЯ ОГОЛОШЕННЯ (ВИПРАВЛЕНО)
-// ===============================================================================
-
-
 // =================================================================================
 // 5. ГОЛОВНИЙ ВИКОНАВЧИЙ БЛОК (РОУТЕР)
 // =================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     (async () => {
-        await loadNavigation(); // Завантажуємо навігацію
         await fetchFavoriteIds(); // Завантажуємо ID обраних
         setupSocketIO(); // Ініціалізуємо сокети
 
@@ -764,19 +755,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const listingId = urlParams.get('id'); // ID для detail та edit
 
+        await initializeNavigation();
+
         // Головна сторінка
         if (path.endsWith('/') || path.endsWith('index.html')) {
-            fetchAndDisplayListings('listing_type!=find_home'); // Default view
+            await fetchAndDisplayListings('listing_type!=find_home'); // Default view
             setupHomepageFilters();
         }
         // Реєстрація
-        else if (path.endsWith('register.html')) { handleRegistration(); }
+        else if (path.endsWith('register.html')) { await handleRegistration(); }
         // Вхід
-        else if (path.endsWith('login.html')) { handleLogin(); }
+        else if (path.endsWith('login.html')) { await handleLogin(); }
         // Створення оголошення
         else if (path.endsWith('add_listing.html')) {
             setupAddListingFormLogic();
-            handleListingSubmission();
+            await handleListingSubmission();
         }
         // Редагування оголошення
         else if (path.endsWith('edit_listing.html')) {

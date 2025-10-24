@@ -4,7 +4,7 @@
 
 import { getAuthHeaders, MY_USER_ID, removeToken } from './auth.js';
 import { setupNavLinks, DEFAULT_AVATAR_URL } from './navigation.js';
-import {DEFAULT_LISTING_IMAGE} from "../app";
+import {DEFAULT_LISTING_IMAGE} from "../app.js";
 
 /**
  * Завантажує дані профілю для форми.
@@ -263,7 +263,7 @@ export const handleSettingsSubmission = () => {
 };
 
 // --- Логіка user_profile.html ---
-const loadPublicProfileData = async () => {
+export const loadPublicProfileData = async () => {
     const loadingIndicator = document.getElementById('loadingIndicator');
     const profileContainer = document.getElementById('profileContainer'); // Головний контейнер сторінки
     if (!loadingIndicator || !profileContainer) return;
