@@ -2063,3 +2063,33 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
+/* --- Report Bug Page - File List Styles --- */
+.file-list-container {
+    margin-top: 15px; /* Відступ від кнопки */
+    font-size: 0.9rem;
+    color: var(--text-light); /* Світліший колір тексту */
+}
+
+.file-list-item {
+    display: flex; /* Розміщуємо іконку та назву в ряд */
+    align-items: center; /* Вирівнюємо по центру */
+    gap: 8px; /* Відстань між іконкою та текстом */
+    padding: 4px 0; /* Невеликий вертикальний відступ */
+    border-bottom: 1px dashed var(--border-color); /* Розділювач */
+}
+.file-list-item:last-child {
+    border-bottom: none; /* Прибираємо лінію для останнього елемента */
+}
+
+.file-list-item i {
+    color: var(--secondary-color); /* Колір іконки */
+    font-size: 1rem; /* Розмір іконки */
+}
+
+.file-list-item span {
+    /* Стилі для назви файлу, якщо потрібно (наприклад, обмеження довжини) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

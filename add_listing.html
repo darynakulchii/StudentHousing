@@ -50,7 +50,7 @@
                 <label for="type_rent_out">Здати житло</label>
 
                 <input type="radio" id="type_find_mate" name="listing_type" value="find_mate" required>
-                <label for="type_find_mate">Знайти сусіда</label>
+                <label for="type_find_mate">Знайти сусіда (на підселення)</label>
 
                 <input type="radio" id="type_find_home" name="listing_type" value="find_home" required>
                 <label for="type_find_home">Знайти житло</label>
@@ -63,7 +63,7 @@
 
         <div class="form-group">
             <label for="title">Заголовок оголошення *</label>
-            <input type="text" id="title" name="title" placeholder="Наприклад, 'Затишна кімната біля КПІ'" required>
+            <input type="text" id="title" name="title" placeholder="Наприклад, 'Затишна кімната біля ЛНУ'" required>
         </div>
 
         <div class="form-group">
@@ -123,15 +123,25 @@
                 <input type="text" id="city_other_text" name="city_other_text" placeholder="Введіть інше місто" class="hidden-other-input">
             </div>
 
+            <div class="form-group">
+                <label for="district">Район</label>
+                <select id="district" name="district" class="other-option-select">
+                    <option value="" selected>Не вибрано</option>
+                    <option value="Центральний">Центральний</option>
+                    <option value="Шевченківський">Шевченківський</option>
+                    <option value="Залізничний">Залізничний</option>
+                    <option value="other">Інший (вказати)</option>
+                </select>
+                <input type="text" id="district_other_text" name="district_other" placeholder="Введіть інший район" class="hidden-other-input">
+            </div>
             <div class="form-group" id="priceGroup" style="display: none;">
                 <label for="price">Ціна (₴/міс) *</label>
-                <input type="number" id="price" name="price" placeholder="Наприклад, 10000" min="0" max="1000000" required>
-            </div>
+                <input type="number" id="price" name="price" placeholder="Наприклад, 10000" min="1000" max="1000000"> </div>
         </div>
 
         <div class="form-group" id="addressGroup" style="display: none;">
             <label for="address">Адреса (вулиця, номер будинку)</label>
-            <input type="text" id="address" name="address" placeholder="Наприклад, вул. Хрещатик, 22">
+            <input type="text" id="address" name="address" placeholder="Наприклад, вул. Личаківська, 34">
             <small class="form-description">Ви також можете вказати точне місце на карті.</small>
             <div id="map"></div>
             <input type="hidden" id="latitude" name="latitude">
@@ -139,7 +149,7 @@
         </div>
 
         <div class="form-group" id="photoGroup" style="display: none;">
-            <label>Фото (до 8 шт.) * <span id="photoRequiredIndicator" style="color: red;"></span></label>
+            <label>Фото (до 8 шт.) <span id="photoRequiredIndicator" style="color: red;"></span></label>
             <p class="form-description">Перше вибране фото буде головним. Натисніть на будь-який квадрат, щоб додати фото.</p>
             <input type="file" id="listingPhotosInput" name="photos" multiple accept="image/*" style="display: none;">
             <div class="photo-upload-grid" id="photoPreviewContainer">
@@ -163,10 +173,10 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="target_price_min">Мін. ціна (₴/міс)</label>
-                    <input type="number" id="target_price_min" name="target_price_min" placeholder="5000" min="0" max="1000000">
+                    <input type="number" id="target_price_min" name="target_price_min" placeholder="5000" min="1000" max="1000000">
                 </div>
                 <div class="form-group">
-                    <label for="target_price_max">Макс. ціна (₴/міс)</label> <input type="number" id="target_price_max" name="target_price_max" placeholder="15000" min="0" max="1000000">
+                    <label for="target_price_max">Макс. ціна (₴/міс)</label> <input type="number" id="target_price_max" name="target_price_max" placeholder="15000" min="1000" max="1000000">
                 </div>
             </div>
 
@@ -176,6 +186,7 @@
                     <option value="apartment" selected>Квартира (повністю)</option>
                     <option value="isolated_room">Кімната (ізольована)</option>
                     <option value="walkthrough_room">Кімната (прохідна)</option>
+                    <option value="house">Часний будинок</option>
                     <option value="any">Неважливо</option>
                     <option value="other">Інше</option>
                 </select>
@@ -214,12 +225,11 @@
 
             <div id="studentParams" style="display: none;">
                 <div class="form-group">
-                    <label for="target_university">Бажаний Університет (або район)</label>
+                    <label for="target_university">Бажаний Університет</label>
                     <select id="target_university" name="target_university" class="other-option-select">
-                        <option value="" selected>Будь-який</option>
                         <option value="other">Інший</option>
                     </select>
-                    <input type="text" id="target_university_other_text" name="target_university_other_text" placeholder="Введіть інший ВНЗ або район" class="hidden-other-input characteristics-other-text">
+                    <input type="text" id="target_university_other_text" name="target_university_other_text" placeholder="Введіть інший ВНЗ" class="hidden-other-input characteristics-other-text">
                 </div>
                 <div class="form-group">
                     <label>Бажана віддаленість від університету</label>
@@ -398,7 +408,7 @@
                 <label>Чи готові жити з сусідом?</label>
                 <div class="radio-options">
                     <input type="radio" id="ready_mate_yes" name="ready_to_share" value="yes"><label for="ready_mate_yes">Готовий/а</label>
-                    <input type="radio" id="ready_mate_any" name="ready_to_share" value="any" checked><label for="ready_mate_any">Все одно</label>
+                    <input type="radio" id="ready_mate_any" name="ready_to_share" value="any"><label for="ready_mate_any">Все одно</label>
                     <input type="radio" id="ready_mate_no" name="ready_to_share" value="no"><label for="ready_mate_no">Проти, шукаю окрему квартиру</label>
                 </div>
             </div>
@@ -503,8 +513,6 @@
             <div class="form-group">
                 <label>Спосіб життя (про себе)</label>
                 <div class="checkbox-options">
-                    <input type="checkbox" id="my_life_early_bird" name="characteristics" value="my_early_bird"><label for="my_life_early_bird">Жайворонок</label> <!-- Removed quotes -->
-                    <input type="checkbox" id="my_life_night_owl" name="characteristics" value="my_night_owl"><label for="my_life_night_owl">Сова</label> <!-- Removed quotes -->
                     <input type="checkbox" id="my_life_student" name="characteristics" value="my_student"><label for="my_life_student">Вчуся</label>
                     <input type="checkbox" id="my_life_worker" name="characteristics" value="my_worker"><label for="my_life_worker">Працюю</label>
                     <input type="checkbox" id="my_life_study_home" name="characteristics" value="my_study_home"><label for="my_life_study_home">Вчуся вдома</label>
@@ -568,11 +576,11 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="roommate_age_min">Мін. вік</label>
-                    <input type="number" id="roommate_age_min" name="roommate_age_min" placeholder="18" min="0" max="110">
+                    <input type="number" id="roommate_age_min" name="roommate_age_min" placeholder="18" min="16" max="110">
                 </div>
                 <div class="form-group">
                     <label for="roommate_age_max">Макс. вік</label>
-                    <input type="number" id="roommate_age_max" name="roommate_age_max" placeholder="30" min="0" max="110">
+                    <input type="number" id="roommate_age_max" name="roommate_age_max" placeholder="30" min="16" max="110">
                 </div>
             </div>
 
@@ -646,8 +654,6 @@
             <div class="form-group">
                 <label>Спосіб життя (кого шукаєте)</label>
                 <div class="checkbox-options">
-                    <input type="checkbox" id="life_early_bird" name="characteristics" value="mate_early_bird"><label for="life_early_bird">Жайворонок</label>
-                    <input type="checkbox" id="life_night_owl" name="characteristics" value="mate_night_owl"><label for="life_night_owl">Сова</label>
                     <input type="checkbox" id="mate_life_student" name="characteristics" value="mate_student"><label for="mate_life_student">Вчиться</label>
                     <input type="checkbox" id="mate_life_worker" name="characteristics" value="mate_worker"><label for="mate_life_worker">Працює</label>
                     <input type="checkbox" id="mate_life_study_home" name="characteristics" value="mate_study_home"><label for="mate_life_study_home">Вчиться вдома</label>
