@@ -7,12 +7,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="main.css">
     <style>
-        /* Додаткові стилі для видимості секцій та питань */
+        /* Стилі для підкласів та питань */
         .filter-section { display: none; border-top: 2px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
         .filter-section h3 { margin-bottom: 1rem; font-size: 1.1rem; }
-        .filter-trigger-question { margin-top: 15px; padding: 10px; background-color: #f9f9f9; border-radius: 6px; border: 1px solid #eee; }
+        .filter-trigger-question { display: none; margin-top: 15px; padding: 10px; background-color: #f9f9f9; border-radius: 6px; border: 1px solid #eee; }
         .filter-trigger-question label { margin-bottom: 5px; font-weight: 500;}
-        /* Стилі для підкласів */
+
+        #filter_basic { border-top: none; margin-top: 0; padding-top: 0;} /* Завжди видимий */
         #filter_basic h3 { color: var(--secondary-color); } /* Підклас 1 */
         #filter_desired_housing h3 { color: var(--accent-color-blue); } /* Підклас 2 */
         #filter_current_housing h3 { color: var(--primary-color); } /* Підклас 3 */
@@ -63,7 +64,7 @@
         <input type="radio" id="goal_find_housing" name="user_goal" value="find_housing" checked style="display: none;">
         <input type="radio" id="goal_find_roommate" name="user_goal" value="find_roommate" style="display: none;">
         <input type="radio" id="goal_rent_out" name="user_goal" value="rent_out_housing" style="display: none;">
-        <input type="radio" id="goal_all" name="user_goal" value="all" style="display: none;"> <div id="filter_basic" class="filter-section" style="display: block; border-top: none; margin-top: 0; padding-top: 0;">
+        <input type="radio" id="goal_all" name="user_goal" value="all" style="display: none;"> <div id="filter_basic" class="filter-section" style="display: block;">
         <h3>Локація</h3>
         <div class="form-group">
             <label for="filter_city">Місто</label>
@@ -99,11 +100,22 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Бажана побутова техніка:</label>
+                <label for="filter_target_rooms">Кількість кімнат (Мін.):</label>
+                <select id="filter_target_rooms" name="target_rooms">
+                    <option value="" selected>Будь-яка</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Бажані зручності:</label>
                 <div class="checkbox-options">
                     <input type="checkbox" id="filter_desired_tech_fridge" name="desired_housing_characteristics" value="fridge"><label for="filter_desired_tech_fridge">Холодильник</label>
                     <input type="checkbox" id="filter_desired_tech_washer" name="desired_housing_characteristics" value="washing_machine"><label for="filter_desired_tech_washer">Пральна машина</label>
                     <input type="checkbox" id="filter_desired_tech_wifi" name="desired_housing_characteristics" value="wifi"><label for="filter_desired_tech_wifi">Wi-Fi</label>
+                    <input type="checkbox" id="filter_desired_comfort_balcony" name="desired_housing_characteristics" value="balcony"><label for="filter_desired_comfort_balcony">Балкон</label>
                 </div>
             </div>
             <div class="form-group filter-trigger-question">
@@ -141,6 +153,49 @@
                     <option value="outside">Палить (лише на вулиці)</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>Бажані риси:</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="filter_desired_roommate_tidy" name="desired_roommate_characteristics" value="mate_tidy"><label for="filter_desired_roommate_tidy">Охайний/а</label>
+                    <input type="checkbox" id="filter_desired_roommate_calm" name="desired_roommate_characteristics" value="mate_calm"><label for="filter_desired_roommate_calm">Спокійний/а</label>
+                </div>
+            </div>
+        </div>
+
+        <div id="filter_desired_tenant" class="filter-section">
+            <h3>Бажані характеристики орендаря</h3>
+            <div class="form-group">
+                <label>Бажана стать орендаря:</label>
+                <select id="filter_desired_tenant_gender" name="desired_tenant_gender">
+                    <option value="" selected>Будь-яка</option>
+                    <option value="female">Жіноча</option>
+                    <option value="male">Чоловіча</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Бажаний вік орендаря:</label>
+                <div class="form-row">
+                    <input type="number" id="filter_desired_tenant_age_min" name="desired_tenant_age_min" placeholder="Від" min="16">
+                    <input type="number" id="filter_desired_tenant_age_max" name="desired_tenant_age_max" placeholder="До" min="16">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Паління орендаря:</label>
+                <select id="filter_desired_tenant_smoking" name="desired_tenant_smoking">
+                    <option value="" selected>Неважливо</option>
+                    <option value="no">Не палить</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Кількість людей:</label>
+                <select id="filter_desired_tenant_group_count" name="desired_tenant_group_count">
+                    <option value="" selected>Неважливо</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4+">4+</option>
+                </select>
+            </div>
         </div>
 
         <div class="filter-trigger-question" id="ask_my_chars" style="display: none;">
@@ -173,31 +228,12 @@
                     <option value="outside">Палю (лише на вулиці)</option>
                 </select>
             </div>
-        </div>
-
-        <div id="filter_desired_tenant" class="filter-section">
-            <h3>Бажані характеристики орендаря</h3>
             <div class="form-group">
-                <label>Бажана стать орендаря:</label>
-                <select id="filter_desired_tenant_gender" name="desired_tenant_gender">
-                    <option value="" selected>Будь-яка</option>
-                    <option value="female">Жіноча</option>
-                    <option value="male">Чоловіча</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Бажаний вік орендаря:</label>
-                <div class="form-row">
-                    <input type="number" id="filter_desired_tenant_age_min" name="desired_tenant_age_min" placeholder="Від" min="16">
-                    <input type="number" id="filter_desired_tenant_age_max" name="desired_tenant_age_max" placeholder="До" min="16">
+                <label>Ваші риси:</label>
+                <div class="checkbox-options">
+                    <input type="checkbox" id="filter_my_char_tidy" name="my_characteristics" value="my_tidy"><label for="filter_my_char_tidy">Охайний/а</label>
+                    <input type="checkbox" id="filter_my_char_calm" name="my_characteristics" value="my_calm"><label for="filter_my_char_calm">Спокійний/а</label>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>Паління орендаря:</label>
-                <select id="filter_desired_tenant_smoking" name="desired_tenant_smoking">
-                    <option value="" selected>Неважливо</option>
-                    <option value="no">Не палить</option>
-                </select>
             </div>
         </div>
 
@@ -211,7 +247,7 @@
         <div id="filter_current_housing" class="filter-section">
             <h3>Характеристики вашого житла</h3>
             <div class="form-group">
-                <label>Ціна за місце (₴/міс):</label>
+                <label>Ціна за місце/кімнату (₴/міс):</label>
                 <div class="form-row">
                     <input type="number" name="current_price_min" placeholder="Від" min="0">
                     <input type="number" name="current_price_max" placeholder="До" min="0">
@@ -236,11 +272,12 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Побутова техніка (наявна):</label>
+                <label>Наявні зручності:</label>
                 <div class="checkbox-options">
                     <input type="checkbox" id="filter_current_tech_fridge" name="current_housing_characteristics" value="fridge"><label for="filter_current_tech_fridge">Холодильник</label>
                     <input type="checkbox" id="filter_current_tech_washer" name="current_housing_characteristics" value="washing_machine"><label for="filter_current_tech_washer">Пральна машина</label>
                     <input type="checkbox" id="filter_current_tech_wifi" name="current_housing_characteristics" value="wifi"><label for="filter_current_tech_wifi">Wi-Fi</label>
+                    <input type="checkbox" id="filter_current_comfort_balcony" name="current_housing_characteristics" value="balcony"><label for="filter_current_comfort_balcony">Балкон</label>
                 </div>
             </div>
         </div>
