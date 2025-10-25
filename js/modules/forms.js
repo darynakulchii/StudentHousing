@@ -1185,8 +1185,6 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         }
         const listing = await response.json();
 
-        // --- Перевірка власника (якщо бекенд не робить це сам) ---
-        // Припускаємо, що MY_USER_ID доступний
         // if (listing.user_id !== MY_USER_ID) {
         //     alert('Ви не є власником цього оголошення.');
         //     window.location.href = 'my_listings.html';
@@ -1262,6 +1260,8 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         setupSelectWithOther('planning');
         setupSelectWithOther('heating_type');
         setupSelectWithOther('renovation_type');
+        setupSelectWithOther('building_type');
+        setupSelectWithOther('district');
 
 
         // Радіо-кнопки
