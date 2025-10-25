@@ -1382,7 +1382,7 @@ export const setupHomepageFilters = () => {
     const searchIcon = document.querySelector('.search-icon');
     if (!filtersForm || !actionButtons.length || !searchInput || !searchIcon) return;
 
-    // Функція для запуску пошуку/фільтрації
+    // --- Функція для запуску пошуку/фільтрації ---
     const triggerSearchAndFilter = () => {
         const formData = new FormData(filtersForm);
         const params = new URLSearchParams();
@@ -1397,46 +1397,66 @@ export const setupHomepageFilters = () => {
             params.append('listing_type', 'rent_out');
             params.append('listing_type', 'find_mate');
         } else if (selectedGoal === 'find_roommate') {
-            // Шукаю сусіда -> Показуємо 'find_home'
+            // Шукаю сусіда -> Показуємо 'find_home' (людей, що шукають житло і готові ділити)
             params.append('listing_type', 'find_home');
-            // TODO: Пізніше додати фільтр ready_to_share='yes','any' на бекенді
+            // Додаємо фільтр готовності ділити житло (якщо він є у формі)
+            const readyToShare = formData.get('ready_to_share');
+            if (readyToShare && readyToShare !== 'no') { // Тільки якщо 'yes' або 'any'/' '
+                params.append('ready_to_share', readyToShare);
+            } else if (!readyToShare) {
+                // Якщо фільтр не встановлений, припускаємо, що шукаємо тих, хто готовий або не визначився
+                params.append('ready_to_share', 'yes');
+                params.append('ready_to_share', 'any');
+                params.append('ready_to_share', ''); // Пусте значення теж може бути
+            }
+            // Якщо readyToShare === 'no', то запит listing_type=find_home&ready_to_share=no нічого не знайде, що логічно
         } else if (selectedGoal === 'rent_out_housing') {
-            // Шукаю орендаря -> Показуємо 'find_home'
+            // Шукаю орендаря -> Показуємо 'find_home' (людей, що шукають житло)
             params.append('listing_type', 'find_home');
         }
         // Якщо selectedGoal не вибрано (режим "Всі"), параметр listing_type не додається,
         // бекенд має повернути всі активні оголошення.
 
-        // Збір характеристик з фільтрів
+        // Збір характеристик (з усіх секцій фільтрів)
         const characteristics = [];
-        filtersForm.querySelectorAll('input[name="characteristics"]:checked').forEach(cb => characteristics.push(cb.value));
+        filtersForm.querySelectorAll('input[name="characteristics"]:checked, input[name="search_characteristics"]:checked, input[name="person_characteristics"]:checked, input[name="required_characteristics"]:checked')
+            .forEach(cb => characteristics.push(cb.value));
 
         // Додаємо інші поля фільтрів
         formData.forEach((value, key) => {
             // Додаємо всі поля крім user_goal та characteristics, якщо вони мають значення
-            if (key !== 'user_goal' && key !== 'characteristics' && value) {
-                params.append(key, value);
+            // Також ігноруємо пусті значення від радіокнопок/селектів, які мають бути '' за замовчуванням
+            if (key !== 'user_goal' && !key.endsWith('_characteristics') && value && value !== '') {
+                // Спеціальна обробка для міста "Інше"
+                if (key === 'city' && value === 'other') {
+                    const otherCityValue = formData.get('city_other_text')?.trim();
+                    if (otherCityValue) {
+                        params.append('city', otherCityValue); // Надсилаємо текст замість 'other'
+                    }
+                } else if (key !== 'city_other_text') { // Ігноруємо city_other_text, якщо місто не 'other'
+                    params.append(key, value);
+                }
             }
         });
 
-        // Додаємо характеристики, якщо вони є
+        // Додаємо унікальні характеристики, якщо вони є
         if (characteristics.length > 0) {
-            params.append('characteristics', characteristics.join(','));
+            params.append('characteristics', [...new Set(characteristics)].join(','));
         }
 
         const filterQuery = params.toString();
         console.log('Applying search/filters with goal:', selectedGoal, '| Query:', filterQuery);
-        fetchAndDisplayListings(filterQuery); // Викликаємо функцію з app.js
+        fetchAndDisplayListings(filterQuery); // Викликаємо функцію з app.js для оновлення списку
     };
 
-    // Оновлення видимості секцій у формі фільтрів на основі user_goal
+    // --- Оновлення видимості секцій у формі фільтрів на основі user_goal ---
     const updateFilterVisibility = () => {
         const form = filtersForm;
-        // Знаходимо всі потенційні секції фільтрів
-        const housingSearchFilters = form.querySelector('#housingFilters'); // Параметри пошуку житла (для find_home, find_roommate)
-        const listingPropertyFilters = form.querySelector('#listingDetails'); // Характеристики житла (для find_housing, rent_out_housing)
-        const aboutAuthorFilters = form.querySelector('#aboutMe'); // Про автора (для find_housing, find_roommate, rent_out_housing)
-        const roommatePrefFilters = form.querySelector('#roommatePreferences'); // Вимоги до сусіда/орендаря (для find_housing, find_roommate, rent_out_housing)
+        // Знаходимо всі потенційні секції фільтрів за новими ID
+        const housingSearchFilters = form.querySelector('#housingSearchFilters'); // Бажані параметри житла
+        const listingPropertyFilters = form.querySelector('#listingPropertyFilters'); // Характеристики житла (наявні)
+        const aboutAuthorFilters = form.querySelector('#aboutAuthorFilters');      // Фільтри по людині (автору/шукачу)
+        const roommatePrefFilters = form.querySelector('#roommatePrefFilters');   // Вимоги до сусіда/орендаря
 
         // Спочатку ховаємо всі секції
         [housingSearchFilters, listingPropertyFilters, aboutAuthorFilters, roommatePrefFilters].forEach(el => { if (el) el.style.display = 'none'; });
@@ -1447,24 +1467,28 @@ export const setupHomepageFilters = () => {
         console.log("Updating filter visibility for goal:", selectedGoal);
 
         if (selectedGoal === 'find_housing') {
-            // Шукаю житло: потрібні фільтри по характеристиках квартири (#listingDetails)
-            // і, можливо, по характеристиках потенційних сусідів (#aboutMe, #roommatePreferences)
+            // **Шукаю житло:**
+            // - Характеристики житла (наявні) [#listingPropertyFilters]
+            // - Фільтри по автору (власнику/поточному мешканцю) [#aboutAuthorFilters]
+            // - Вимоги автора до сусіда/орендаря [#roommatePrefFilters]
             setVisible(listingPropertyFilters, true);
-            setVisible(aboutAuthorFilters, true); // Фільтри по автору оголошень 'find_mate'
-            setVisible(roommatePrefFilters, true); // Фільтри по вимогах автора оголошень 'find_mate'
+            setVisible(aboutAuthorFilters, true);
+            setVisible(roommatePrefFilters, true);
         } else if (selectedGoal === 'find_roommate') {
-            // Шукаю сусіда: потрібні фільтри по бажаних характеристиках житла (#housingFilters)
-            // і по характеристиках себе (#aboutMe)
+            // **Шукаю сусіда:**
+            // - Бажані параметри житла [#housingSearchFilters]
+            // - Фільтри по шукачу житла (по людині) [#aboutAuthorFilters]
             setVisible(housingSearchFilters, true);
             setVisible(aboutAuthorFilters, true);
         } else if (selectedGoal === 'rent_out_housing') {
-            // Здаю житло (шукаю орендаря): потрібні фільтри по бажаних характеристиках орендаря (#aboutMe, #roommatePreferences)
-            // і по характеристиках своєї квартири (#listingDetails)
-            setVisible(listingPropertyFilters, true); // Щоб власник міг вказати, що є в його квартирі (хоча це не фільтр пошуку) - можливо, прибрати? Або перейменувати секцію
-            setVisible(aboutAuthorFilters, true); // Фільтри по характеристиках орендаря
-            setVisible(roommatePrefFilters, true); // Фільтри по вимогах до орендаря
+            // **Шукаю орендаря:**
+            // - Фільтри по шукачу житла (по людині) [#aboutAuthorFilters]
+            // - Вимоги до сусіда/орендаря (ваші вимоги) [#roommatePrefFilters]
+            setVisible(aboutAuthorFilters, true);
+            setVisible(roommatePrefFilters, true);
         } else {
-            // Режим "Всі" або не вибрано: показуємо всі секції, щоб користувач міг вибрати будь-які фільтри
+            // **Режим "Всі" або не вибрано:**
+            // Показуємо всі секції, щоб користувач міг вибрати будь-які фільтри
             setVisible(housingSearchFilters, true);
             setVisible(listingPropertyFilters, true);
             setVisible(aboutAuthorFilters, true);
@@ -1476,6 +1500,8 @@ export const setupHomepageFilters = () => {
         if (element) element.style.display = isVisible ? 'block' : 'none';
     };
 
+
+    // --- Слухачі подій ---
 
     // Слухачі для кнопок дій ("Знайти житло", "Знайти сусіда" і т.д.)
     actionButtons.forEach(button => {
@@ -1493,14 +1519,8 @@ export const setupHomepageFilters = () => {
 
             // Встановлюємо відповідний radio button у формі фільтрів або знімаємо вибір
             const goalRadios = filtersForm.querySelectorAll('input[name="user_goal"]');
-            let radioToSelect = null;
             goalRadios.forEach(radio => {
-                if (radio.value === goal) {
-                    radio.checked = true;
-                    radioToSelect = radio;
-                } else {
-                    radio.checked = false; // Знімаємо позначку з інших
-                }
+                radio.checked = (radio.value === goal);
             });
 
             // Якщо натиснули "Всі оголошення", знімаємо позначку з усіх радіо
@@ -1514,12 +1534,17 @@ export const setupHomepageFilters = () => {
             let query = '';
             if (goal === 'find_housing') {
                 query = 'listing_type=rent_out&listing_type=find_mate'; // Важливо надсилати обидва
-            } else if (goal === 'find_roommate' || goal === 'rent_out_housing') {
+            } else if (goal === 'find_roommate') {
+                // Показуємо тих, хто шукає житло (find_home) і готовий ділити ('yes' або 'any')
+                query = 'listing_type=find_home&ready_to_share=yes&ready_to_share=any&ready_to_share='; // Додаємо порожнє значення
+            } else if (goal === 'rent_out_housing') {
+                // Показуємо тих, хто шукає житло (find_home)
                 query = 'listing_type=find_home';
             } else if (goal === 'all') {
                 query = ''; // Порожній запит означає "всі активні"
             }
-            fetchAndDisplayListings(query);
+            // Оновлення початкового списку оголошень
+            fetchAndDisplayListings(query || 'listing_type!=find_home'); // Використовуємо стандартний запит для 'all'
         });
     });
 
@@ -1542,13 +1567,11 @@ export const setupHomepageFilters = () => {
     filtersForm.addEventListener('submit', (e) => {
         e.preventDefault();
         triggerSearchAndFilter();
-        // toggleFilters('close'); // Закриваємо бічну панель фільтрів (якщо функція доступна)
-        // Перевіряємо, чи існує функція toggleFilters перед викликом
+        // Спробуємо закрити сайдбар, якщо функція toggleFilters доступна
         if (typeof toggleFilters === 'function') {
             toggleFilters('close');
         } else {
-            console.warn('toggleFilters function is not available.');
-            // Можливо, просто приховати сайдбар напряму, якщо функція не імпортована
+            // Аварійний варіант закриття, якщо toggleFilters не імпортовано
             const sidebar = document.getElementById('filterSidebar');
             const overlay = document.getElementById('overlay');
             if (sidebar) sidebar.classList.remove('open');
@@ -1563,7 +1586,7 @@ export const setupHomepageFilters = () => {
         filtersForm.reset();
         searchInput.value = ''; // Очищуємо поле пошуку
 
-        // Знімаємо виділення з усіх радіокнопок мети
+        // Знімаємо виділення з усіх радіокнопок мети (режим "Всі")
         filtersForm.querySelectorAll('input[name="user_goal"]').forEach(radio => radio.checked = false);
 
         // Активуємо кнопку "Всі оголошення"
@@ -1580,10 +1603,41 @@ export const setupHomepageFilters = () => {
     searchIcon.addEventListener('click', triggerSearchAndFilter);
     searchIcon.style.cursor = 'pointer';
 
-    // Ініціалізація видимості секцій фільтрів при завантаженні сторінки
+    // Слухач для зміни міста для оновлення поля "Інше місто"
+    const citySelect = filtersForm.querySelector('#filter_city');
+    const cityOtherInput = filtersForm.querySelector('#filter_city_other_text');
+    if (citySelect && cityOtherInput) {
+        citySelect.addEventListener('change', () => {
+            const isOther = citySelect.value === 'other';
+            cityOtherInput.style.display = isOther ? 'block' : 'none';
+            cityOtherInput.classList.toggle('hidden-other-input', !isOther);
+            if (!isOther) {
+                cityOtherInput.value = '';
+            }
+        });
+        // Ініціалізація стану при завантаженні
+        const isOtherInitial = citySelect.value === 'other';
+        cityOtherInput.style.display = isOtherInitial ? 'block' : 'none';
+        cityOtherInput.classList.toggle('hidden-other-input', !isOtherInitial);
+    }
+
+
+    // --- Ініціалізація видимості секцій фільтрів при завантаженні сторінки ---
     // Встановлюємо початковий стан відповідно до активної кнопки (за замовчуванням 'find_housing')
-    const initialGoal = document.querySelector('.action-btn.active-action')?.getAttribute('data-goal') || 'find_housing';
+    const initialGoalButton = document.querySelector('.action-btn.active-action');
+    const initialGoal = initialGoalButton?.getAttribute('data-goal') || 'find_housing'; // Беремо з активної кнопки
     const initialRadio = filtersForm.querySelector(`input[name="user_goal"][value="${initialGoal}"]`);
-    if(initialRadio) initialRadio.checked = true;
-    updateFilterVisibility();
+    if(initialRadio) {
+        initialRadio.checked = true; // Встановлюємо радіо відповідно до кнопки
+    } else {
+        // Якщо активна кнопка "Всі", жодне радіо не має бути вибране
+        if (initialGoal === 'all') {
+            filtersForm.querySelectorAll('input[name="user_goal"]').forEach(radio => radio.checked = false);
+        } else {
+            // Якщо щось пішло не так, ставимо 'find_housing' за замовчуванням
+            const fallbackRadio = filtersForm.querySelector('input[name="user_goal"][value="find_housing"]');
+            if (fallbackRadio) fallbackRadio.checked = true;
+        }
+    }
+    updateFilterVisibility(); // Оновлюємо видимість на основі вибраного радіо
 };
