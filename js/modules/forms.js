@@ -27,7 +27,7 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
         return;
     }
 
-    // Видаляємо стару карту, якщо вона існує (важливо для редагування)
+    // Видаляємо стару карту, якщо вона існує
     if (map) {
         map.remove();
         map = null;
@@ -35,38 +35,57 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
     }
 
     // Ініціалізуємо карту
-    map = L.map(mapElement).setView([initialLat, initialLng], 13); // 13 - рівень масштабування
+    try {
+        map = L.map(mapElement).setView([initialLat, initialLng], 13); // 13 - рівень масштабування
 
-    // Додаємо базовий шар карти (OpenStreetMap)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(map);
+        // Додаємо базовий шар карти (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
 
-    // Якщо є початкові координати (для редагування), ставимо маркер
-    if (initialLat && initialLng && !(initialLat === 49.8397 && initialLng === 24.0297)) { // Перевіряємо, чи не дефолтні координати
-        marker = L.marker([initialLat, initialLng]).addTo(map);
-        latitudeInput.value = initialLat;
-        longitudeInput.value = initialLng;
-    }
-
-    // Обробник кліку на карті
-    map.on('click', function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
-
-        // Видаляємо старий маркер, якщо він є
-        if (marker) {
-            map.removeLayer(marker);
+        // Якщо є початкові координати (для редагування), ставимо маркер
+        if (initialLat && initialLng && !(initialLat === 49.8397 && initialLng === 24.0297)) { // Перевіряємо, чи не дефолтні координати
+            marker = L.marker([initialLat, initialLng]).addTo(map);
+            // Важливо оновити input тут, бо вони могли бути порожніми
+            latitudeInput.value = initialLat.toFixed(6);
+            longitudeInput.value = initialLng.toFixed(6);
         }
 
-        // Додаємо новий маркер
-        marker = L.marker([lat, lng]).addTo(map);
+        // Обробник кліку на карті
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
 
-        // Зберігаємо координати у приховані поля форми
-        latitudeInput.value = lat.toFixed(6); // Зберігаємо з 6 знаками після коми
-        longitudeInput.value = lng.toFixed(6);
-    });
+            // Видаляємо старий маркер, якщо він є
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            // Додаємо новий маркер
+            marker = L.marker([lat, lng]).addTo(map);
+
+            // Зберігаємо координати у приховані поля форми
+            latitudeInput.value = lat.toFixed(6); // Зберігаємо з 6 знаками після коми
+            longitudeInput.value = lng.toFixed(6);
+        });
+
+        // *** ВАЖЛИВЕ ВИПРАВЛЕННЯ: ***
+        // Викликаємо invalidateSize після короткої затримки, щоб дозволити DOM оновитись
+        setTimeout(() => {
+            if (map) { // Перевіряємо, чи карта ще існує
+                map.invalidateSize();
+                console.log("Map size invalidated after initialization.");
+            }
+        }, 10); // Невелика затримка (10 мс) зазвичай достатньо
+
+    } catch (error) {
+        console.error("Помилка ініціалізації карти Leaflet:", error);
+        if (mapElement) { // Показуємо помилку в контейнері карти
+            mapElement.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Помилка завантаження карти. Деталі в консолі.</p>`;
+        }
+        map = null; // Скидаємо змінну карти
+    }
 };
 
 // =================================================================================
@@ -485,7 +504,7 @@ export const setupAddListingFormLogic = () => {
     // --- Ініціалізація стану форми при завантаженні ---
     updateFormState(form);
     // Ініціалізація карти (заглушка)
-    initializeMap(); // Припускаємо, що ця функція теж винесена або доступна
+    initializeMap(form); // Припускаємо, що ця функція теж винесена або доступна
 };
 
 /**
@@ -1411,11 +1430,10 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
             loadInitialPhotosCallback(listing.photos);
         }
 
-        // Оновлюємо стан форми (видимість блоків) ПІСЛЯ заповнення всіх полів
+        // Оновлюємо стан форми (видимість блоків)
         updateFormState(form);
-
-        // Ініціалізуємо карту (можливо, з координатами, якщо вони є)
-        initializeMap(); // TODO: Передати координати listing.latitude, listing.longitude
+        // Ініціалізуємо карту з отриманими координатами (або дефолтними, якщо їх немає)
+        initializeMap(form, isNaN(initialLat) ? undefined : initialLat, isNaN(initialLng) ? undefined : initialLng); // --- Передаємо 'form' та координати
 
     } catch (error) {
         console.error('Помилка завантаження даних для редагування:', error);

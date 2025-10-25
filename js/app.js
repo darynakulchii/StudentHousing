@@ -375,6 +375,8 @@ const fetchAndDisplayListingDetail = async () => {
                     </div>
 
                     <div class="detail-section">
+                        <div id="listingMap" style="height: 300px; margin-top: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;"></div>
+                        <div class="detail-section">
                         <h2>Опис</h2>
                         <p>${listing.description ? listing.description.replace(/\n/g, '<br>') : 'Опис відсутній.'}</p>
                     </div>
