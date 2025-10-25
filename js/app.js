@@ -398,6 +398,31 @@ const fetchAndDisplayListingDetail = async () => {
         `;
         container.innerHTML = detailHTML;
 
+        // --- Ініціалізація карти на сторінці деталей (якщо є координати) ---
+        const listingMapElement = document.getElementById('listingMap'); // Додайте цей div в detailHTML
+        if (listingMapElement && listing.latitude && listing.longitude) {
+            try {
+                const lat = parseFloat(listing.latitude);
+                const lng = parseFloat(listing.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const detailMap = L.map(listingMapElement).setView([lat, lng], 15); // Масштаб 15
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(detailMap);
+                    L.marker([lat, lng]).addTo(detailMap)
+                        .bindPopup(listing.title || 'Розташування') // Підпис для маркера
+                        .openPopup();
+                } else {
+                    listingMapElement.innerHTML = '<p>Не вдалося відобразити карту (невірні координати).</p>';
+                }
+            } catch (mapError) {
+                console.error("Помилка ініціалізації карти:", mapError);
+                listingMapElement.innerHTML = '<p>Помилка при відображенні карти.</p>';
+            }
+        } else if (listingMapElement) {
+            listingMapElement.innerHTML = '<p>Розташування на карті не вказано.</p>'; // Якщо координат немає
+        }
+
         // --- Setup Thumbnail Click Listeners ---
         const thumbnails = container.querySelectorAll('.gallery-thumbnail:not(.inactive)');
         const mainImageElement = container.querySelector('#mainDetailImage');

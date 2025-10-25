@@ -14,13 +14,59 @@ let editListingPhotosToDelete = new Set();
 let editListingNewFilesToUpload = [];
 const MAX_PHOTOS = 8;
 
-// --- Заглушка для ініціалізації карти ---
-// TODO: Implement actual map logic (e.g., using Leaflet)
-const initializeMap = () => {
-    const mapElement = document.getElementById('map');
-    if (!mapElement) return;
-    console.log("Map initialization placeholder.");
-    mapElement.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-light);">Карта буде тут</p>';
+let map = null; // Змінна для зберігання екземпляру карти
+let marker = null; // Змінна для зберігання маркера
+
+const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) => { // Координати Львова за замовчуванням
+    const mapElement = formElement.querySelector('#map');
+    const latitudeInput = formElement.querySelector('#latitude');
+    const longitudeInput = formElement.querySelector('#longitude');
+
+    if (!mapElement || !latitudeInput || !longitudeInput) {
+        console.error("Map container or coordinate inputs not found in the form.");
+        return;
+    }
+
+    // Видаляємо стару карту, якщо вона існує (важливо для редагування)
+    if (map) {
+        map.remove();
+        map = null;
+        marker = null;
+    }
+
+    // Ініціалізуємо карту
+    map = L.map(mapElement).setView([initialLat, initialLng], 13); // 13 - рівень масштабування
+
+    // Додаємо базовий шар карти (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    // Якщо є початкові координати (для редагування), ставимо маркер
+    if (initialLat && initialLng && !(initialLat === 49.8397 && initialLng === 24.0297)) { // Перевіряємо, чи не дефолтні координати
+        marker = L.marker([initialLat, initialLng]).addTo(map);
+        latitudeInput.value = initialLat;
+        longitudeInput.value = initialLng;
+    }
+
+    // Обробник кліку на карті
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        // Видаляємо старий маркер, якщо він є
+        if (marker) {
+            map.removeLayer(marker);
+        }
+
+        // Додаємо новий маркер
+        marker = L.marker([lat, lng]).addTo(map);
+
+        // Зберігаємо координати у приховані поля форми
+        latitudeInput.value = lat.toFixed(6); // Зберігаємо з 6 знаками після коми
+        longitudeInput.value = lng.toFixed(6);
+    });
 };
 
 // =================================================================================
@@ -532,11 +578,6 @@ export const setupEditListingFormLogic = () => {
             }
         });
     });
-
-    // --- Ініціалізація стану форми ВИКЛИКАЄТЬСЯ в loadListingDataForEdit ПІСЛЯ заповнення ---
-    // updateFormState(form); // НЕ ТУТ
-    // Ініціалізація карти (заглушка)
-    initializeMap();
 };
 
 /**
@@ -1190,6 +1231,9 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         //     window.location.href = 'my_listings.html';
         //     return;
         // }
+
+        const initialLat = parseFloat(listing.latitude);
+        const initialLng = parseFloat(listing.longitude);
 
         // Заповнюємо базові поля
         form.querySelector('#listingIdField').value = listing.listing_id;
