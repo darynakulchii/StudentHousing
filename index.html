@@ -59,11 +59,19 @@
     </div>
 
     <form class="filters-form" id="filtersForm">
-
-        <input type="radio" id="goal_find_housing" name="user_goal" value="find_housing" checked style="display: none;">
-        <input type="radio" id="goal_find_roommate" name="user_goal" value="find_roommate" style="display: none;">
-        <input type="radio" id="goal_rent_out" name="user_goal" value="rent_out_housing" style="display: none;">
-        <input type="radio" id="goal_all" name="user_goal" value="all" style="display: none;"> <div id="filter_basic" class="filter-section" style="display: block; border-top: none; margin-top: 0; padding-top: 0;">
+        <div class="form-group goal-group" style="border-bottom: 2px solid var(--border-color); padding-bottom: 15px;">
+            <label style="font-size: 1.1rem; color: var(--text-dark); margin-bottom: 10px;">Я хочу:</label>
+            <div class="radio-options">
+                <input type="radio" id="filter_goal_find_housing" name="user_goal" value="find_housing">
+                <label for="filter_goal_find_housing">Знайти житло</label>
+                <input type="radio" id="filter_goal_find_roommate" name="user_goal" value="find_roommate">
+                <label for="filter_goal_find_roommate">Знайти сусіда</label>
+                <input type="radio" id="filter_goal_rent_out" name="user_goal" value="rent_out_housing">
+                <label for="filter_goal_rent_out">Здати житло</label>
+                <input type="radio" id="filter_goal_all" name="user_goal" value="all"> <label for="filter_goal_all">Всі</label>
+            </div>
+        </div>
+        <div id="filter_basic" class="filter-section" style="display: block; border-top: none; margin-top: 0; padding-top: 0;">
         <h3>Локація</h3>
         <div class="form-group">
             <label for="filter_city">Місто</label>
