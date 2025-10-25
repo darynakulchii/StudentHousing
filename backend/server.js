@@ -212,6 +212,12 @@ app.get('/api/listings', async (req, res) => {
             params.push(req.query.city, req.query.city);
         }
 
+        // === НОВА УМОВА ДЛЯ РАЙОНУ ===
+        if (req.query.district) {
+            whereClauses.push(`(l.district = $${paramIndex++} OR l.district_other ILIKE $${paramIndex++})`);
+            params.push(req.query.district, req.query.district);
+        }
+
         // === 5. Фільтри по БАЖАНОМУ ЖИТЛУ (#filter_desired_housing) ===
         if (req.query.desired_price_min) { whereClauses.push(`l.target_price_min >= $${paramIndex++}`); params.push(req.query.desired_price_min); }
         if (req.query.desired_price_max) { whereClauses.push(`l.target_price_max <= $${paramIndex++}`); params.push(req.query.desired_price_max); }
@@ -1346,7 +1352,72 @@ app.use((err, req, res, next) => {
 });
 
 // ===============================================
-// 11. ЗАПУСК СЕРВЕРА
+// 11. МАРШРУТ ДЛЯ ЗВІТІВ ПРО ПОМИЛКИ (Оновлено для масиву типів)
+// ===============================================
+
+// Middleware для обробки файлів (якщо потрібно)
+const reportUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 } // Обмеження 5MB на файл звіту
+}).array('files'); // 'files' - name атрибут <input type="file">
+
+app.post('/api/report-bug', authenticateToken, reportUpload, async (req, res) => {
+    const userId = req.user.userId;
+    // Очікуємо 'problemTypes' (FormData надішле масив, якщо name="problemTypes[]")
+    const problemTypes = req.body.problemTypes || [];
+    const problemDescription = req.body.problemDescription;
+    const files = req.files;
+    const problemTypesArray = Array.isArray(problemTypes) ? problemTypes : [problemTypes];
+
+    // Оновлена перевірка валідації
+    if (!problemDescription || problemTypesArray.length === 0) {
+        return res.status(400).json({ error: 'Необхідно вказати опис та вибрати хоча б один тип проблеми.' });
+    }
+
+    try {
+        console.log('--- Новий звіт про помилку ---');
+        console.log(`Від користувача ID: ${userId}`);
+        // ▼▼▼ ЗМІНА ТУТ ▼▼▼
+        // Виводимо масив типів через кому
+        console.log(`Типи проблеми: ${problemTypesArray.join(', ')}`);
+        // ▲▲▲ КІНЕЦЬ ЗМІНИ ▲▲▲
+        console.log(`Опис: ${problemDescription}`);
+
+        const uploadedFileUrls = [];
+        if (files && files.length > 0) {
+            console.log(`Завантажено файлів: ${files.length}`);
+            // --- Завантаження файлів на Cloudinary ---
+            for (const file of files) {
+                try {
+                    const result = await uploadToCloudinary(file.buffer);
+                    uploadedFileUrls.push(result.secure_url);
+                    console.log(`Файл завантажено на Cloudinary: ${result.secure_url}`);
+                } catch (uploadError) {
+                    console.error('Помилка завантаження файлу на Cloudinary:', uploadError);
+                }
+            }
+            console.log('URL завантажених файлів:', uploadedFileUrls);
+        }
+
+        // --- Опціонально: Збереження звіту в базу даних (з масивом типів) ---
+        const insertQuery = `
+            INSERT INTO bug_reports (user_id, report_types, description, file_urls, created_at)
+            VALUES ($1, $2, $3, $4, NOW()); // report_types тепер ARRAY TEXT[] або JSONB
+        `;
+        // Передаємо масив problemTypesArray
+        await pool.query(insertQuery, [userId, problemTypesArray, problemDescription, uploadedFileUrls]);
+        console.log('Звіт збережено в базу даних.');
+
+        res.status(200).json({ message: 'Дякуємо! Ваш звіт успішно надіслано.' });
+
+    } catch (error) {
+        console.error('Помилка обробки звіту про помилку:', error);
+        res.status(500).json({ error: 'Сталася помилка на сервері при обробці вашого звіту.' });
+    }
+});
+
+// ===============================================
+// 12. ЗАПУСК СЕРВЕРА
 // ===============================================
 httpServer.listen(port, () => {
     console.log(`Сервер бекенду (з Socket.io) запущено на http://localhost:${port}`);

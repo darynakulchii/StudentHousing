@@ -39,10 +39,10 @@
     </section>
 
     <section class="main-actions-menu" id="actionsMenu">
-        <button class="action-card action-btn active-action" data-goal="find_housing">Знайти житло</button>
+        <button class="action-card action-btn" data-goal="find_housing">Знайти житло</button>
         <button class="action-card action-btn" data-goal="find_roommate">Знайти сусіда (у своє житло)</button>
         <button class="action-card action-btn" data-goal="rent_out_housing">Здати житло</button>
-        <button class="action-card action-btn" data-goal="all">Всі оголошення</button>
+        <button class="action-card action-btn active-action" data-goal="all">Всі оголошення</button>
     </section>
 
     <section class="listings-grid">
@@ -86,6 +86,18 @@
             </select>
             <input type="text" id="filter_city_other_text" name="city_other_text" placeholder="Введіть інше місто" class="hidden-other-input" style="display: none; margin-top: 5px;">
         </div>
+
+            <div class="form-group">
+                <label for="filter_district">Район</label>
+                <select id="filter_district" name="district" class="other-option-select">
+                    <option value="" selected>Будь-який район</option>
+                    <option value="Центральний">Центральний</option>
+                    <option value="Шевченківський">Шевченківський</option>
+                    <option value="Залізничний">Залізничний</option>
+                    <option value="other">Інший (вказати)</option>
+                </select>
+                <input type="text" id="filter_district_other_text" name="district_other" placeholder="Введіть інший район" class="hidden-other-input" style="display: none; margin-top: 5px;">
+            </div>
     </div>
 
         <div id="filter_desired_housing" class="filter-section">
@@ -118,7 +130,7 @@
                 <label>Чи готові жити з сусідом?</label>
                 <div class="radio-options">
                     <input type="radio" id="filter_share_yes" name="ready_to_share_filter" value="yes"><label for="filter_share_yes">Так</label>
-                    <input type="radio" id="filter_share_any" name="ready_to_share_filter" value="any" checked><label for="filter_share_any">Неважливо</label>
+                    <input type="radio" id="filter_share_any" name="ready_to_share_filter" value="any"><label for="filter_share_any">Неважливо</label>
                     <input type="radio" id="filter_share_no" name="ready_to_share_filter" value="no"><label for="filter_share_no">Ні</label>
                 </div>
             </div>

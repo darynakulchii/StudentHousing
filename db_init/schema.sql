@@ -42,7 +42,9 @@ CREATE TABLE "listings" (
                             "title" VARCHAR(255) NOT NULL,
                             "description" TEXT,
                             "city" VARCHAR(100) NOT NULL,
-                            "city_other" VARCHAR(255), -- Змінено з city_other_text для консистенції
+                            "city_other" VARCHAR(255),
+                            "district" varchar(150),
+                            "district_other" varchar(255),
                             "main_photo_url" VARCHAR(500),
                             "address" VARCHAR(255),
                             "latitude" DECIMAL(9, 6),
@@ -127,6 +129,21 @@ CREATE TABLE "listings" (
 
 );
 
+-- Таблиця повідомлень про помилки
+CREATE TABLE "bug_reports" (
+                               "report_id" SERIAL PRIMARY KEY,
+                               "user_id" INT REFERENCES "users"("user_id") ON DELETE SET NULL, -- Зберігаємо звіт, навіть якщо користувач видалить акаунт
+                               "report_types" TEXT[] NOT NULL, -- Масив типів проблем (наприклад, {'Невідповідний контент', 'Інше'})
+                               "description" TEXT NOT NULL, -- Опис проблеми
+                               "file_urls" TEXT[], -- Масив URL завантажених файлів (з Cloudinary або іншого сховища)
+                               "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                               "status" VARCHAR(50) DEFAULT 'new' -- Статус обробки звіту (наприклад, 'new', 'in_progress', 'resolved')
+);
+
+-- Індекс для звітів
+CREATE INDEX "idx_bug_reports_user_id" ON "bug_reports" ("user_id");
+CREATE INDEX "idx_bug_reports_status" ON "bug_reports" ("status");
+
 -- Таблиця фотографій
 CREATE TABLE "listing_photos" (
                                   "photo_id" SERIAL PRIMARY KEY,
@@ -195,7 +212,7 @@ CREATE TABLE "notifications" (
 CREATE INDEX "idx_notifications_user_id" ON "notifications" ("user_id");
 
 -- =================================================================
--- КРОК 2: ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК (Оновлено)
+-- КРОК 2: ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК
 -- =================================================================
 
 INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
@@ -211,8 +228,6 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('my_humorous', 'З почуттям гумору', 'my_personality'),
 
 -- 'Про себе' (Спосіб життя) - Змінено
-('my_early_bird', 'Жайворонок', 'my_lifestyle'),
-('my_night_owl', 'Сова', 'my_lifestyle'),
 ('my_student', 'Вчуся', 'my_lifestyle'),
 ('my_worker', 'Працюю', 'my_lifestyle'),
 ('my_study_home', 'Вчуся вдома', 'my_lifestyle'),
@@ -236,14 +251,14 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('my_fashion', 'Мода', 'my_interests'),
 ('my_politics', 'Політика', 'my_interests'),
 
--- 'Про себе' (Мої тварини) - Додано multiple
+-- 'Про себе' (Мої тварини)
 ('my_pet_cat', 'Маю кота', 'my_pets'),
 ('my_pet_dog', 'Маю собаку', 'my_pets'),
 ('my_pet_other', 'Маю іншу тваринку', 'my_pets'),
 ('my_pet_multiple', 'Маю декілька тварин', 'my_pets'),
 ('my_pet_no', 'Не маю тварин', 'my_pets'),
 
--- 'Вимоги до сусіда' (Особистість) - Розширено
+-- 'Вимоги до сусіда' (Особистість)
 ('mate_introvert', 'Інтроверт', 'mate_personality'),
 ('mate_extrovert', 'Екстраверт', 'mate_personality'),
 ('mate_ambivert', 'Амбіверт', 'mate_personality'),
@@ -254,15 +269,13 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('mate_responsible', 'Відповідальний/а', 'mate_personality'),
 ('mate_humorous', 'З почуттям гумору', 'mate_personality'),
 
--- 'Вимоги до сусіда' (Спосіб життя) - Змінено
-('mate_early_bird', 'Жайворонок', 'mate_lifestyle'),
-('mate_night_owl', 'Сова', 'mate_lifestyle'),
+-- 'Вимоги до сусіда' (Спосіб життя)
 ('mate_student', 'Вчиться', 'mate_lifestyle'),
 ('mate_worker', 'Працює', 'mate_lifestyle'),
 ('mate_study_home', 'Вчиться вдома', 'mate_lifestyle'),
 ('mate_work_home', 'Працює вдома', 'mate_lifestyle'),
 
--- 'Вимоги до сусіда' (Інтереси) - Розширено
+-- 'Вимоги до сусіда' (Інтереси)
 ('mate_music', 'Музика', 'mate_interests'),
 ('mate_gaming', 'Ігри', 'mate_interests'),
 ('mate_cooking', 'Кулінарія', 'mate_interests'),
@@ -280,7 +293,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('mate_fashion', 'Мода', 'mate_interests'),
 ('mate_politics', 'Політика', 'mate_interests'),
 
--- 'Вимоги до сусіда' (Тварини у сусіда) - Додано multiple
+-- 'Вимоги до сусіда' (Тварини у сусіда)
 ('mate_has_cat', 'З котом', 'mate_pets'),
 ('mate_has_dog', 'З собакою', 'mate_pets'),
 ('mate_has_other', 'З іншою тваринкою', 'mate_pets'),
@@ -334,7 +347,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('fire_alarm', 'Пожежна сигналізація', 'comfort'),
 ('generator', 'Автономний електрогенератор', 'comfort'),
 
--- 'Характеристики житла' (Домашні улюбленці) - Ці ключі тепер для деталізації, коли обрано 'yes'
+-- 'Характеристики житла' (Домашні улюбленці)
 ('pet_cat', 'Котик', 'pets_allowed_detail'),
 ('pet_mid_dog', 'Собачка', 'pets_allowed_detail'),
 ('pet_other', 'Інша тваринка', 'pets_allowed_detail'),
@@ -350,7 +363,6 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('rules_families', 'Тільки сім''ям', 'rules'),
 ('rules_with_owners', 'З господарями', 'rules'),
 ('rules_kids', 'Можна з дітьми', 'rules'),
-('rules_smoking', 'Можна курити', 'rules'),
 -- 'Характеристики житла' (Комунікації)
 ('comm_gas', 'Газ', 'communications'),
 ('comm_central_water', 'Центральний водопровід', 'communications'),

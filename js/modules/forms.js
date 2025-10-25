@@ -69,6 +69,7 @@ export const updateFormState = (formElement) => {
     const totalAreaInput = formElement.querySelector('#total_area');
     const kitchenAreaInput = formElement.querySelector('#kitchen_area');
     const furnishingRadios = formElement.querySelectorAll('input[name="furnishing"]');
+    const readyToShareRadios = formElement.querySelectorAll('input[name="ready_to_share"]');
     // Базові поля (завжди required, крім типу)
     const titleInput = formElement.querySelector('#title');
     const descriptionInput = formElement.querySelector('#description');
@@ -177,7 +178,7 @@ export const updateFormState = (formElement) => {
     // 1. Скидаємо 'required' для всіх потенційно обов'язкових полів
     [priceInput, targetPriceMaxInput, myAgeInput, maxOccupantsSelect, currentOccupantsSelect,
         seekingRoommatesSelect, roomsSelect, floorInput, totalFloorsInput, totalAreaInput, kitchenAreaInput,
-        myGenderRadios, furnishingRadios].forEach(el => setRequired(el, false));
+        myGenderRadios, furnishingRadios, readyToShareRadios].forEach(el => setRequired(el, false));
 
     // 2. Встановлюємо 'required' для базових (крім типу, бо він різний)
     setRequired(titleInput, true);
@@ -223,6 +224,7 @@ export const updateFormState = (formElement) => {
 
     if (isFindHome) {
         setVisible(housingFilters, true);
+        setRequired(readyToShareRadios, true);
         setVisible(aboutMe, true);
         // Вимоги до сусіда показуємо, якщо ready_to_share не 'no'
         const isSharing = formElement.querySelector('input[name="ready_to_share"]:checked')?.value;
@@ -699,7 +701,7 @@ export const handleListingSubmission = async () => {
     const previewContainer = document.getElementById('photoPreviewContainer');
     const submitButton = form?.querySelector('.submit-listing-btn');
     const photoErrorHint = form?.querySelector('#photoErrorHint');
-    const listingTypeHint = form?.querySelector('#listingTypeHint'); // Hint for listing type
+    const listingTypeHint = form?.querySelector('#listingTypeHint');
 
     if (!form || !photoInput || !previewContainer || !submitButton || !photoErrorHint || !listingTypeHint) {
         console.error("One or more elements for add listing form not found.");
@@ -787,8 +789,7 @@ export const handleListingSubmission = async () => {
     // --- Обробник відправки ---
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        listingTypeHint.style.display = 'none'; // Сховати підказку типу
-
+        listingTypeHint.style.display = 'none';
         // --- Валідація ---
         const selectedTypeRadio = form.querySelector('input[name="listing_type"]:checked');
         if (!selectedTypeRadio) {
@@ -811,6 +812,17 @@ export const handleListingSubmission = async () => {
             firstInvalid?.focus();
             firstInvalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
+        }
+
+        if (selectedType === 'find_home') {
+            const readyToShareChecked = form.querySelector('input[name="ready_to_share"]:checked');
+            if (!readyToShareChecked) {
+                alert('Будь ласка, вкажіть, чи готові ви жити з сусідом.');
+                // Знайдемо відповідний блок для прокрутки
+                const readyToShareGroup = form.querySelector('input[name="ready_to_share"]')?.closest('.form-group');
+                readyToShareGroup?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
         }
         // --- Кінець валідації ---
 
@@ -1512,14 +1524,17 @@ export const setupHomepageFilters = () => {
             // Збираємо значення з select, input[type=number], input[type=text]
             section.querySelectorAll('select, input[type="number"], input[type="text"][name$="_text"]')
                 .forEach(input => {
-                    if (input.name && !['user_goal', 'show_current_housing', 'show_my_chars', 'ready_to_share_filter'].includes(input.name)) {
-                        const value = input.value?.trim();
-                        if (input.name === 'city' && value === 'other') {
-                            const otherCityValue = formData.get('city_other_text')?.trim();
-                            if (otherCityValue) params.append('city', otherCityValue);
-                        } else if (input.name !== 'city_other_text' && value && value !== '') {
-                            params.append(input.name, value);
-                        }
+                    if (input.name === 'city' && value === 'other') {
+                        const otherCityValue = formData.get('city_other_text')?.trim();
+                        if (otherCityValue) params.append('city', otherCityValue);
+                    }
+                    // --- Обробка району "Інше" ---
+                    else if (input.name === 'district' && value === 'other') {
+                        const otherDistrictValue = formData.get('district_other')?.trim();
+                        if (otherDistrictValue) params.append('district', otherDistrictValue);
+                    }
+                    else if (!['city_other_text', 'district_other'].includes(input.name) && value && value !== '') {
+                        params.append(input.name, value);
                     }
                 });
             // Збираємо значення з радіокнопок (крім тригерів та мети)
@@ -1664,6 +1679,18 @@ export const setupHomepageFilters = () => {
             if (!isOther) cityOtherInput.value = '';
         });
         cityOtherInput.style.display = citySelect.value === 'other' ? 'block' : 'none'; // Init state
+    }
+
+    // СЛУХАЧ для зміни району ("Інше")
+    const districtSelect = filtersForm.querySelector('#filter_district');
+    const districtOtherInput = filtersForm.querySelector('#filter_district_other_text');
+    if (districtSelect && districtOtherInput) {
+        districtSelect.addEventListener('change', () => {
+            const isOther = districtSelect.value === 'other';
+            districtOtherInput.style.display = isOther ? 'block' : 'none';
+            if (!isOther) districtOtherInput.value = '';
+        });
+        districtOtherInput.style.display = districtSelect.value === 'other' ? 'block' : 'none'; // Init state
     }
 
     // --- Ініціалізація видимості при завантаженні ---

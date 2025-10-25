@@ -306,7 +306,7 @@ const fetchAndDisplayListingDetail = async () => {
                 </div>`;
         }
 
-
+        const displayDistrict = listing.district === 'other' && listing.district_other ? listing.district_other : listing.district;
         const combinedHousingCharsHTML = apartmentCharsHTML + nearbyUniversitiesHTML + optionalFieldsHTML;
 
         if (listing.listing_type === 'find_home') {
@@ -366,7 +366,7 @@ const fetchAndDisplayListingDetail = async () => {
                     <span class="detail-price">₴${listing.price || 0} / міс</span>
 
                     <div class="detail-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'} ${listing.address ? `, ${listing.address}` : ''}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'} ${displayDistrict ? `, ${displayDistrict}` : ''} ${listing.address ? `, ${listing.address}` : ''}</p>
                         ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
                         ${listing.rooms ? `<p><i class="fas fa-door-open"></i> Кімнат: ${listing.rooms}</p>` : ''}
                         ${listing.total_area ? `<p><i class="fas fa-ruler-combined"></i> Площа: ${listing.total_area} м²</p>` : ''}
@@ -741,6 +741,177 @@ const handleDeleteListing = async (listingId) => {
 };
 
 // =================================================================================
+// ЛОГІКА СТОРІНКИ report_bug.html
+// =================================================================================
+
+const setupReportBugPage = () => {
+    const reportForm = document.getElementById('reportForm');
+    if (!reportForm) return;
+
+    const problemTags = reportForm.querySelectorAll('.problem-tag'); // Кнопки вибору типу
+    const hiddenCheckboxesContainer = document.getElementById('hiddenProblemTypes'); // Контейнер для прихованих чекбоксів
+    const descriptionInput = document.getElementById('problemDescription'); // Поле для опису
+    const fileInput = document.getElementById('fileInput'); // Інпут для файлів
+    const fileListContainer = document.getElementById('fileList'); // Контейнер для списку файлів
+    const submitBtn = reportForm.querySelector('.submit-btn'); // Кнопка "Надіслати"
+    const cancelBtn = reportForm.querySelector('.cancel-btn'); // Кнопка "Скасувати"
+
+    // Використовуємо Set для зберігання унікальних вибраних значень типів проблеми
+    const selectedProblemTypes = new Set();
+
+    /**
+     * Оновлює приховані чекбокси, які будуть надіслані з формою.
+     * Створює <input type="checkbox" name="problemTypes[]" value="..." checked>
+     * для кожного вибраного типу проблеми.
+     */
+    const updateHiddenCheckboxes = () => {
+        hiddenCheckboxesContainer.innerHTML = ''; // Очищуємо попередні чекбокси
+        // Для кожного вибраного типу створюємо відповідний чекбокс
+        selectedProblemTypes.forEach(value => {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'problemTypes[]'; // Важливо: '[]' для передачі масиву
+            checkbox.value = value;
+            checkbox.checked = true; // Завжди позначений, бо він відповідає вибраному типу
+            hiddenCheckboxesContainer.appendChild(checkbox);
+        });
+    };
+
+    /**
+     * Оновлює список імен вибраних файлів, що відображається користувачу.
+     */
+    const updateFileList = () => {
+        // Якщо контейнер для списку не знайдено, виходимо
+        if (!fileListContainer) return;
+
+        fileListContainer.innerHTML = ''; // Очищуємо поточний список
+
+        // Якщо файли вибрано, створюємо список
+        if (fileInput.files.length > 0) {
+            // Проходимо по кожному вибраному файлу
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                // Створюємо елемент списку
+                const listItem = document.createElement('div');
+                listItem.className = 'file-list-item'; // Додаємо CSS клас
+                // Вставляємо іконку та ім'я файлу
+                listItem.innerHTML = `
+                    <i class="fas fa-file-alt"></i> <span>${file.name}</span>       `;
+                // Додаємо елемент до контейнера
+                fileListContainer.appendChild(listItem);
+            }
+        }
+    };
+
+    // --- Обробка кліку на кнопки типів проблеми ---
+    problemTags.forEach(tag => {
+        tag.addEventListener('click', () => {
+            // Отримуємо значення типу проблеми з data-атрибута кнопки
+            const value = tag.dataset.value;
+
+            // Перемикаємо CSS клас 'active' для візуального підсвічування
+            tag.classList.toggle('active');
+
+            // Оновлюємо Set вибраних типів
+            if (tag.classList.contains('active')) {
+                selectedProblemTypes.add(value); // Додаємо тип, якщо кнопка стала активною
+            } else {
+                selectedProblemTypes.delete(value); // Видаляємо тип, якщо кнопка стала неактивною
+            }
+
+            // Оновлюємо приховані чекбокси, щоб дані коректно надіслались
+            updateHiddenCheckboxes();
+
+            // Виводимо в консоль поточний список вибраних типів (для налагодження)
+            console.log('Вибрані типи проблем:', Array.from(selectedProblemTypes));
+        });
+    });
+
+    // --- Додаємо слухача події 'change' для інпуту файлів ---
+    if (fileInput) {
+        // Коли користувач вибирає файли, викликаємо функцію оновлення списку
+        fileInput.addEventListener('change', updateFileList);
+    }
+
+    // --- Обробка відправки форми ---
+    reportForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Запобігаємо стандартній відправці форми
+        const description = descriptionInput.value.trim(); // Отримуємо текст опису
+
+        // --- Валідація форми ---
+        if (selectedProblemTypes.size === 0) { // Перевіряємо, чи вибрано хоча б один тип
+            alert('Будь ласка, оберіть хоча б один тип проблеми.');
+            return; // Зупиняємо відправку
+        }
+        if (!description) { // Перевіряємо, чи введено опис
+            alert('Будь ласка, опишіть проблему.');
+            descriptionInput.focus(); // Ставимо фокус на поле опису
+            return; // Зупиняємо відправку
+        }
+        // --- Кінець валідації ---
+
+        // Блокуємо кнопку та змінюємо текст на час відправки
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Надсилання...';
+
+        // Створюємо об'єкт FormData прямо з HTML-форми.
+        // Він автоматично включатиме:
+        // - Текст з <textarea name="problemDescription">
+        // - Вибрані файли з <input type="file" name="files">
+        // - Значення всіх checked чекбоксів з #hiddenProblemTypes (name="problemTypes[]")
+        const formData = new FormData(reportForm);
+
+        try {
+            // Надсилаємо дані на сервер методом POST
+            const response = await fetch('http://localhost:3000/api/report-bug', {
+                method: 'POST',
+                headers: getAuthHeaders(false), // Важливо: isJson=false для FormData
+                body: formData, // Передаємо FormData
+            });
+
+            // Перевіряємо відповідь сервера
+            if (!response.ok) {
+                // Якщо помилка, намагаємось отримати текст помилки з відповіді
+                const errorData = await response.json();
+                // Кидаємо помилку, щоб перейти в блок catch
+                throw new Error(errorData.error || `HTTP помилка! Статус: ${response.status}`);
+            }
+
+            // Якщо відповідь успішна (ok)
+            const result = await response.json(); // Отримуємо дані з відповіді
+            alert(result.message); // Показуємо повідомлення про успіх
+            reportForm.reset(); // Скидаємо всі поля форми
+            selectedProblemTypes.clear(); // Очищуємо Set вибраних типів
+            problemTags.forEach(tag => tag.classList.remove('active')); // Знімаємо виділення з кнопок
+            fileListContainer.innerHTML = ''; // Очищуємо список файлів
+            updateHiddenCheckboxes(); // Очищуємо приховані чекбокси
+
+        } catch (error) {
+            // Обробка помилок (мережевих або отриманих від сервера)
+            console.error('Помилка надсилання звіту:', error);
+            alert(`Помилка: ${error.message}`); // Показуємо повідомлення про помилку
+        } finally {
+            // У будь-якому випадку (успіх чи помилка) розблоковуємо кнопку
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Надіслати';
+        }
+    });
+
+    // --- Обробка кнопки "Скасувати" ---
+    cancelBtn.addEventListener('click', () => {
+        // Питаємо підтвердження у користувача
+        if (confirm('Ви впевнені, що хочете скасувати звіт? Введені дані буде втрачено.')) {
+            reportForm.reset(); // Скидаємо форму
+            selectedProblemTypes.clear(); // Очищуємо Set
+            problemTags.forEach(tag => tag.classList.remove('active')); // Знімаємо виділення кнопок
+            fileListContainer.innerHTML = ''; // Очищуємо список файлів
+            updateHiddenCheckboxes(); // Очищуємо приховані чекбокси
+            // Можна додати перехід назад: history.back();
+        }
+    });
+};
+
+// =================================================================================
 // 5. ГОЛОВНИЙ ВИКОНАВЧИЙ БЛОК (РОУТЕР)
 // =================================================================================
 
@@ -837,6 +1008,16 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (path.endsWith('user_profile.html')) { await loadPublicProfileData(); }
         // Обране
         else if (path.endsWith('favorites.html')) { await fetchAndDisplayFavorites(); }
+
+        // Налаштування сторінки звіту про помилку
+        if (path.endsWith('report_bug.html')) {
+            if (!MY_USER_ID) {
+                alert('Будь ласка, увійдіть, щоб повідомити про помилку.');
+                window.location.href = 'login.html';
+                return;
+            }
+            setupReportBugPage();
+        }
 
     })(); // Само_викликаюча асинхронна функція
 });
