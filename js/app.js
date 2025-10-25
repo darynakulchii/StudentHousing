@@ -306,6 +306,9 @@ const fetchAndDisplayListingDetail = async () => {
                 </div>`;
         }
 
+        const displayCity = listing.city === 'other' && listing.city_other
+            ? listing.city_other
+            : (listing.city || 'Місто не вказано');
         const displayDistrict = listing.district === 'other' && listing.district_other ? listing.district_other : listing.district;
         const combinedHousingCharsHTML = apartmentCharsHTML + nearbyUniversitiesHTML + optionalFieldsHTML;
 
@@ -366,8 +369,7 @@ const fetchAndDisplayListingDetail = async () => {
                     <span class="detail-price">₴${listing.price || 0} / міс</span>
 
                     <div class="detail-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'} ${displayDistrict ? `, ${displayDistrict}` : ''} ${listing.address ? `, ${listing.address}` : ''}</p>
-                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
+                        <p><i class="fas fa-map-marker-alt"></i> ${displayCity}${displayDistrict ? `, ${displayDistrict}` : ''}${listing.address ? `, ${listing.address}` : ''}</p>                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
                         ${listing.rooms ? `<p><i class="fas fa-door-open"></i> Кімнат: ${listing.rooms}</p>` : ''}
                         ${listing.total_area ? `<p><i class="fas fa-ruler-combined"></i> Площа: ${listing.total_area} м²</p>` : ''}
                         ${listing.kitchen_area ? `<p><i class="fas fa-utensils"></i> Кухня: ${listing.kitchen_area} м²</p>` : ''}
