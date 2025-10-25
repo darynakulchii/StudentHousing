@@ -128,11 +128,16 @@
 
         <div class="form-group" id="addressGroup" style="display: none;">
             <label for="address">Адреса (вулиця, номер будинку)</label>
-            <input type="text" id="address" name="address" placeholder="Наприклад, вул. Хрещатик, 22">
+            <div style="display: flex; gap: 10px; align-items: flex-start;"> <input type="text" id="address" name="address" placeholder="Наприклад, вул. Личаківська, 34" style="flex-grow: 1;">
+                <button type="button" id="findOnMapBtn" title="Знайти адресу на карті" style="padding: 10px 15px; height: 42px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--border-color); background: #eee; cursor: pointer;">
+                    <i class="fas fa-search-location"></i>
+                </button>
+            </div>
             <small class="form-description">Ви також можете вказати точне місце на карті.</small>
             <div id="map"></div>
             <input type="hidden" id="latitude" name="latitude">
             <input type="hidden" id="longitude" name="longitude">
+            <small id="mapError" style="color: var(--danger-color); display: none; margin-top: 5px;"></small>
         </div>
 
         <div class="form-group" id="photoGroup" style="display: block;"> <label>Фото (до 8 шт.)</label>
