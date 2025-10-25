@@ -525,7 +525,7 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
         'my_personality_other_text', 'my_lifestyle_other_text', 'my_interests_other_text',
         'mate_personality_other_text', 'mate_lifestyle_other_text', 'mate_interests_other_text',
         'comm_other_text', 'infra_other_text', 'incl_other_text', 'blackout_other_text',
-        'university_other_text'
+        'university_other_text', 'district', 'district_other'
     ];
     const columns = ['user_id'];
     const values = [user_id];
@@ -740,7 +740,7 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
             'my_personality_other_text', 'my_lifestyle_other_text', 'my_interests_other_text',
             'mate_personality_other_text', 'mate_lifestyle_other_text', 'mate_interests_other_text',
             'comm_other_text', 'infra_other_text', 'incl_other_text', 'blackout_other_text',
-            'university_other_text'
+            'university_other_text', 'district', 'district_other'
         ];
 
         const setClauses = [];
