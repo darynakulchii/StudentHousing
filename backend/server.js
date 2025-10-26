@@ -1402,7 +1402,7 @@ app.post('/api/report-bug', authenticateToken, reportUpload, async (req, res) =>
         // --- Опціонально: Збереження звіту в базу даних (з масивом типів) ---
         const insertQuery = `
             INSERT INTO bug_reports (user_id, report_types, description, file_urls, created_at)
-            VALUES ($1, $2, $3, $4, NOW()); // report_types тепер ARRAY TEXT[] або JSONB
+            VALUES ($1, $2, $3, $4, NOW());
         `;
         // Передаємо масив problemTypesArray
         await pool.query(insertQuery, [userId, problemTypesArray, problemDescription, uploadedFileUrls]);
