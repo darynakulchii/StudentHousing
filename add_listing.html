@@ -9,41 +9,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
-    <style>
-        /* Стилі для карти (приклад) */
-        #map { height: 300px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .hidden-other-input { display: none; margin-top: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem;} /* Стиль для прихованого поля "Інше" */
-        /* Стилі для опції "Інше" в характеристиках */
-        .checkbox-option-item.other-characteristic-option {
-            /* Можна додати стилі, якщо потрібно виділити */
-            /* Ensure it aligns well within flex container */
-            width: 100%; /* Make 'Other' checkbox take full width to push input below */
-        }
-
-        .characteristics-other-text {
-            display: none; /* Сховано за замовчуванням */
-        }
-
-        .checkbox-options {
-            /* Дозволяємо полю вводу займати всю ширину */
-            flex-wrap: wrap;
-        }
-        /* Style for the 'Other' checkbox item itself if needed */
-        .checkbox-option-item {
-            display: inline-flex; /* Align label and checkbox */
-            align-items: center; /* Vertically align */
-            margin-bottom: 5px; /* Add some space */
-        }
-    </style>
 </head>
 
 <body>
-
 <div id="navigation-placeholder"></div>
-
 <main class="add-listing-page">
     <h1>Створити нове оголошення</h1>
 
@@ -333,7 +302,7 @@
                 <div class="form-group">
                     <label>Бажана політика щодо тварин у житлі</label>
                     <div class="radio-options">
-                        <input type="radio" id="search_pet_policy_any" name="search_pet_policy" value="any" checked><label for="search_pet_policy_any">Неважливо</label>
+                        <input type="radio" id="search_pet_policy_any" name="search_pet_policy" value="any"><label for="search_pet_policy_any">Неважливо</label>
                         <input type="radio" id="search_pet_policy_no" name="search_pet_policy" value="no"><label for="search_pet_policy_no">Без тварин</label>
                         <input type="radio" id="search_pet_policy_yes" name="search_pet_policy" value="yes"><label for="search_pet_policy_yes">Дозволено</label>
                     </div>
@@ -435,7 +404,6 @@
                     <div class="radio-options">
                         <input type="radio" id="my_gender_female" name="my_gender" value="female"><label for="my_gender_female">Жіноча</label>
                         <input type="radio" id="my_gender_male" name="my_gender" value="male"><label for="my_gender_male">Чоловіча</label>
-                        <input type="radio" id="my_gender_other" name="my_gender" value="other"><label for="my_gender_other">Інша</label>
                     </div>
                 </div>
                 <div class="form-group">
@@ -447,7 +415,7 @@
             <div class="form-group" id="myGroupSizeGroup" style="display: none;">
                 <label>Для скількох людей шукаєте житло?</label>
                 <div class="radio-options">
-                    <input type="radio" id="group_size_1" name="my_group_size" value="1" checked><label for="group_size_1">Лише для себе</label>
+                    <input type="radio" id="group_size_1" name="my_group_size" value="1"><label for="group_size_1">Лише для себе</label>
                     <input type="radio" id="group_size_more" name="my_group_size" value="more"><label for="group_size_more">Для себе та друзів</label>
                 </div>
                 <select id="my_group_count" name="my_group_count" style="display: none; margin-top: 10px;">
@@ -461,7 +429,7 @@
             <div class="form-group">
                 <label>Паління</label>
                 <div class="radio-options">
-                    <input type="radio" id="my_smoke_no" name="my_smoking" value="no" checked><label for="my_smoke_no">Не палю</label>
+                    <input type="radio" id="my_smoke_no" name="my_smoking" value="no"><label for="my_smoke_no">Не палю</label>
                     <input type="radio" id="my_smoke_yes" name="my_smoking" value="yes"><label for="my_smoke_yes">Палю</label>
                     <input type="radio" id="my_smoke_outside" name="my_smoking" value="outside"><label for="my_smoke_outside">Палю (лише на вулиці)</label>
                 </div>
@@ -470,7 +438,7 @@
             <div class="form-group">
                 <label>Алкоголь</label>
                 <div class="radio-options">
-                    <input type="radio" id="my_drink_no" name="my_drinking" value="no" checked><label for="my_drink_no">Не вживаю</label>
+                    <input type="radio" id="my_drink_no" name="my_drinking" value="no"><label for="my_drink_no">Не вживаю</label>
                     <input type="radio" id="my_drink_rarely" name="my_drinking" value="rarely"><label for="my_drink_rarely">Рідко вживаю</label>
                     <input type="radio" id="my_drink_yes" name="my_drinking" value="yes"><label for="my_drink_yes">Вживаю</label>
                 </div>
@@ -479,7 +447,7 @@
             <div class="form-group">
                 <label>Гості</label>
                 <div class="radio-options">
-                    <input type="radio" id="my_guests_no" name="my_guests" value="no" checked><label for="my_guests_no">Без гостей</label>
+                    <input type="radio" id="my_guests_no" name="my_guests" value="no"><label for="my_guests_no">Без гостей</label>
                     <input type="radio" id="my_guests_rarely" name="my_guests" value="rarely"><label for="my_guests_rarely">Рідко</label>
                     <input type="radio" id="my_guests_sometimes" name="my_guests" value="sometimes"><label for="my_guests_sometimes">Іноді</label>
                     <input type="radio" id="my_guests_often" name="my_guests" value="often"><label for="my_guests_often">Часто</label>
@@ -490,7 +458,7 @@
                 <label>Чи є у вас тварини?</label>
                 <div class="radio-options">
                     <input type="radio" id="my_pets_yes" name="my_pets_policy" value="yes"><label for="my_pets_yes">Так</label>
-                    <input type="radio" id="my_pets_no" name="my_pets_policy" value="no" checked><label for="my_pets_no">Ні</label>
+                    <input type="radio" id="my_pets_no" name="my_pets_policy" value="no"><label for="my_pets_no">Ні</label>
                 </div>
                 <div class="checkbox-options" id="my_pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
                     <p class="form-description" style="width: 100%; margin-bottom: 5px;">Вкажіть, які саме:</p>
@@ -579,7 +547,6 @@
                         <option value="any" selected>Будь-яка</option>
                         <option value="female">Жіноча</option>
                         <option value="male">Чоловіча</option>
-                        <option value="other">Інша</option>
                     </select>
                 </div>
             </div>
@@ -598,7 +565,7 @@
             <div class="form-group">
                 <label>Паління</label>
                 <div class="radio-options">
-                    <input type="radio" id="smoke_any" name="roommate_smoking" value="any" checked><label for="smoke_any">Неважливо</label>
+                    <input type="radio" id="smoke_any" name="roommate_smoking" value="any"><label for="smoke_any">Неважливо</label>
                     <input type="radio" id="smoke_no" name="roommate_smoking" value="no"><label for="smoke_no">Не палить</label>
                     <input type="radio" id="smoke_yes" name="roommate_smoking" value="yes"><label for="smoke_yes">Палить</label>
                     <input type="radio" id="smoke_outside" name="roommate_smoking" value="outside"><label for="smoke_outside">Палить (лише на вулиці)</label>
@@ -608,7 +575,7 @@
             <div class="form-group">
                 <label>Алкоголь</label>
                 <div class="radio-options">
-                    <input type="radio" id="drink_any" name="roommate_drinking" value="any" checked><label for="drink_any">Неважливо</label>
+                    <input type="radio" id="drink_any" name="roommate_drinking" value="any"><label for="drink_any">Неважливо</label>
                     <input type="radio" id="drink_no" name="roommate_drinking" value="no"><label for="drink_no">Не вживає</label>
                     <input type="radio" id="drink_rarely" name="roommate_drinking" value="rarely"><label for="drink_rarely">Рідко вживає</label>
                     <input type="radio" id="drink_yes" name="roommate_drinking" value="yes"><label for="drink_yes">Вживає</label>
@@ -618,7 +585,7 @@
             <div class="form-group">
                 <label>Гості</label>
                 <div class="radio-options">
-                    <input type="radio" id="guests_any" name="roommate_guests" value="any" checked><label for="guests_any">Неважливо</label>
+                    <input type="radio" id="guests_any" name="roommate_guests" value="any"><label for="guests_any">Неважливо</label>
                     <input type="radio" id="guests_no" name="roommate_guests" value="no"><label for="guests_no">Без гостей</label>
                     <input type="radio" id="guests_rarely" name="roommate_guests" value="rarely"><label for="guests_rarely">Рідко</label>
                     <input type="radio" id="guests_sometimes" name="roommate_guests" value="sometimes"><label for="guests_sometimes">Іноді</label>
@@ -630,7 +597,7 @@
                 <label>Чи згодні ви жити з сусідом, у якого є тварини?</label>
                 <div class="radio-options">
                     <input type="radio" id="mate_pets_yes" name="mate_pets_policy" value="yes"><label for="mate_pets_yes">Так</label>
-                    <input type="radio" id="mate_pets_no" name="mate_pets_policy" value="no" checked><label for="mate_pets_no">Ні</label>
+                    <input type="radio" id="mate_pets_no" name="mate_pets_policy" value="no"><label for="mate_pets_no">Ні</label>
                     <input type="radio" id="mate_pets_maybe" name="mate_pets_policy" value="maybe"><label for="mate_pets_maybe">Можливо</label>
                 </div>
                 <div class="checkbox-options" id="mate_pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
@@ -975,7 +942,7 @@
                 <label>Домашні улюбленці (чи дозволено у квартирі)</label>
                 <div class="radio-options">
                     <input type="radio" id="pet_allowed_yes" name="pet_policy" value="yes"><label for="pet_allowed_yes">Так</label>
-                    <input type="radio" id="pet_allowed_no" name="pet_policy" value="no" checked><label for="pet_allowed_no">Ні</label>
+                    <input type="radio" id="pet_allowed_no" name="pet_policy" value="no"><label for="pet_allowed_no">Ні</label>
                 </div>
                 <div class="checkbox-options" id="pet_details" style="display: none; margin-top: 10px; padding-left: 20px;">
                     <input type="checkbox" id="pet_cat" name="characteristics" value="pet_cat"><label for="pet_cat">Котик</label>
@@ -1096,6 +1063,9 @@
     </form>
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
