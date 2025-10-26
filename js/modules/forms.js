@@ -1655,7 +1655,7 @@ export const setupHomepageFilters = () => {
     const searchIcon = document.querySelector('.search-icon');
     if (!filtersForm || !actionButtons.length || !searchInput || !searchIcon) {
         console.error("Не знайдено один або більше елементів для фільтрів головної сторінки.");
-        return; // Додано повернення, якщо елементи не знайдено
+        return;
     }
 
     // --- Елементи секцій та тригерів ---
@@ -1675,6 +1675,9 @@ export const setupHomepageFilters = () => {
     const showCurrentHousingRadios = filtersForm.querySelectorAll('input[name="show_current_housing"]');
     const showMyCharsRadios = filtersForm.querySelectorAll('input[name="show_my_chars"]');
     const readyToShareRadios = filtersForm.querySelectorAll('input[name="ready_to_share_filter"]');
+    // *** НОВЕ: Радіокнопки та деталі для фільтра тварин ***
+    const searchPetPolicyRadios = filtersForm.querySelectorAll('input[name="search_pet_policy"]');
+    const filterPetDetailsDiv = filtersForm.querySelector('#filter_pet_details');
 
     // Допоміжна функція для видимості
     const setVisible = (element, isVisible) => {
@@ -1687,6 +1690,8 @@ export const setupHomepageFilters = () => {
         const wantsToShare = filtersForm.querySelector('input[name="ready_to_share_filter"]:checked')?.value;
         const showCurrentHousing = filtersForm.querySelector('input[name="show_current_housing"]:checked')?.value === 'yes';
         const showMyChars = filtersForm.querySelector('input[name="show_my_chars"]:checked')?.value === 'yes';
+        // *** НОВЕ: Перевірка вибраної політики щодо тварин ***
+        const isPetPolicyYes = filtersForm.querySelector('input[name="search_pet_policy"][value="yes"]:checked');
 
         console.log("Updating visibility. Goal:", selectedGoal, "WantsToShare:", wantsToShare, "ShowCurrent:", showCurrentHousing, "ShowMy:", showMyChars);
 
@@ -1701,7 +1706,13 @@ export const setupHomepageFilters = () => {
 
         // 2. Логіка для кожної мети
         if (selectedGoal === 'find_housing') { // Знайти житло
-            setVisible(filterDesiredHousing, true); // 2. Бажані характеристики житла (з питанням про сусіда всередині)
+            setVisible(filterDesiredHousing, true); // 2. Бажані характеристики житла
+
+            // *** НОВЕ: Показуємо/ховаємо деталі тварин ***
+            setVisible(filterPetDetailsDiv, !!isPetPolicyYes); // !! перетворює на boolean
+            if (!isPetPolicyYes && filterPetDetailsDiv) { // Знімаємо позначки, якщо "Дозволено" не вибрано
+                filterPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            }
 
             if (wantsToShare === 'yes' || wantsToShare === 'any') {
                 setVisible(filterDesiredRoommate, true); // 4. Бажані характеристики сусіда
@@ -1735,6 +1746,12 @@ export const setupHomepageFilters = () => {
         } else if (selectedGoal === 'all' || !selectedGoal) { // Всі оголошення
             // Показуємо базові + всі основні секції 2, 3, 4, 5, 6 БЕЗ питань-тригерів
             setVisible(filterDesiredHousing, true);
+            // *** НОВЕ: Показуємо/ховаємо деталі тварин для 'all' ***
+            setVisible(filterPetDetailsDiv, !!isPetPolicyYes);
+            if (!isPetPolicyYes && filterPetDetailsDiv) {
+                filterPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            }
+
             setVisible(filterCurrentHousing, true);
             setVisible(filterDesiredRoommate, true);
             setVisible(filterMyChars, true);
@@ -1750,7 +1767,10 @@ export const setupHomepageFilters = () => {
         if (searchTerm) params.append('search', searchTerm);
 
         const selectedGoal = formData.get('user_goal');
-        const wantsToShare = formData.get('ready_to_share_filter'); // З поля всередині #filter_desired_housing
+        const wantsToShare = formData.get('ready_to_share_filter');
+
+        // *** НОВЕ: Отримуємо значення політики щодо тварин ***
+        const selectedPetPolicy = formData.get('search_pet_policy');
 
         // Визначаємо listing_type для запиту
         if (selectedGoal === 'find_housing') {
@@ -1785,27 +1805,28 @@ export const setupHomepageFilters = () => {
             // Збираємо значення з select, input[type=number], input[type=text]
             section.querySelectorAll('select, input[type="number"], input[type="text"][name$="_text"]')
                 .forEach(input => {
+                    const value = input.value?.trim(); // Додаємо ?.trim() для безпеки
                     if (input.name === 'city' && value === 'other') {
                         const otherCityValue = formData.get('city_other_text')?.trim();
                         if (otherCityValue) params.append('city', otherCityValue);
                     }
-                    // --- Обробка району "Інше" ---
                     else if (input.name === 'district' && value === 'other') {
                         const otherDistrictValue = formData.get('district_other')?.trim();
                         if (otherDistrictValue) params.append('district', otherDistrictValue);
                     }
-                    else if (!['city_other_text', 'district_other'].includes(input.name) && value && value !== '') {
+                    // *** Змінено: Перевіряємо, чи value не порожнє ***
+                    else if (!['city_other_text', 'district_other'].includes(input.name) && value) {
                         params.append(input.name, value);
                     }
                 });
-            // Збираємо значення з радіокнопок (крім тригерів та мети)
+            // Збираємо значення з радіокнопок (крім тригерів, мети та політики тварин)
             section.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
-                if (radio.name && !['user_goal', 'show_current_housing', 'show_my_chars', 'ready_to_share_filter'].includes(radio.name)) {
+                if (radio.name && !['user_goal', 'show_current_housing', 'show_my_chars', 'ready_to_share_filter', 'search_pet_policy'].includes(radio.name)) {
                     const value = radio.value;
                     if (value && value !== '') params.append(radio.name, value);
                 }
             });
-            // Збираємо значення з чекбоксів характеристик, групуючи їх
+            // Збираємо значення з чекбоксів характеристик
             let charGroupName = null;
             if (sectionId === 'filter_desired_housing') charGroupName = 'desired_housing';
             else if (sectionId === 'filter_current_housing') charGroupName = 'current_housing';
@@ -1814,17 +1835,20 @@ export const setupHomepageFilters = () => {
             else if (sectionId === 'filter_desired_tenant') charGroupName = 'desired_tenant';
 
             if (charGroupName) {
-                // Перебираємо ВСІ чекбокси в секції, що мають name, який закінчується на _characteristics
                 section.querySelectorAll(`input[type="checkbox"][name$="_characteristics"]:checked`).forEach(checkbox => {
-                    // Додаємо значення чекбоксу до відповідної групи характеристик
                     characteristics[charGroupName].push(checkbox.value);
                 });
             }
         });
 
-        // Додаємо вибрану мету до параметрів (для бекенду, щоб знати логіку характеристик)
+        // Додаємо вибрану мету до параметрів
         if (selectedGoal && selectedGoal !== 'all') {
             params.append('user_goal', selectedGoal);
+        }
+
+        // *** НОВЕ: Додаємо політику щодо тварин до параметрів, якщо вона не 'any' ***
+        if (selectedPetPolicy && selectedPetPolicy !== 'any') {
+            params.append('search_pet_policy', selectedPetPolicy);
         }
 
         // Додаємо згруповані характеристики до параметрів
@@ -1851,15 +1875,17 @@ export const setupHomepageFilters = () => {
             filtersForm.reset();
             searchInput.value = '';
 
-            // Встановлюємо відповідний goal radio у ФОРМІ
             const goalRadioInForm = filtersForm.querySelector(`input[name="user_goal"][value="${goal}"]`);
             if (goalRadioInForm) goalRadioInForm.checked = true;
-            else filtersForm.querySelectorAll('input[name="user_goal"]').forEach(r => r.checked = false); // Для 'all'
+            else filtersForm.querySelectorAll('input[name="user_goal"]').forEach(r => r.checked = false);
 
             // Явно встановлюємо тригери після reset
             filtersForm.querySelector('#show_current_housing_no').checked = true;
             filtersForm.querySelector('#show_my_chars_no').checked = true;
             filtersForm.querySelector('#filter_share_any').checked = true;
+            // *** НОВЕ: Скидання фільтра тварин ***
+            filtersForm.querySelector('#filter_pet_policy_any').checked = true;
+
 
             updateFilterVisibility();
 
@@ -1871,18 +1897,15 @@ export const setupHomepageFilters = () => {
         });
     });
 
-    // Слухачі для всіх радіокнопок у формі (цілі та тригери)
+    // Слухачі для всіх радіокнопок у формі (цілі, тригери, політика тварин)
     filtersForm.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', () => {
-            // Якщо змінилася мета (user_goal)
             if (radio.name === 'user_goal' && radio.checked) {
                 const goalValue = radio.value;
-                // Оновлюємо активну кнопку зверху
                 actionButtons.forEach(btn => btn.classList.remove('active-action'));
                 document.querySelector(`.action-btn[data-goal="${goalValue}"]`)?.classList.add('active-action');
             }
-            // Завжди оновлюємо видимість
-            updateFilterVisibility();
+            updateFilterVisibility(); // Завжди оновлюємо видимість при зміні будь-якого радіо
         });
     });
 
@@ -1890,12 +1913,10 @@ export const setupHomepageFilters = () => {
     filtersForm.addEventListener('submit', (e) => {
         e.preventDefault();
         triggerSearchAndFilter();
-        // Використовуємо імпортовану функцію для закриття
         if (typeof toggleFilters === 'function') {
             toggleFilters('close');
         } else {
             console.warn("toggleFilters function not available for closing sidebar.");
-            // Можна додати резервну логіку закриття, якщо потрібно
         }
     });
 
@@ -1905,20 +1926,19 @@ export const setupHomepageFilters = () => {
         filtersForm.reset();
         searchInput.value = '';
 
-        // Знімаємо вибір мети у формі
         filtersForm.querySelectorAll('input[name="user_goal"]').forEach(r => r.checked = false);
-        // Активуємо кнопку "Всі" зверху
         actionButtons.forEach(btn => btn.classList.remove('active-action'));
         document.querySelector('.action-btn[data-goal="all"]')?.classList.add('active-action');
-        // Явно ставимо радіо "Всі" у формі
         const allRadio = filtersForm.querySelector('input[name="user_goal"][value="all"]');
         if (allRadio) allRadio.checked = true;
-
 
         // Явно встановлюємо тригери
         filtersForm.querySelector('#show_current_housing_no').checked = true;
         filtersForm.querySelector('#show_my_chars_no').checked = true;
         filtersForm.querySelector('#filter_share_any').checked = true;
+        // *** НОВЕ: Скидання фільтра тварин ***
+        filtersForm.querySelector('#filter_pet_policy_any').checked = true;
+
 
         updateFilterVisibility(); // Покаже всі секції
         fetchAndDisplayListings('');
@@ -1939,7 +1959,7 @@ export const setupHomepageFilters = () => {
             cityOtherInput.style.display = isOther ? 'block' : 'none';
             if (!isOther) cityOtherInput.value = '';
         });
-        cityOtherInput.style.display = citySelect.value === 'other' ? 'block' : 'none'; // Init state
+        cityOtherInput.style.display = citySelect.value === 'other' ? 'block' : 'none';
     }
 
     // СЛУХАЧ для зміни району ("Інше")
@@ -1951,25 +1971,25 @@ export const setupHomepageFilters = () => {
             districtOtherInput.style.display = isOther ? 'block' : 'none';
             if (!isOther) districtOtherInput.value = '';
         });
-        districtOtherInput.style.display = districtSelect.value === 'other' ? 'block' : 'none'; // Init state
+        districtOtherInput.style.display = districtSelect.value === 'other' ? 'block' : 'none';
     }
 
     // --- Ініціалізація видимості при завантаженні ---
     const initialGoalButton = document.querySelector('.action-btn.active-action');
-    const initialGoal = initialGoalButton?.getAttribute('data-goal') || 'find_housing';
-    // Встановлюємо радіо у формі відповідно до активної кнопки
+    const initialGoal = initialGoalButton?.getAttribute('data-goal') || 'all'; // Змінено на 'all' за замовчуванням
     const initialRadioInForm = filtersForm.querySelector(`input[name="user_goal"][value="${initialGoal}"]`);
     if(initialRadioInForm) initialRadioInForm.checked = true;
-    else { // Якщо активна кнопка "Всі" або щось пішло не так
+    else {
         const allRadio = filtersForm.querySelector('input[name="user_goal"][value="all"]');
-        if (allRadio) allRadio.checked = true; // За замовчуванням ставимо "Всі" у формі
+        if (allRadio) allRadio.checked = true;
     }
-
 
     // Встановлюємо початкові значення тригерів
     filtersForm.querySelector('#show_current_housing_no').checked = true;
     filtersForm.querySelector('#show_my_chars_no').checked = true;
     filtersForm.querySelector('#filter_share_any').checked = true;
+    // *** НОВЕ: Ініціалізація фільтра тварин ***
+    filtersForm.querySelector('#filter_pet_policy_any').checked = true;
 
     updateFilterVisibility(); // Викликаємо для встановлення початкової видимості
 };
