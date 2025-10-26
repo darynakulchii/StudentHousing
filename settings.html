@@ -10,39 +10,66 @@
 <body>
 <div id="navigation-placeholder"></div>
 
-<main class="profile-page"> <h1>Налаштування</h1>
+<main class="settings-page">
+    <h1>Налаштування</h1>
 
-    <div class="profile-container" style="justify-content: center;">
-        <section class="profile-info" style="flex: 0 1 600px;">
-            <h2>Керування акаунтом</h2>
-            <form id="settingsForm" class="profile-form" style="padding: 0; border: none; box-shadow: none;">
-                <div class="form-group">
-                    <label>Приватність</label>
-                    <div class="checkbox-options" style="display: block;">
-                        <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--background-form);">
-                            <input type="checkbox" id="show_phone_publicly" name="show_phone_publicly" value="true" style="width: 20px; height: 20px; flex-shrink: 0;">
-                            <label for="show_phone_publicly" style="margin: 0; font-weight: normal; color: var(--text-dark); cursor: pointer;">
-                                Показувати мій номер телефону на сторінці профілю та в моїх оголошеннях
-                            </label>
-                        </div>
+    <div class="settings-content-wrapper">
+
+        <section class="settings-section">
+            <h2>Приватність та сповіщення</h2>
+            <form id="settingsForm" class="settings-form">
+
+
+                <div class="checkbox-options">  <!-- спільна рамка -->
+                    <div class="setting-switch-row">
+
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="show_phone_publicly" name="show_phone_publicly" value="true">
+                            <span class="slider round"></span>
+                        </label>
+
+                        <label for="show_phone_publicly" class="switch-label">
+                            Показувати мій номер телефону на сторінці профілю та в моїх оголошеннях.
+                        </label>
+
+                     </div>
+
+
+                    <div class="setting-switch-row">
+
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="email_notifications" name="email_notifications" value="true" checked>
+                            <span class="slider round"></span>
+                        </label>
+
+                        <label for="email_notifications" class="switch-label">
+                            Отримувати важливі оновлення та повідомлення на електронну пошту.
+                        </label>
+
                     </div>
+
                 </div>
 
-                <button type="submit" style="width: auto; align-self: flex-start;">
-                    Зберегти налаштування
-                </button>
+
+                <div class="settings-actions">
+                    <button type="submit" class="submit-btn save-btn">
+                        Зберегти налаштування
+                    </button>
+                </div>
             </form>
+        </section>
 
-            <hr style="margin: 20px 0;">
-            <hr style="margin-bottom: 20px;">
+        <section class="settings-section">
+            <h2>Видалення акаунту</h2>
 
-            <h3>Видалення акаунту</h3>
-            <p style="color: var(--text-light); margin-bottom: 20px;">
-                Ця дія назавжди видалить ваш профіль, оголошення та всі повідомлення.
-                Цю дію неможливо скасувати.
-            </p>
+            <div class="delete-account-box">
+                <p>
+                    Ця дія назавжди видалить ваш профіль, оголошення та всі повідомлення.
+                    <br>Цю дію <b>неможливо скасувати</b>.<br>
+                </p>
+            </div>
 
-            <button type="button" class="delete-btn" id="btnDeleteAccount">
+            <button type="button" class="delete-btn danger-btn" id="btnDeleteAccount">
                 <i class="fas fa-trash-alt"></i> Видалити мій акаунт
             </button>
         </section>
