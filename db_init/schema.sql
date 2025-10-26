@@ -1,5 +1,5 @@
 -- =================================================================
--- КРОК 0: СТВОРЕННЯ УКРАЇНСЬКОЇ КОНФІГУРАЦІЇ ПОШУКУ
+-- СТВОРЕННЯ УКРАЇНСЬКОЇ КОНФІГУРАЦІЇ ПОШУКУ
 -- =================================================================
 DO $$
     BEGIN
@@ -84,7 +84,7 @@ CREATE TABLE "listings" (
                             "target_price_min" INT,
                             "target_price_max" INT,
                             "housing_type_search" VARCHAR(50),
-                            "housing_type_search_other" VARCHAR(255), -- Змінено назву для консистенції
+                            "housing_type_search_other" VARCHAR(255),
                             "target_rooms" VARCHAR(10),
                             "target_roommates_max" VARCHAR(10),
                             "target_university" VARCHAR(255),
@@ -132,12 +132,12 @@ CREATE TABLE "listings" (
 -- Таблиця повідомлень про помилки
 CREATE TABLE "bug_reports" (
                                "report_id" SERIAL PRIMARY KEY,
-                               "user_id" INT REFERENCES "users"("user_id") ON DELETE SET NULL, -- Зберігаємо звіт, навіть якщо користувач видалить акаунт
-                               "report_types" TEXT[] NOT NULL, -- Масив типів проблем (наприклад, {'Невідповідний контент', 'Інше'})
-                               "description" TEXT NOT NULL, -- Опис проблеми
-                               "file_urls" TEXT[], -- Масив URL завантажених файлів (з Cloudinary або іншого сховища)
+                               "user_id" INT REFERENCES "users"("user_id") ON DELETE SET NULL,
+                               "report_types" TEXT[] NOT NULL,
+                               "description" TEXT NOT NULL,
+                               "file_urls" TEXT[],
                                "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                               "status" VARCHAR(50) DEFAULT 'new' -- Статус обробки звіту (наприклад, 'new', 'in_progress', 'resolved')
+                               "status" VARCHAR(50) DEFAULT 'new'
 );
 
 -- Індекс для звітів
@@ -169,7 +169,7 @@ CREATE TABLE "listing_characteristics" (
                                            UNIQUE ("listing_id", "char_id")
 );
 
--- Таблиця "Обране"
+-- Таблиця обране
 CREATE TABLE "favorites" (
                              "favorite_id" SERIAL PRIMARY KEY,
                              "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE,
@@ -212,11 +212,11 @@ CREATE TABLE "notifications" (
 CREATE INDEX "idx_notifications_user_id" ON "notifications" ("user_id");
 
 -- =================================================================
--- КРОК 2: ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК
+-- ЗАПОВНЕННЯ ДОВІДНИКА ХАРАКТЕРИСТИК
 -- =================================================================
 
 INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
--- 'Про себе' (Особистість) - Розширено
+-- 'Про себе' (Особистість)
 ('my_introvert', 'Інтроверт', 'my_personality'),
 ('my_extrovert', 'Екстраверт', 'my_personality'),
 ('my_ambivert', 'Амбіверт', 'my_personality'),
@@ -227,13 +227,13 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('my_responsible', 'Відповідальний/а', 'my_personality'),
 ('my_humorous', 'З почуттям гумору', 'my_personality'),
 
--- 'Про себе' (Спосіб життя) - Змінено
+-- 'Про себе' (Спосіб життя)
 ('my_student', 'Вчуся', 'my_lifestyle'),
 ('my_worker', 'Працюю', 'my_lifestyle'),
 ('my_study_home', 'Вчуся вдома', 'my_lifestyle'),
 ('my_work_home', 'Працюю вдома', 'my_lifestyle'),
 
--- 'Про себе' (Інтереси) - Розширено
+-- 'Про себе' (Інтереси)
 ('my_music', 'Музика', 'my_interests'),
 ('my_gaming', 'Ігри', 'my_interests'),
 ('my_cooking', 'Кулінарія', 'my_interests'),
@@ -316,6 +316,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('dishwasher', 'Посудомийна машина', 'tech'),
 ('drying_machine', 'Сушильна машина', 'tech'),
 ('no_appliances', 'Без побутової техніки', 'tech'),
+
 -- 'Характеристики житла' (Мультимедіа)
 ('wifi', 'Wi-Fi', 'media'),
 ('cable_tv', 'Кабельне, цифрове ТБ', 'media'),
@@ -323,6 +324,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('satellite_tv', 'Супутникове ТБ', 'media'),
 ('tv', 'Телевізор', 'media'),
 ('no_media', 'Без мультимедіа', 'media'),
+
 -- 'Характеристики житла' (Комфорт)
 ('ac', 'Кондиціонер', 'comfort'),
 ('cctv', 'Відеоспостереження', 'comfort'),
@@ -359,10 +361,12 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('blackout_elevator', 'Працює ліфт', 'blackout'),
 ('blackout_backup_power', 'Підключене резервне живлення', 'blackout'),
 ('blackout_water', 'Працює водопостачання', 'blackout'),
+
 -- 'Характеристики житла' (Додатково/Правила)
 ('rules_families', 'Тільки сім''ям', 'rules'),
 ('rules_with_owners', 'З господарями', 'rules'),
 ('rules_kids', 'Можна з дітьми', 'rules'),
+
 -- 'Характеристики житла' (Комунікації)
 ('comm_gas', 'Газ', 'communications'),
 ('comm_central_water', 'Центральний водопровід', 'communications'),
@@ -371,6 +375,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('comm_electricity', 'Електрика', 'communications'),
 ('comm_no', 'Без комунікацій', 'communications'),
 ('comm_central_sewer', 'Центральна каналізація', 'communications'),
+
 -- 'Характеристики житла' (Інфраструктура)
 ('infra_kindergarten', 'Дитячий садок', 'infra'),
 ('infra_pharmacy', 'Аптека', 'infra'),
@@ -391,6 +396,7 @@ INSERT INTO "characteristics" ("system_key", "name_ukr", "category") VALUES
 ('infra_park', 'Парк, зелена зона', 'infra'),
 ('infra_train_station', 'Залізнична станція', 'infra'),
 ('infra_playground', 'Дитячий майданчик', 'infra'),
+
 -- 'Характеристики житла' (Інклюзивність)
 ('incl_ramp_short', 'Пандус довжиною до 2,4 м.', 'inclusive'),
 ('incl_wide_doors_entry', 'Широкі двері в під''їзді (від 0,9 м.)', 'inclusive'),

@@ -6,32 +6,17 @@
     <title>UniHome | Пошук студентського житла</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="main.css">
-    <style>
-        /* Додаткові стилі для видимості секцій та питань */
-        .filter-section { display: none; border-top: 2px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
-        .filter-section h3 { margin-bottom: 1rem; font-size: 1.1rem; }
-        .filter-trigger-question { margin-top: 15px; padding: 10px; background-color: #f9f9f9; border-radius: 6px; border: 1px solid #eee; }
-        .filter-trigger-question label { margin-bottom: 5px; font-weight: 500;}
-        /* Стилі для підкласів */
-        #filter_basic h3 { color: var(--secondary-color); } /* Підклас 1 */
-        #filter_desired_housing h3 { color: var(--accent-color-blue); } /* Підклас 2 */
-        #filter_current_housing h3 { color: var(--primary-color); } /* Підклас 3 */
-        #filter_desired_roommate h3 { color: var(--accent-color-orange); } /* Підклас 4 */
-        #filter_my_chars h3 { color: var(--accent-color-green); } /* Підклас 5 */
-        #filter_desired_tenant h3 { color: #5a6268; } /* Підклас 6 */
-    </style>
 </head>
 
 <body>
 <div id="navigation-placeholder"></div>
-
 <main class="main-content">
     <h1>Знайди своє комфортне житло!</h1>
 
     <section class="search-section">
         <div class="search-block">
             <i class="fas fa-search search-icon"></i>
-            <input type="text" placeholder="Пошук: район, вулиця, університет..." class="search-input">
+            <input type="text" placeholder="Пошук" class="search-input">
             <button class="filter-btn">
                 <i class="fas fa-sliders-h"></i>
             </button>
