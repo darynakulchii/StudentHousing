@@ -332,9 +332,13 @@ app.get('/api/listings/:id', async (req, res) => {
     try {
         const client = await pool.connect();
 
-        // === ОНОВЛЕНО: Додано u.avatar_url до запиту ===
         const listingQuery = `
-            SELECT l.*, u.first_name, u.last_name, u.email, u.avatar_url
+            SELECT l.*,
+                   u.first_name,
+                   u.last_name,
+                   u.avatar_url,
+                   u.phone_number,         
+                   u.show_phone_publicly  
             FROM listings l
                      JOIN users u ON l.user_id = u.user_id
             WHERE l.listing_id = $1;

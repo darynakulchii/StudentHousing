@@ -264,172 +264,206 @@ export const handleSettingsSubmission = () => {
 
 // --- Логіка user_profile.html ---
 export const loadPublicProfileData = async () => {
+    console.log("Attempting to load public profile data...");
     const loadingIndicator = document.getElementById('loadingIndicator');
-    const profileContainer = document.getElementById('profileContainer'); // Головний контейнер сторінки
-    if (!loadingIndicator || !profileContainer) return;
+    const profileContainer = document.getElementById('profileContainer');
+
+    // Перевірка наявності основних елементів
+    if (!loadingIndicator || !profileContainer) {
+        console.error("Critical Error: loadingIndicator or profileContainer element not found!");
+        // Можливо, показати помилку користувачу інакше
+        if(loadingIndicator) loadingIndicator.innerHTML = "<h1>Помилка сторінки</h1><p>Важливі елементи інтерфейсу не знайдено.</p>";
+        return;
+    }
+    console.log("Elements loadingIndicator and profileContainer found.");
+
+    // Показуємо індикатор завантаження на початку
+    loadingIndicator.style.display = 'block';
+    profileContainer.style.display = 'none';
+
+    let user = null; // Оголошуємо за межами try
+    let listings = []; // Оголошуємо за межами try
 
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('id');
 
-        if (!userId) {
-            loadingIndicator.innerHTML = '<h1>Помилка: ID користувача не вказано.</h1>';
-            return;
-        }
-
-        // Якщо користувач дивиться свій власний профіль, перенаправляємо
+        if (!userId) throw new Error('ID користувача не вказано.');
         if (MY_USER_ID && MY_USER_ID.toString() === userId) {
+            console.log("Redirecting to own profile page.");
             window.location.href = 'profile.html';
             return;
         }
 
-        // Запускаємо обидва запити одночасно
+        console.log(`Fetching data for user ID: ${userId}`);
         const profilePromise = fetch(`http://localhost:3000/api/users/${userId}/public-profile`);
         const listingsPromise = fetch(`http://localhost:3000/api/users/${userId}/listings`);
-
         const [profileResponse, listingsResponse] = await Promise.all([profilePromise, listingsPromise]);
+        console.log("API responses received.");
 
-        // 1. Обробка профілю
-        if (profileResponse.status === 404) {
-            throw new Error('Користувача не знайдено.');
-        }
+        // Перевірка відповіді профілю
+        if (profileResponse.status === 404) throw new Error('Користувача не знайдено.');
         if (!profileResponse.ok) {
-            throw new Error('Не вдалося завантажити профіль.');
+            const errorText = await profileResponse.text().catch(() => 'Не вдалося прочитати відповідь сервера');
+            throw new Error(`Не вдалося завантажити профіль (Статус: ${profileResponse.status}). ${errorText}`);
         }
-        const user = await profileResponse.json();
+        user = await profileResponse.json(); // Присвоюємо значення змінній user
+        console.log("User profile data parsed:", user);
 
-        // 2. Обробка оголошень
+        // Обробка відповіді оголошень
         if (!listingsResponse.ok) {
-            // Не критична помилка, просто виводимо в консоль
-            console.error('Не вдалося завантажити оголошення користувача.');
-            // throw new Error('Не вдалося завантажити оголошення користувача.');
+            console.warn(`Не вдалося завантажити оголошення користувача (Статус: ${listingsResponse.status}). Відображення без оголошень.`);
+        } else {
+            try {
+                listings = await listingsResponse.json(); // Присвоюємо значення змінній listings
+                console.log(`User listings data parsed: ${listings.length} items`);
+            } catch (jsonError) {
+                console.error('Помилка парсингу JSON оголошень:', jsonError);
+                // listings залишається []
+            }
         }
-        const listings = listingsResponse.ok ? await listingsResponse.json() : []; // Якщо помилка, вважаємо список порожнім
 
+        // !!!!! ТЕПЕР МИ ВПЕВНЕНІ, ЩО ДАНІ ОТРИМАНО (АБО БУЛА ОБРОБЛЕНА ПОМИЛКА ОТРИМАННЯ) !!!!!
+        // Ховаємо індикатор і показуємо контейнер ТУТ, ДО заповнення даними
+        console.log("Hiding loader, showing container BEFORE populating data...");
+        loadingIndicator.style.display = 'none';
+        profileContainer.style.display = 'flex'; // Показуємо основний блок
 
-        // --- Заповнення даними ---
+        // --- Заповнення даними (з додатковими перевірками та логуванням помилок заповнення) ---
+        console.log("Populating profile data into HTML...");
+        // Використовуємо try...catch для всього блоку заповнення, щоб зловити будь-які помилки тут
+        try {
+            document.title = `UniHome | Профіль ${user.first_name || 'Користувач'}`;
 
-        // Встановлення заголовку сторінки
-        document.title = `UniHome | Профіль ${user.first_name}`;
+            const safeSet = (id, property, value, defaultValue = 'Не вказано') => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element[property] = value || defaultValue;
+                } else {
+                    console.warn(`Element with ID '${id}' not found for property '${property}'.`);
+                }
+            };
+            const safeSetHTML = (id, html) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerHTML = html;
+                } else {
+                    console.warn(`Element with ID '${id}' not found for innerHTML.`);
+                }
+            };
 
-        // Сайдбар
-        document.getElementById('profileAvatarImg').src = user.avatar_url || DEFAULT_AVATAR_URL;
-        document.getElementById('profileAvatarName').textContent = `${user.first_name} ${user.last_name}`;
+            // --- Заповнення елементів (код як у попередньому варіанті, але всередині нового try) ---
+            safeSet('profileAvatarImg', 'src', user.avatar_url || DEFAULT_AVATAR_URL);
+            safeSet('profileAvatarName', 'textContent', `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Користувач');
 
-        // Кнопка "Зв'язатись"
-        const contactBtn = document.getElementById('btnContactUser');
-        if(contactBtn) { // Додано перевірку
-            if (MY_USER_ID) {
-                contactBtn.href = `chat.html?user_id=${user.user_id}`;
-                contactBtn.style.display = 'inline-block'; // Показуємо кнопку
-            } else {
-                // Якщо поточний користувач не залогінений, ховаємо кнопку
-                contactBtn.style.display = 'none';
-                // Можна додати повідомлення про необхідність логіну
-                const sidebar = contactBtn.closest('.profile-sidebar');
-                if(sidebar){
-                    const loginMsg = document.createElement('p');
-                    loginMsg.innerHTML = '<small>Щоб зв\'язатися, <a href="login.html">увійдіть</a>.</small>';
-                    loginMsg.style.textAlign = 'center';
-                    loginMsg.style.marginTop = '10px';
-                    sidebar.appendChild(loginMsg);
+            const contactBtn = document.getElementById('btnContactUser');
+            if(contactBtn) {
+                if (MY_USER_ID) {
+                    contactBtn.href = `chat.html?user_id=${user.user_id}`;
+                    contactBtn.style.display = 'inline-block';
+                } else {
+                    contactBtn.style.display = 'none';
+                    const sidebar = contactBtn.closest('.profile-sidebar');
+                    if(sidebar && !sidebar.querySelector('.login-msg')){
+                        const loginMsg = document.createElement('p');
+                        loginMsg.className = 'login-msg';
+                        loginMsg.innerHTML = '<small>Щоб зв\'язатися, <a href="login.html" style="text-decoration: underline; color: var(--primary-color);">увійдіть</a>.</small>';
+                        loginMsg.style.textAlign = 'center';
+                        loginMsg.style.marginTop = '10px';
+                        sidebar.appendChild(loginMsg);
+                    }
                 }
             }
-        }
 
-
-        // Показ телефону
-        const phoneContainer = document.getElementById('publicPhoneContainer');
-        if (phoneContainer && user.phone_number) { // `phone_number` буде null, якщо показ приховано
+            const phoneContainer = document.getElementById('publicPhoneContainer');
             const phoneLink = document.getElementById('publicPhoneLink');
-            if(phoneLink){
-                phoneLink.href = `tel:${user.phone_number}`;
-                phoneLink.textContent = user.phone_number;
-                phoneContainer.style.display = 'flex';
+            if (phoneContainer && phoneLink) {
+                if (user.phone_number) { // Перевірка на null/undefined/порожній рядок
+                    phoneLink.href = `tel:${user.phone_number}`;
+                    phoneLink.textContent = user.phone_number;
+                    phoneContainer.style.display = 'flex';
+                    console.log("Phone number displayed.");
+                } else {
+                    phoneContainer.style.display = 'none';
+                    console.log("Phone number hidden (not provided or preference off).");
+                }
+            } else {
+                console.warn("Phone container or link element not found.");
             }
-        } else if (phoneContainer) {
-            phoneContainer.style.display = 'none'; // Ховаємо, якщо номера немає або приховано
-        }
 
+            safeSet('profileCity', 'textContent', user.city);
 
-        // Основна інформація
-        const profileCityEl = document.getElementById('profileCity');
-        if(profileCityEl) profileCityEl.textContent = user.city || 'Не вказано';
-
-
-        // Розрахунок віку
-        const ageSpan = document.getElementById('profileAge');
-        if(ageSpan){
+            let ageText = 'Не вказано';
             if (user.date_of_birth) {
-                try { // Додано try-catch для обробки невалідних дат
+                try {
                     const birthDate = new Date(user.date_of_birth);
-                    // Перевірка, чи дата валідна
                     if (!isNaN(birthDate.getTime())) {
                         const ageDifMs = Date.now() - birthDate.getTime();
                         const ageDate = new Date(ageDifMs);
                         const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-                        ageSpan.textContent = `${age} років`;
-                    } else {
-                        ageSpan.textContent = 'Не вказано';
+                        if (age > 0) ageText = `${age} років`;
                     }
-                } catch (e) {
-                    console.error("Помилка обробки дати народження:", e);
-                    ageSpan.textContent = 'Не вказано';
-                }
-            } else {
-                ageSpan.textContent = 'Не вказано';
+                } catch (e) { console.error("Помилка обробки дати народження:", e); }
             }
-        }
+            safeSet('profileAge', 'textContent', ageText);
 
+            safeSet('profileBio', 'textContent', user.bio || 'Користувач ще не додав біографію.');
+            safeSet('listingsCount', 'textContent', listings.length);
 
-        const profileBioEl = document.getElementById('profileBio');
-        if(profileBioEl) profileBioEl.textContent = user.bio || 'Користувач ще не додав біографію.';
-
-        // Оголошення
-        const listingsCountEl = document.getElementById('listingsCount');
-        if(listingsCountEl) listingsCountEl.textContent = listings.length;
-
-        const listingsContainer = document.getElementById('userListingsContainer');
-        if(listingsContainer) {
-            listingsContainer.innerHTML = ''; // Очищуємо
-
+            let listingsHTML = '';
             if (listings.length === 0) {
-                listingsContainer.innerHTML = '<p style="color: var(--text-light); padding: 10px;">Користувач не має активних оголошень.</p>';
+                listingsHTML = '<p style="color: var(--text-light); padding: 10px; text-align: center;">Користувач не має активних оголошень.</p>';
             } else {
-                // Використовуємо той самий шаблон картки, що й на index.html
                 listings.forEach(listing => {
                     const imageUrl = listing.main_photo_url || DEFAULT_LISTING_IMAGE[listing.listing_type] || DEFAULT_LISTING_IMAGE['default'];
-
                     let typeTag = '';
                     if (listing.listing_type === 'rent_out') typeTag = '<span class="type-tag rent">Здають</span>';
                     else if (listing.listing_type === 'find_mate') typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
                     else if (listing.listing_type === 'find_home') typeTag = '<span class="type-tag home">Шукають житло</span>';
 
-                    listingsContainer.innerHTML += `
-                        <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
-                            <div class="listing-card">
-                                <img src="${imageUrl}" alt="${listing.title}" class="listing-image">
-                                <div class="info-overlay">
-                                    <span class="price-tag">₴${listing.price || '...'} / міс</span>
-                                    ${typeTag}
-                                </div>
-                                <div class="listing-content">
-                                    <h3>${listing.title}</h3>
-                                    <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто'}</p>
-                                </div>
-                            </div>
-                        </a>
-                    `;
+                    listingsHTML += `
+                         <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
+                             <div class="listing-card">
+                                 <img src="${imageUrl}" alt="${listing.title || 'Оголошення'}" class="listing-image">
+                                 <div class="info-overlay">
+                                     <span class="price-tag">₴${listing.price || '...'} / міс</span>
+                                     ${typeTag}
+                                 </div>
+                                 <div class="listing-content">
+                                     <h3>${listing.title || 'Без назви'}</h3>
+                                     <p class="details"><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто'}</p>
+                                 </div>
+                             </div>
+                         </a>`;
                 });
+            }
+            safeSetHTML('userListingsContainer', listingsHTML);
+
+            console.log("Finished populating data. Showing content...");
+            // ТЕПЕР ховаємо індикатор і показуємо контент
+            loadingIndicator.style.display = 'none';
+            profileContainer.style.display = 'flex';
+
+        } catch (populationError) {
+            // Якщо сталася помилка ПІД ЧАС ЗАПОВНЕННЯ ДАНИМИ
+            console.error("Error occurred while populating profile data into HTML:", populationError);
+            // Можна показати повідомлення про часткове завантаження або залишити як є,
+            // оскільки основний контейнер вже видимий.
+            // Наприклад, додати повідомлення в кінець контейнера:
+            if(profileContainer) {
+                profileContainer.innerHTML += `<p style="color: red; grid-column: 1 / -1; text-align: center;">Виникла помилка під час відображення деяких даних.</p>`;
             }
         }
 
-        // Показуємо контент
-        loadingIndicator.style.display = 'none';
-        profileContainer.style.display = 'flex'; // 'flex', оскільки .public-profile-container - це flex-контейнер
-
-    } catch (error) {
-        console.error('Помилка завантаження публічного профілю:', error);
-        loadingIndicator.innerHTML = `<h1>Помилка завантаження</h1><p style="text-align: center;">${error.message}</p>`;
+    } catch (error) { // Обробка помилок ОТРИМАННЯ даних
+        console.error('Критична помилка завантаження публічного профілю:', error);
+        if (loadingIndicator) {
+            loadingIndicator.innerHTML = `<h1>Помилка завантаження</h1><p style="text-align: center;">${error.message}</p>`;
+            loadingIndicator.style.display = 'block'; // Показуємо помилку
+        }
+        if (profileContainer) {
+            profileContainer.style.display = 'none'; // Ховаємо контейнер
+        }
     }
+    // Блок finally не потрібен, оскільки ми керуємо видимістю в кінці try та в catch
 };
