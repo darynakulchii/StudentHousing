@@ -486,7 +486,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     width: 100%;
     padding: 12px;
     border: none;
-    background: var(--danger-color);
+    background: #e74c3c;
     color: var(--text-white);
     border-radius: 8px;
     cursor: pointer;
@@ -731,7 +731,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* ==================================== */
 .profile-page {
     /* Можливо, потрібно буде додати max-width: 1000px; margin: auto; */
-    padding: 20px;
+    padding: 40px;
     background: transparent;
 }
 .profile-container {
@@ -1347,37 +1347,50 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     border-radius: 16px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     border: 1px solid #ddd; /* 🔹 рамка довкола всього */
-    color: #333;
+    color: var(--border-color);
 
+    /* 1. РОБИМО ВІДНОСНО ПОЗИЦІОНОВАНИМ */
+    position: relative;
+
+    /* Додатковий верхній відступ, щоб дати місце для h1 */
+    /* Збільшимо верхній відступ, бо h1 буде вилізати за межі */
+    padding-top: 40px; /* Збільшуємо, щоб h1 не накладався на вміст форми */
 }
 
 /* Заголовок */
 .report-page h1 {
+    /* 2. АБСОЛЮТНЕ ПОЗИЦІОНУВАННЯ */
+    position: absolute;
+    top: -60px; /* Підніміть його на -60px від верхнього краю рамки */
+    left: 50%; /* Центруємо його по горизонталі */
+    transform: translateX(-50%); /* Зсуваємо на половину його ширини для точного центрування */
+
     text-align: center;
     font-size: 1.8rem;
     font-weight: 700;
     color: var(--secondary-color);
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     padding-left: 5px;
 }
 
 /* Поле опису */
 .report-form textarea {
+    top: -60px;
     width: 100%;
     height: 120px;
     resize: none;
-    padding: 12px;
+    padding: 8px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
     font-family: inherit;
     font-size: 1rem;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
 /* Підпис */
 .problem-label {
     display: block;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     font-weight: 600;
     font-size: 1.2rem;
     color: var(--secondary-color);
@@ -1419,7 +1432,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 .file-upload {
     padding-left: 15px;
     margin-bottom: 40px;
-    margin-left: 10px;
     text-align: left; /* 🔹 вирівняно по лівому краю */
 }
 
@@ -1427,7 +1439,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: var(--primary-color);
+    color: var(--secondary-color);
     cursor: pointer;
     font-weight: 530;
     font-size: 1rem;
@@ -1435,7 +1447,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 }
 
 .file-label:hover {
-    color: var(--secondary-color);
+    color: var(--primary-color);
 }
 
 /* Кнопки */
@@ -1458,7 +1470,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 
 .cancel-btn {
     background: #e0e0e0;
-    color: #555;
+    color: var(--secondary-color);
 }
 
 .cancel-btn:hover {
@@ -1473,10 +1485,226 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 
 .submit-btn:hover {
     border-color: var(--border-color);
-    background: #5858d6;
+    background: var(--primary-color);
 }
 
 /* --- /////////////// --- */
+
+/* ======================================================= */
+/* ОСНОВНИЙ КОНТЕЙНЕР НАЛАШТУВАНЬ (settings.html) */
+/* ======================================================= */
+
+.settings-page {
+    max-width: 700px;
+    margin: 70px auto;
+    background: #fff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    position: relative;
+    color: var(--secondary-color);
+}
+
+/* Заголовок H1 над рамкою */
+.settings-page h1 {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin: 0;
+    text-align: center;
+}
+
+/* ======================================================= */
+/* СПІЛЬНА РАМКА ДЛЯ ОБОХ ПЕРЕМИКАЧІВ */
+/* ======================================================= */
+
+.checkbox-options {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: #fcfcfc;
+    padding: 18px;
+    margin-bottom: 25px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.setting-switch-row {
+    display: flex;           /* горизонтально */
+    align-items: center;     /* по центру вертикально */
+    gap: 10px;               /* відстань між кнопкою і текстом */
+    padding: 10px 14px;
+    /*border: 1px solid var(--border-color);
+    border-radius: 10px;*/
+    background: #fff;
+    margin-bottom: 5px;
+}
+
+.switch-toggle {
+    display: inline-block;   /* дозволяє тексту стояти збоку */
+    flex-shrink: 0;          /* не зменшуємо кнопку */
+    width: 40px;             /* ширина кнопки */
+    height: 22px;
+}
+
+.switch-label {
+    flex-grow: 1;            /* текст займає простір праворуч */
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+/* Текст опису */
+.setting-switch-row .switch-label {
+    display: inline-block; /* важливо, щоб був на одному рядку з кнопкою */
+    color: var(--text-dark);
+    font-size: 0.95rem;
+}
+
+/* Ефект при наведенні */
+.setting-switch-row:hover {
+    background: #f8faff;
+    border-color: #cfd8e3;
+}
+
+
+
+/* ======================================================= */
+/* СТИЛІ ДЛЯ ТУМБЛЕРА */
+/* ======================================================= */
+
+.switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+/* Приховуємо стандартний чекбокс */
+.switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Сам повзунок */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 22px;
+}
+
+/* Кнопка на повзунку */
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+/* Активований стан */
+input:checked + .slider {
+    background-color: var(--secondary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(18px);
+}
+
+/* Закруглення для "pill" форми */
+.slider.round {
+    border-radius: 22px;
+}
+
+/* ======================================================= */
+/* КНОПКА ЗБЕРЕЖЕННЯ */
+/* ======================================================= */
+
+.settings-actions {
+    display: flex;
+    justify-content: center; /* центр по горизонталі */
+    margin-top: 0;           /* прибираємо зайвий margin */
+    padding-top: 0;          /* прибираємо padding */
+}
+.save-btn {
+    display: block;
+    margin: -10px auto 20px auto; /* невеликий верхній відступ від останнього рядка */
+    background: var(--secondary-color);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.save-btn:hover {
+    background: var(--primary-color);
+}
+
+
+
+/* --- рамка для видалення акаунту --- */
+.delete-account-box {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    background: #fcfcfc;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    margin-top: 10px;
+    gap: 5px;
+}
+
+.delete-btn {
+    width: auto !important;
+    text-align: center;
+    /*display: inline-block;              /* замість block */
+    /*margin: 5px auto 0 auto;*/
+    background: var(--danger-color);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 35px;                /* трохи ширше, як Save */
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+
+}
+
+/* Центрування тільки для цієї кнопки */
+.delete-btn {
+    display: block;
+    width: fit-content;
+    margin: 15px auto 0 auto;
+}
+
+
+.delete-btn:hover {
+    background-color: rgba(192, 57, 43, 1); /* Непрозорий червоний при наведенні */
+}
+
+
+/* End of settings part */
+
+
+
 
 /* Login/Register наслідують стилі add-listing-page */
 .login-page h1, .register-page h1 { /* Якщо додасте класи */
