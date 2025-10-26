@@ -87,7 +87,7 @@
                     <option value="Полтава">Полтава</option>
                     <option value="Рівне">Рівне</option>
                     <option value="Севастополь">Севастополь</option>
-                    <option value="Сєвєродонецьк">Сєвєродонецьк</option>
+                    <option value="Сіверодонецьк">Сіверодонецьк</option>
                     <option value="Сімферополь">Сімферополь</option>
                     <option value="Слов'янськ">Слов'янськ</option>
                     <option value="Суми">Суми</option>
@@ -100,6 +100,18 @@
                     <option value="other">Інше</option>
                 </select>
                 <input type="text" id="city_other_text" name="city_other_text" placeholder="Введіть інше місто" class="hidden-other-input">
+            </div>
+
+            <div class="form-group">
+                <label for="district">Район</label>
+                <select id="district" name="district" class="other-option-select">
+                    <option value="" selected>Не вибрано</option>
+                    <option value="Центральний">Центральний</option>
+                    <option value="Шевченківський">Шевченківський</option>
+                    <option value="Залізничний">Залізничний</option>
+                    <option value="other">Інший (вказати)</option>
+                </select>
+                <input type="text" id="district_other_text" name="district_other" placeholder="Введіть інший район" class="hidden-other-input">
             </div>
 
             <div class="form-group" id="priceGroup" style="display: none;">
@@ -363,7 +375,7 @@
                 <label>Чи готові жити з сусідом?</label>
                 <div class="radio-options">
                     <input type="radio" id="ready_mate_yes" name="ready_to_share" value="yes"><label for="ready_mate_yes">Готовий/а</label>
-                    <input type="radio" id="ready_mate_any" name="ready_to_share" value="any" checked><label for="ready_mate_any">Все одно</label>
+                    <input type="radio" id="ready_mate_any" name="ready_to_share" value="any"><label for="ready_mate_any">Все одно</label>
                     <input type="radio" id="ready_mate_no" name="ready_to_share" value="no"><label for="ready_mate_no">Проти, шукаю окрему квартиру</label>
                 </div>
             </div>
@@ -1042,6 +1054,7 @@
                 <textarea id="study_conditions" name="study_conditions" rows="3" placeholder="Наприклад: Є окремий робочий стіл, тихий район, швидкісний інтернет..."></textarea>
             </div>
 
+        </div>
             <button type="submit" class="submit-listing-btn">Зберегти зміни</button>
     </form>
 </main>

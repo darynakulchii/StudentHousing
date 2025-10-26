@@ -5,42 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniHome | Повідомити про помилку</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="main.css">
-</head>
+    <link rel="stylesheet" href="main.css"> </head>
 <body>
 
-    <div id="navigation-placeholder"></div>
+<div id="navigation-placeholder"></div>
 
-    <main class="report-page">
-        <h1>Повідомити про проблему</h1>
+<main class="report-page">
+    <h1>Повідомити про проблему</h1>
 
-        <form id="reportForm" class="report-form">
+    <form id="reportForm" class="report-form">
 
-            <textarea id="problemDescription" placeholder="Коротко опишіть вашу проблему чи запитання..." required></textarea>
+        <textarea id="problemDescription" name="problemDescription" placeholder="Коротко опишіть вашу проблему чи запитання..." required></textarea>
 
-            <label class="problem-label">Оберіть тип проблеми, що найбільше відповідає:</label>
-            <div class="problem-types">
-                <button type="button" class="problem-tag">Невідповідний контент</button>
-                <button type="button" class="problem-tag">Жорстокий контент</button>
-                <button type="button" class="problem-tag">Неправдива інформація</button>
-                <button type="button" class="problem-tag">Інше</button>
-            </div>
+        <label class="problem-label">Оберіть тип(и) проблеми:</label>
+        <div class="problem-types" id="problemTypesContainer">
+            <button type="button" class="problem-tag" data-value="Невідповідний контент">Невідповідний контент</button>
+            <button type="button" class="problem-tag" data-value="Жорстокий контент">Жорстокий контент</button>
+            <button type="button" class="problem-tag" data-value="Неправдива інформація">Неправдива інформація</button>
+            <button type="button" class="problem-tag" data-value="Інше">Інше</button>
+        </div>
+        <div id="hiddenProblemTypes" style="display: none;"></div>
 
-            <div class="file-upload">
-                <label for="fileInput" class="file-label">
-                    <i class="fas fa-plus-circle"></i> Додати файли (зображення та/або інші файли, що описують проблему)
-                </label>
-                <input type="file" id="fileInput" multiple hidden>
-            </div>
+        <div class="file-upload">
+            <label for="fileInput" class="file-label">
+                <i class="fas fa-plus-circle"></i> Додати файли (зображення та інші файли, що описують проблему)
+            </label>
+            <input type="file" id="fileInput" name="files" multiple hidden>
+            <div id="fileList" class="file-list-container"></div>
+        </div>
 
-            <div class="report-buttons">
-                <button type="button" class="cancel-btn">Скасувати</button>
-                <button type="submit" class="submit-btn">Надіслати</button>
-            </div>
-        </form>
+        <div class="report-buttons">
+            <button type="button" class="cancel-btn">Скасувати</button>
+            <button type="submit" class="submit-btn">Надіслати</button>
+        </div>
+    </form>
 
-    </main>
+</main>
 
-    <script type="module" src="js/app.js"></script>
-</body>
+<script type="module" src="js/app.js"></script> </body>
 </html>
