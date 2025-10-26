@@ -337,6 +337,17 @@ const fetchAndDisplayListingDetail = async () => {
             </a>
         `;
 
+        // === Додано логіку для телефону ===
+        let authorPhoneHTML = '';
+        if (listing.show_phone_publicly && listing.phone_number) { //
+            authorPhoneHTML = `
+                <div class="profile-phone-public" style="display: flex; margin-top: 10px;">
+                    <i class="fas fa-phone"></i>
+                    <a href="tel:${listing.phone_number}">${listing.phone_number}</a>
+                </div>
+            `; //
+        }
+
         // === Contact Button HTML ===
         const contactButtonHTML = (MY_USER_ID === listing.user_id)
             ? `<a href="profile.html" class="contact-btn" style="background: #7f8c8d;">
@@ -395,7 +406,7 @@ const fetchAndDisplayListingDetail = async () => {
                         <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
                             <p class="author-name">${listing.first_name} ${listing.last_name}</p>
                         </a>
-                        ${contactButtonHTML}
+                        ${authorPhoneHTML} ${contactButtonHTML}
                     </div>
                 </aside>
             </div>
