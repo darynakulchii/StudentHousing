@@ -146,7 +146,6 @@ const createNotification = async (userId, message, link_url = null) => {
 app.get('/api/listings', async (req, res) => {
     try {
         let query = `SELECT l.* FROM listings l`;
-        // Додаємо LEFT JOIN для характеристик, щоб фільтрувати по них ефективніше
         query += ` LEFT JOIN (
                         SELECT lc.listing_id, array_agg(c.system_key) as characteristics_keys
                         FROM listing_characteristics lc
@@ -179,6 +178,7 @@ app.get('/api/listings', async (req, res) => {
         }
 
         // === 3. Фільтр "Готовий ділити житло" (для find_home) ===
+        // (Логіка залишається такою ж)
         if (req.query.ready_to_share) {
             const shareOptionsRaw = Array.isArray(req.query.ready_to_share)
                 ? req.query.ready_to_share : [req.query.ready_to_share];
@@ -206,105 +206,91 @@ app.get('/api/listings', async (req, res) => {
             }
         }
 
-        // === 4. Основні фільтри (Місто) ===
+        // === 4. Основні фільтри (Місто, Район) ===
         if (req.query.city) {
             whereClauses.push(`(l.city = $${paramIndex++} OR l.city_other = $${paramIndex++})`);
             params.push(req.query.city, req.query.city);
         }
-
-        // === НОВА УМОВА ДЛЯ РАЙОНУ ===
         if (req.query.district) {
             whereClauses.push(`(l.district = $${paramIndex++} OR l.district_other ILIKE $${paramIndex++})`);
-            params.push(req.query.district, req.query.district);
+            params.push(req.query.district, `%${req.query.district}%`); // Використовуємо ILIKE для district_other
         }
 
-        // === 5. Фільтри по БАЖАНОМУ ЖИТЛУ (#filter_desired_housing) ===
+        // *** НОВЕ: Фільтр політики щодо тварин ***
+        if (req.query.search_pet_policy) {
+            const petPolicy = req.query.search_pet_policy.toLowerCase();
+            if (petPolicy === 'yes') {
+                // Шукаємо оголошення, де явно вказано 'yes'
+                whereClauses.push(`l.pet_policy = $${paramIndex++}`);
+                params.push('yes');
+            } else if (petPolicy === 'no') {
+                // Шукаємо оголошення, де вказано 'no' АБО поле порожнє/NULL
+                whereClauses.push(`(l.pet_policy = $${paramIndex++} OR l.pet_policy IS NULL OR l.pet_policy = '')`);
+                params.push('no');
+            }
+            // Якщо 'any', то умова не додається
+        }
+
+        // === 5-9. Інші Фільтри (Бажане житло, Наявне житло, Про себе, Бажаний сусід, Бажаний орендар) ===
+        // (Логіка залишається такою ж, як ви надали раніше)
         if (req.query.desired_price_min) { whereClauses.push(`l.target_price_min >= $${paramIndex++}`); params.push(req.query.desired_price_min); }
         if (req.query.desired_price_max) { whereClauses.push(`l.target_price_max <= $${paramIndex++}`); params.push(req.query.desired_price_max); }
         if (req.query.housing_type_search) { whereClauses.push(`l.housing_type_search = $${paramIndex++}`); params.push(req.query.housing_type_search); }
         if (req.query.target_rooms) { whereClauses.push(`l.target_rooms = $${paramIndex++}`); params.push(req.query.target_rooms); }
-        // Додайте інші поля з #filter_desired_housing
 
-        // === 6. Фільтри по НАЯВНОМУ ЖИТЛУ (#filter_current_housing) ===
         if (req.query.current_price_min) { whereClauses.push(`l.price >= $${paramIndex++}`); params.push(req.query.current_price_min); }
         if (req.query.current_price_max) { whereClauses.push(`l.price <= $${paramIndex++}`); params.push(req.query.current_price_max); }
         if (req.query.current_rooms) { whereClauses.push(`l.rooms = $${paramIndex++}`); params.push(req.query.current_rooms); }
         if (req.query.current_furnishing) { whereClauses.push(`l.furnishing = $${paramIndex++}`); params.push(req.query.current_furnishing); }
-        // Додайте інші поля з #filter_current_housing
 
-        // === 7. Фільтри по ВАШИХ характеристиках / характеристиках АВТОРА (#filter_my_chars) ===
         if (req.query.my_gender_filter) { whereClauses.push(`l.my_gender = $${paramIndex++}`); params.push(req.query.my_gender_filter); }
-        if (req.query.my_age_filter) { // Якщо вказано точний вік
+        if (req.query.my_age_filter) {
             whereClauses.push(`l.my_age = $${paramIndex++}`); params.push(req.query.my_age_filter);
-        } else { // Якщо використовується діапазон (зі старих фільтрів, для сумісності)
+        } else {
             if (req.query.my_age_min) { whereClauses.push(`l.my_age >= $${paramIndex++}`); params.push(req.query.my_age_min); }
             if (req.query.my_age_max) { whereClauses.push(`l.my_age <= $${paramIndex++}`); params.push(req.query.my_age_max); }
         }
         if (req.query.my_smoking_filter) { whereClauses.push(`l.my_smoking = $${paramIndex++}`); params.push(req.query.my_smoking_filter); }
-        // Додайте інші поля з #filter_my_chars
 
-        // === 8. Фільтри по БАЖАНИХ характеристиках СУСІДА (#filter_desired_roommate) ===
         if (req.query.desired_roommate_gender) { whereClauses.push(`(l.roommate_gender = $${paramIndex++} OR l.roommate_gender = 'any' OR l.roommate_gender IS NULL)`); params.push(req.query.desired_roommate_gender); }
-        if (req.query.desired_roommate_age_min) { whereClauses.push(`(l.roommate_age_max >= $${paramIndex++} OR l.roommate_age_max IS NULL)`); params.push(req.query.desired_roommate_age_min); } // Макс. вік в оголошенні >= мін. бажаного
-        if (req.query.desired_roommate_age_max) { whereClauses.push(`(l.roommate_age_min <= $${paramIndex++} OR l.roommate_age_min IS NULL)`); params.push(req.query.desired_roommate_age_max); } // Мін. вік в оголошенні <= макс. бажаного
+        if (req.query.desired_roommate_age_min) { whereClauses.push(`(l.roommate_age_max >= $${paramIndex++} OR l.roommate_age_max IS NULL)`); params.push(req.query.desired_roommate_age_min); }
+        if (req.query.desired_roommate_age_max) { whereClauses.push(`(l.roommate_age_min <= $${paramIndex++} OR l.roommate_age_min IS NULL)`); params.push(req.query.desired_roommate_age_max); }
         if (req.query.desired_roommate_smoking) { whereClauses.push(`(l.roommate_smoking = $${paramIndex++} OR l.roommate_smoking = 'any' OR l.roommate_smoking IS NULL)`); params.push(req.query.desired_roommate_smoking); }
-        // Додайте інші поля з #filter_desired_roommate
 
-        // === 9. Фільтри по БАЖАНИХ характеристиках ОРЕНДАРЯ (#filter_desired_tenant) ===
-        // Часто це ті ж самі поля, що й для сусіда, але можна використовувати інші name атрибути, якщо логіка відрізняється
-        if (req.query.desired_tenant_gender) { whereClauses.push(`(l.roommate_gender = $${paramIndex++} OR l.roommate_gender = 'any' OR l.roommate_gender IS NULL)`); params.push(req.query.desired_tenant_gender); } // Використовуємо roommate_gender
+        if (req.query.desired_tenant_gender) { whereClauses.push(`(l.roommate_gender = $${paramIndex++} OR l.roommate_gender = 'any' OR l.roommate_gender IS NULL)`); params.push(req.query.desired_tenant_gender); }
         if (req.query.desired_tenant_age_min) { whereClauses.push(`(l.roommate_age_max >= $${paramIndex++} OR l.roommate_age_max IS NULL)`); params.push(req.query.desired_tenant_age_min); }
         if (req.query.desired_tenant_age_max) { whereClauses.push(`(l.roommate_age_min <= $${paramIndex++} OR l.roommate_age_min IS NULL)`); params.push(req.query.desired_tenant_age_max); }
         if (req.query.desired_tenant_smoking) { whereClauses.push(`(l.roommate_smoking = $${paramIndex++} OR l.roommate_smoking = 'any' OR l.roommate_smoking IS NULL)`); params.push(req.query.desired_tenant_smoking); }
-        // Додайте інші поля з #filter_desired_tenant
 
-
-        // === 10. Складні фільтри (Характеристики) ===
-        // Розділяємо характеристики за призначенням
+        // === 10. Фільтри Характеристик ===
         const desiredHousingChars = req.query.desired_housing_characteristics?.split(',').filter(c => c) || [];
         const currentHousingChars = req.query.current_housing_characteristics?.split(',').filter(c => c) || [];
-        const myChars = req.query.my_characteristics?.split(',').filter(c => c) || []; // З #filter_my_chars
+        const myChars = req.query.my_characteristics?.split(',').filter(c => c) || [];
         const desiredRoommateChars = req.query.desired_roommate_characteristics?.split(',').filter(c => c) || [];
         const desiredTenantChars = req.query.desired_tenant_characteristics?.split(',').filter(c => c) || [];
 
-        // Фільтр по БАЖАНИХ характеристиках житла (для find_home)
-        // Оголошення типу rent_out/find_mate повинні мати ці характеристики
+        // Логіка для характеристик залишається такою ж, як ви надали раніше
         if (desiredHousingChars.length > 0) {
             const placeholders = desiredHousingChars.map(() => `$${paramIndex++}`).join(',');
-            // Перевіряємо, що масив characteristics_keys містить ВСІ бажані характеристики
             whereClauses.push(`(l.listing_type = 'rent_out' OR l.listing_type = 'find_mate') AND char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
             params.push(...desiredHousingChars);
         }
-
-        // Фільтр по НАЯВНИХ характеристиках житла (для rent_out/find_mate)
-        // Оголошення типу find_home повинні шукати ці характеристики (порівнюємо з desired)
-        // TODO: Потрібна більш складна логіка порівняння масивів або окремі поля для бажаних характеристик в find_home
-        // Поки що просто перевіримо, чи наявні характеристики є в оголошенні (для тестів)
         if (currentHousingChars.length > 0) {
             const placeholders = currentHousingChars.map(() => `$${paramIndex++}`).join(',');
             whereClauses.push(`char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
             params.push(...currentHousingChars);
         }
-
-        // Фільтри по ВАШИХ характеристиках / характеристиках АВТОРА
-        // Оголошення типу find_home / find_mate повинні мати ці характеристики в секції "про себе"
-        // TODO: Порівняння з вимогами до сусіда/орендаря в інших типах оголошень
         if (myChars.length > 0) {
             const placeholders = myChars.map(() => `$${paramIndex++}`).join(',');
             whereClauses.push(`char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
-            params.push(...myChars.filter(c => c.startsWith('my_'))); // Переконуємось, що це 'my_' характеристики
+            params.push(...myChars.filter(c => c.startsWith('my_')));
         }
-
-        // Фільтри по БАЖАНИХ характеристиках СУСІДА / ОРЕНДАРЯ
-        // Оголошення типу find_home / find_mate повинні мати ці характеристики у вимогах до сусіда
-        // TODO: Порівняння з характеристиками "про себе" в інших типах оголошень
         if (desiredRoommateChars.length > 0 || desiredTenantChars.length > 0) {
             const combinedDesired = [...new Set([...desiredRoommateChars, ...desiredTenantChars])];
             const placeholders = combinedDesired.map(() => `$${paramIndex++}`).join(',');
             whereClauses.push(`char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
-            params.push(...combinedDesired.filter(c => c.startsWith('mate_'))); // Переконуємось, що це 'mate_' характеристики
+            params.push(...combinedDesired.filter(c => c.startsWith('mate_')));
         }
-
 
         // === 11. Збираємо запит ===
         if (whereClauses.length > 0) {

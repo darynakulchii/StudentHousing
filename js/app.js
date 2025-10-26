@@ -148,7 +148,7 @@ const fetchAndDisplayListingDetail = async () => {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const listing = await response.json();
-        document.title = `UniHome | ${listing.title}`; // Set page title
+        document.title = `UniHome | ${listing.title}`;
 
         // --- Photo display logic with defaults ---
         let mainImage = listing.photos?.find(p => p.is_main); // Use optional chaining
@@ -329,6 +329,15 @@ const fetchAndDisplayListingDetail = async () => {
             `;
         }
 
+        let profileLinkUrl;
+        // Перевіряємо, чи користувач залогінений І чи ID автора збігається з ID поточного користувача
+        if (MY_USER_ID && MY_USER_ID === listing.user_id) { //
+            profileLinkUrl = 'profile.html'; // Посилання на власний редагований профіль
+        } else {
+            profileLinkUrl = `user_profile.html?id=${listing.user_id}`; // Посилання на публічний профіль
+        }
+        console.log(`Generated profile link: ${profileLinkUrl}`); // Логування для перевірки
+
         // === Author Avatar HTML ===
         const authorAvatarHTML = `
              <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
@@ -404,10 +413,10 @@ const fetchAndDisplayListingDetail = async () => {
                     <h3>Автор оголошення</h3>
                     <div class="author-card">
                         ${authorAvatarHTML}
-                        <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
-                            <p class="author-name">${listing.first_name} ${listing.last_name}</p>
+                        <a href="${profileLinkUrl}" class="author-name-link"> <p class="author-name">${listing.first_name} ${listing.last_name}</p>
                         </a>
-                        ${authorPhoneHTML} ${contactButtonHTML}
+                        ${authorPhoneHTML}
+                        ${contactButtonHTML}
                     </div>
                 </aside>
             </div>
