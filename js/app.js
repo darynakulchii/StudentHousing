@@ -306,6 +306,9 @@ const fetchAndDisplayListingDetail = async () => {
                 </div>`;
         }
 
+        const displayCity = listing.city === 'other' && listing.city_other
+            ? listing.city_other
+            : (listing.city || 'Місто не вказано');
         const displayDistrict = listing.district === 'other' && listing.district_other ? listing.district_other : listing.district;
         const combinedHousingCharsHTML = apartmentCharsHTML + nearbyUniversitiesHTML + optionalFieldsHTML;
 
@@ -366,8 +369,7 @@ const fetchAndDisplayListingDetail = async () => {
                     <span class="detail-price">₴${listing.price || 0} / міс</span>
 
                     <div class="detail-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${listing.city || 'Місто не вказано'} ${displayDistrict ? `, ${displayDistrict}` : ''} ${listing.address ? `, ${listing.address}` : ''}</p>
-                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
+                        <p><i class="fas fa-map-marker-alt"></i> ${displayCity}${displayDistrict ? `, ${displayDistrict}` : ''}${listing.address ? `, ${listing.address}` : ''}</p>                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
                         ${listing.rooms ? `<p><i class="fas fa-door-open"></i> Кімнат: ${listing.rooms}</p>` : ''}
                         ${listing.total_area ? `<p><i class="fas fa-ruler-combined"></i> Площа: ${listing.total_area} м²</p>` : ''}
                         ${listing.kitchen_area ? `<p><i class="fas fa-utensils"></i> Кухня: ${listing.kitchen_area} м²</p>` : ''}
@@ -375,6 +377,8 @@ const fetchAndDisplayListingDetail = async () => {
                     </div>
 
                     <div class="detail-section">
+                        <div id="listingMap" style="height: 300px; margin-top: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;"></div>
+                        <div class="detail-section">
                         <h2>Опис</h2>
                         <p>${listing.description ? listing.description.replace(/\n/g, '<br>') : 'Опис відсутній.'}</p>
                     </div>
@@ -397,6 +401,31 @@ const fetchAndDisplayListingDetail = async () => {
             </div>
         `;
         container.innerHTML = detailHTML;
+
+        // --- Ініціалізація карти на сторінці деталей (якщо є координати) ---
+        const listingMapElement = document.getElementById('listingMap'); // Додайте цей div в detailHTML
+        if (listingMapElement && listing.latitude && listing.longitude) {
+            try {
+                const lat = parseFloat(listing.latitude);
+                const lng = parseFloat(listing.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const detailMap = L.map(listingMapElement).setView([lat, lng], 15); // Масштаб 15
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(detailMap);
+                    L.marker([lat, lng]).addTo(detailMap)
+                        .bindPopup(listing.title || 'Розташування') // Підпис для маркера
+                        .openPopup();
+                } else {
+                    listingMapElement.innerHTML = '<p>Не вдалося відобразити карту (невірні координати).</p>';
+                }
+            } catch (mapError) {
+                console.error("Помилка ініціалізації карти:", mapError);
+                listingMapElement.innerHTML = '<p>Помилка при відображенні карти.</p>';
+            }
+        } else if (listingMapElement) {
+            listingMapElement.innerHTML = '<p>Розташування на карті не вказано.</p>'; // Якщо координат немає
+        }
 
         // --- Setup Thumbnail Click Listeners ---
         const thumbnails = container.querySelectorAll('.gallery-thumbnail:not(.inactive)');

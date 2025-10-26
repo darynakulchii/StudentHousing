@@ -14,13 +14,257 @@ let editListingPhotosToDelete = new Set();
 let editListingNewFilesToUpload = [];
 const MAX_PHOTOS = 8;
 
-// --- Заглушка для ініціалізації карти ---
-// TODO: Implement actual map logic (e.g., using Leaflet)
-const initializeMap = () => {
-    const mapElement = document.getElementById('map');
-    if (!mapElement) return;
-    console.log("Map initialization placeholder.");
-    mapElement.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-light);">Карта буде тут</p>';
+let map = null; // Змінна для зберігання екземпляру карти
+let marker = null; // Змінна для зберігання маркера
+
+const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) => { // Координати Львова за замовчуванням
+    const mapElement = formElement.querySelector('#map');
+    const latitudeInput = formElement.querySelector('#latitude');
+    const longitudeInput = formElement.querySelector('#longitude');
+
+    if (!mapElement || !latitudeInput || !longitudeInput) {
+        console.error("Map container or coordinate inputs not found in the form.");
+        return;
+    }
+
+    // Видаляємо стару карту, якщо вона існує
+    if (map) {
+        map.remove();
+        map = null;
+        marker = null;
+    }
+
+    // Ініціалізуємо карту
+    try {
+        map = L.map(mapElement).setView([initialLat, initialLng], 13); // 13 - рівень масштабування
+
+        // Додаємо базовий шар карти (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Якщо є початкові координати (для редагування), ставимо маркер
+        if (initialLat && initialLng && !(initialLat === 49.8397 && initialLng === 24.0297)) { // Перевіряємо, чи не дефолтні координати
+            marker = L.marker([initialLat, initialLng]).addTo(map);
+            // Важливо оновити input тут, бо вони могли бути порожніми
+            latitudeInput.value = initialLat.toFixed(6);
+            longitudeInput.value = initialLng.toFixed(6);
+        }
+
+        // Обробник кліку на карті
+        map.on('click', async function(e) { // Зробимо функцію асинхронною
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            // Видаляємо старий маркер, якщо він є
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            // Додаємо новий маркер
+            marker = L.marker([lat, lng]).addTo(map);
+
+            // Зберігаємо координати у приховані поля форми
+            latitudeInput.value = lat.toFixed(6);
+            longitudeInput.value = lng.toFixed(6);
+
+            // --- ЗВОРОТНЄ ГЕОКОДУВАННЯ (Nominatim) ---
+            const mapErrorElement = formElement.querySelector('#mapError');
+            if(mapErrorElement) mapErrorElement.style.display = 'none'; // Сховаємо попередню помилку
+
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=uk`);
+                if (!response.ok) {
+                    throw new Error(`Nominatim error! status: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data && data.address) {
+                    const addr = data.address;
+                    const city = addr.city || addr.town || addr.village || '';
+                    const district = addr.suburb || addr.county || ''; // 'suburb' часто район міста, 'county' - район області
+                    const street = addr.road || '';
+                    const houseNumber = addr.house_number || '';
+
+                    // Оновлюємо поля (якщо вони існують у формі)
+                    const citySelect = formElement.querySelector('#city');
+                    const districtSelect = formElement.querySelector('#district');
+                    const addressInput = formElement.querySelector('#address');
+
+                    // Оновлення міста (з перевіркою опцій)
+                    if (citySelect) {
+                        let cityFoundInOptions = false;
+                        for (let option of citySelect.options) {
+                            if (option.value.toLowerCase() === city.toLowerCase()) {
+                                citySelect.value = option.value;
+                                cityFoundInOptions = true;
+                                break;
+                            }
+                        }
+                        // Якщо місто не знайдено в опціях, вибираємо "Інше" і заповнюємо поле
+                        if (!cityFoundInOptions && city) {
+                            citySelect.value = 'other';
+                            const cityOtherInput = formElement.querySelector('#city_other_text');
+                            if (cityOtherInput) {
+                                cityOtherInput.value = city;
+                                cityOtherInput.style.display = 'block';
+                                cityOtherInput.classList.remove('hidden-other-input');
+                            }
+                        }
+                        // Викликаємо оновлення стану, якщо місто змінилось (для підвантаження університетів)
+                        updateFormState(formElement); // Можливо знадобиться await, якщо updateFormState стане async
+                    }
+
+                    // Оновлення району (подібно до міста)
+                    if (districtSelect) {
+                        let districtFound = false;
+                        for (let option of districtSelect.options) {
+                            if (option.value.toLowerCase() === district.toLowerCase()) {
+                                districtSelect.value = option.value;
+                                districtFound = true;
+                                break;
+                            }
+                        }
+                        if (!districtFound && district) {
+                            districtSelect.value = 'other';
+                            const districtOtherInput = formElement.querySelector('#district_other_text'); // Виправлено ID
+                            if (districtOtherInput) {
+                                districtOtherInput.value = district;
+                                districtOtherInput.style.display = 'block';
+                                districtOtherInput.classList.remove('hidden-other-input');
+                            }
+                        } else if (districtSelect.value === 'other' && !district) { // Якщо раніше було "інше", а тепер район не визначено
+                            const districtOtherInput = formElement.querySelector('#district_other_text');
+                            if (districtOtherInput) districtOtherInput.value = '';
+                        }
+                    }
+
+                    // Оновлення адреси
+                    if (addressInput) {
+                        addressInput.value = `${street}${houseNumber ? ' ' + houseNumber : ''}`.trim();
+                    }
+
+                    console.log("Reverse geocoded address:", data.display_name);
+                } else {
+                    console.warn("Could not reverse geocode coordinates.");
+                    if(mapErrorElement) {
+                        mapErrorElement.textContent = 'Не вдалося визначити адресу для цієї точки.';
+                        mapErrorElement.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error("Reverse geocoding failed:", error);
+                if(mapErrorElement) {
+                    mapErrorElement.textContent = 'Помилка визначення адреси.';
+                    mapErrorElement.style.display = 'block';
+                }
+            }
+        });
+
+        // *** ВАЖЛИВЕ ВИПРАВЛЕННЯ: ***
+        // Викликаємо invalidateSize після короткої затримки, щоб дозволити DOM оновитись
+        setTimeout(() => {
+            if (map) { // Перевіряємо, чи карта ще існує
+                map.invalidateSize();
+                console.log("Map size invalidated after initialization.");
+            }
+        }, 10); // Невелика затримка (10 мс) зазвичай достатньо
+
+    } catch (error) {
+        console.error("Помилка ініціалізації карти Leaflet:", error);
+        if (mapElement) { // Показуємо помилку в контейнері карти
+            mapElement.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Помилка завантаження карти. Деталі в консолі.</p>`;
+        }
+        map = null; // Скидаємо змінну карти
+    }
+};
+
+/**
+ * Знаходить адресу на карті за даними з полів форми.
+ * @param {HTMLFormElement} formElement - Елемент форми.
+ */
+const geocodeAddressAndShowOnMap = async (formElement) => {
+    if (!map) {
+        console.error("Map is not initialized yet.");
+        return;
+    }
+
+    const citySelect = formElement.querySelector('#city');
+    const cityOtherInput = formElement.querySelector('#city_other_text');
+    const districtSelect = formElement.querySelector('#district');
+    const districtOtherInput = formElement.querySelector('#district_other_text');
+    const addressInput = formElement.querySelector('#address');
+    const latitudeInput = formElement.querySelector('#latitude');
+    const longitudeInput = formElement.querySelector('#longitude');
+    const mapErrorElement = formElement.querySelector('#mapError');
+    const findButton = formElement.querySelector('#findOnMapBtn');
+
+    if (!addressInput || !latitudeInput || !longitudeInput || !mapErrorElement || !findButton) return;
+
+    // Збираємо адресу
+    const city = citySelect.value === 'other' ? cityOtherInput.value : citySelect.value;
+    const district = districtSelect.value === 'other' ? districtOtherInput.value : districtSelect.value;
+    const address = addressInput.value;
+
+    if (!city || !address) {
+        mapErrorElement.textContent = 'Будь ласка, введіть місто та адресу для пошуку.';
+        mapErrorElement.style.display = 'block';
+        return;
+    }
+
+    mapErrorElement.style.display = 'none'; // Сховаємо попередню помилку
+    findButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Показуємо спіннер
+    findButton.disabled = true;
+
+    // Формуємо рядок запиту для Nominatim
+    const query = `${address}, ${district ? district + ',' : ''} ${city}`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1&accept-language=uk`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Nominatim error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const result = data[0];
+            const lat = parseFloat(result.lat);
+            const lng = parseFloat(result.lon);
+
+            console.log("Geocoded address:", result.display_name);
+            console.log("Coordinates:", lat, lng);
+
+            // Видаляємо старий маркер
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            // Додаємо новий маркер
+            marker = L.marker([lat, lng]).addTo(map);
+
+            // Центруємо карту
+            map.setView([lat, lng], 16); // Більш детальний зум при пошуку
+
+            // Оновлюємо приховані поля
+            latitudeInput.value = lat.toFixed(6);
+            longitudeInput.value = lng.toFixed(6);
+
+        } else {
+            console.warn("Address not found by Nominatim.");
+            mapErrorElement.textContent = 'Адресу не знайдено. Спробуйте уточнити запит або вказати точку на карті вручну.';
+            mapErrorElement.style.display = 'block';
+            // Не видаляємо існуючий маркер, якщо він є
+        }
+    } catch (error) {
+        console.error("Geocoding failed:", error);
+        mapErrorElement.textContent = 'Помилка пошуку адреси.';
+        mapErrorElement.style.display = 'block';
+    } finally {
+        findButton.innerHTML = '<i class="fas fa-search-location"></i>'; // Повертаємо іконку
+        findButton.disabled = false;
+    }
 };
 
 // =================================================================================
@@ -276,6 +520,14 @@ export const setupAddListingFormLogic = () => {
     isStudentRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     myGroupSizeRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
 
+    // Додаємо слухач для кнопки "Знайти на карті"
+    const findButton = form.querySelector('#findOnMapBtn');
+    if (findButton) {
+        findButton.addEventListener('click', () => {
+            geocodeAddressAndShowOnMap(form);
+        });
+    }
+
     // Логіка для "Інше" (залишається специфічною для форми)
     otherOptionSelects.forEach(select => {
         select.addEventListener('change', (e) => {
@@ -430,16 +682,21 @@ export const setupAddListingFormLogic = () => {
             }
         }
     });
+
     // Ініціалізація стану поля "Інше" при завантаженні (важливо для редагування)
     if (targetUniversitySelect && targetUniversityOtherTextInput) {
         targetUniversityOtherTextInput.style.display = targetUniversitySelect.value === 'other' ? 'block' : 'none';
         targetUniversityOtherTextInput.classList.toggle('hidden-other-input', targetUniversitySelect.value !== 'other');
     }
 
-    // --- Ініціалізація стану форми при завантаженні ---
+    // Ініціалізація стану форми при завантаженні
     updateFormState(form);
-    // Ініціалізація карти (заглушка)
-    initializeMap(); // Припускаємо, що ця функція теж винесена або доступна
+    // Ініціалізація карти з невеликою затримкою
+    setTimeout(() => {
+        initializeMap(form);
+        console.log("Map initialized via setupAddListingFormLogic after delay.");
+    }, 50); // Затримка 50 мс (можна спробувати 0 або 10, якщо 50 забагато)
+    //
 };
 
 /**
@@ -465,11 +722,18 @@ export const setupEditListingFormLogic = () => {
     // --- Логіка подій (викликає зовнішню updateFormState) ---
     const updateHandler = () => updateFormState(form); // Обгортка
 
-    // НЕМАЄ слухача на listingType, бо він не змінюється
     citySelect?.addEventListener('change', updateHandler);
     readyToShareRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     isStudentRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     myGroupSizeRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
+
+    // Додаємо слухач для кнопки "Знайти на карті"
+    const findButton = form.querySelector('#findOnMapBtn');
+    if (findButton) {
+        findButton.addEventListener('click', () => {
+            geocodeAddressAndShowOnMap(form);
+        });
+    }
 
     // Логіка для "Інше" (копія з add)
     otherOptionSelects.forEach(select => {
@@ -532,11 +796,6 @@ export const setupEditListingFormLogic = () => {
             }
         });
     });
-
-    // --- Ініціалізація стану форми ВИКЛИКАЄТЬСЯ в loadListingDataForEdit ПІСЛЯ заповнення ---
-    // updateFormState(form); // НЕ ТУТ
-    // Ініціалізація карти (заглушка)
-    initializeMap();
 };
 
 /**
@@ -1191,6 +1450,9 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         //     return;
         // }
 
+        const initialLat = parseFloat(listing.latitude);
+        const initialLng = parseFloat(listing.longitude);
+
         // Заповнюємо базові поля
         form.querySelector('#listingIdField').value = listing.listing_id;
         form.querySelector('#initialListingType').value = listing.listing_type; // Зберігаємо тип
@@ -1367,11 +1629,10 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
             loadInitialPhotosCallback(listing.photos);
         }
 
-        // Оновлюємо стан форми (видимість блоків) ПІСЛЯ заповнення всіх полів
+        // Оновлюємо стан форми (видимість блоків)
         updateFormState(form);
-
-        // Ініціалізуємо карту (можливо, з координатами, якщо вони є)
-        initializeMap(); // TODO: Передати координати listing.latitude, listing.longitude
+        // Ініціалізуємо карту з отриманими координатами (або дефолтними, якщо їх немає)
+        initializeMap(form, isNaN(initialLat) ? undefined : initialLat, isNaN(initialLng) ? undefined : initialLng); // --- Передаємо 'form' та координати
 
     } catch (error) {
         console.error('Помилка завантаження даних для редагування:', error);
@@ -1712,3 +1973,4 @@ export const setupHomepageFilters = () => {
 
     updateFilterVisibility(); // Викликаємо для встановлення початкової видимості
 };
+
