@@ -264,6 +264,7 @@ export const handleSettingsSubmission = () => {
 
 // --- Логіка user_profile.html ---
 export const loadPublicProfileData = async () => {
+    console.log(">>> loadPublicProfileData function started...");
     console.log("Attempting to load public profile data...");
     const loadingIndicator = document.getElementById('loadingIndicator');
     const profileContainer = document.getElementById('profileContainer');
@@ -289,11 +290,15 @@ export const loadPublicProfileData = async () => {
         const userId = urlParams.get('id');
 
         if (!userId) throw new Error('ID користувача не вказано.');
-        if (MY_USER_ID && MY_USER_ID.toString() === userId) {
+        const currentUserId = MY_USER_ID; // Отримуємо значення в окрему змінну
+        console.log('Checking redirection: currentUserId =', currentUserId, ' | page userId =', userId); // Додаємо логування
+        // Перевіряємо, що currentUserId не null/undefined ПЕРЕД викликом toString()
+        if (currentUserId !== null && currentUserId !== undefined && currentUserId.toString() === userId) {
             console.log("Redirecting to own profile page.");
             window.location.href = 'profile.html';
-            return;
+            return; // Зупиняємо виконання, якщо це власний профіль
         }
+        console.log("Not redirecting. Proceeding to fetch data..."); // Логування, що перенаправлення не відбулося
 
         console.log(`Fetching data for user ID: ${userId}`);
         const profilePromise = fetch(`http://localhost:3000/api/users/${userId}/public-profile`);

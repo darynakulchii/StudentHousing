@@ -1,6 +1,7 @@
 // =================================================================================
 // 0. ІМПОРТИ ТА ГЛОБАЛЬНІ ДАНІ
 // =================================================================================
+console.log(">>> app.js script loaded and executing...");
 
 // ВИКОРИСТОВУЄМО ДАНІ З МОДУЛЯ
 import { removeToken, getAuthHeaders, handleLogin, handleRegistration, MY_USER_ID, handleLoginSettings } from './modules/auth.js';
@@ -956,15 +957,21 @@ const setupReportBugPage = () => {
 // =================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log(">>> DOMContentLoaded event fired."); // <--- ДОДАЙТЕ ЦЕЙ РЯДОК
     (async () => {
+        console.log(">>> Async function started.");
         await fetchFavoriteIds(); // Завантажуємо ID обраних
         setupSocketIO(); // Ініціалізуємо сокети
 
         const path = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
         const listingId = urlParams.get('id'); // ID для detail та edit
+        const userIdForProfile = urlParams.get('id');
 
         await initializeNavigation();
+        console.log(">>> Router: Current path =", JSON.stringify(path)); // Використовуємо JSON.stringify
+        console.log(">>> Router: path length =", path.length); // Додаємо довжину
+        console.log(">>> Router: includes('user_profile.html') =", path.includes('user_profile.html')); // Перевірка через includes
 
         // Головна сторінка
         if (path.endsWith('/') || path.endsWith('index.html')) {
@@ -1045,7 +1052,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Налаштування логіну/паролю
         else if (path.endsWith('login_settings.html')) { handleLoginSettings(); }
         // Публічний профіль
-        else if (path.endsWith('user_profile.html')) { await loadPublicProfileData(); }
+        else if (path.includes('user_profile.html')) {
+            console.log(">>> Router: Matched user_profile.html (using includes)");
+            console.log(">>> Router: Matched user_profile.html"); // Перевірка
+            const userIdForProfile = urlParams.get('id'); // Переконайся, що ця змінна тут визначається
+            console.log(">>> Router: userIdForProfile =", userIdForProfile); // Перевірка
+            if (!userIdForProfile) {
+                console.error(">>> Router: User ID not found in URL for profile page!");
+                // Повідомлення про помилку для користувача
+                document.body.innerHTML = '<h1>Помилка: ID користувача не вказано в URL.</h1>';
+            } else {
+                await loadPublicProfileData(); // Виклик функції завантаження
+                console.log(">>> Router: Called loadPublicProfileData()"); // Перевірка
+            }
+        }
         // Обране
         else if (path.endsWith('favorites.html')) { await fetchAndDisplayFavorites(); }
 
@@ -1060,4 +1080,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
     })(); // Само_викликаюча асинхронна функція
+    console.log(">>> AFTER async function IIFE setup.");
 });
