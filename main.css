@@ -2,21 +2,21 @@
 /* 0. RESET & BASE STYLES */
 /* ==================================== */
 :root {
-    --primary-color: #333399; /* Синій */
-    --secondary-color: #2F4157; /* Темно-сіро-синій (для кнопок) */
-    --accent-color-blue: #007bff; /* Яскраво-синій (акцент для фільтрів) */
-    --accent-color-green: #28a745; /* Зелений (акцент для фільтрів) */
-    --accent-color-orange: #fd7e14; /* Оранжевий (акцент для фільтрів) */
-    --danger-color: #e74c3c; /* Червоний (помилки, видалення) */
-    --success-color: #28a745; /* Зелений (успіх) */
-    --background-light: #f5f5f5; /* Світло-сірий фон */
-    --background-form: #f0f7ff; /* Фон полів вводу */
-    --background-white: #FCFCFC; /* Білий фон блоків */
-    --border-color: #C7D9E5; /* Колір рамок */
-    --text-dark: #2c3e50; /* Основний темний текст */
-    --text-light: #7f8c8d; /* Світлий текст */
-    --text-placeholder: #577C8E; /* Колір плейсхолдера */
-    --text-white: #ffffff; /* Білий текст */
+    --primary-color: #333399;
+    --secondary-color: #2F4157;
+    --accent-color-blue: #007bff;
+    --accent-color-green: #28a745;
+    --accent-color-orange: #fd7e14;
+    --danger-color: #e74c3c;
+    --success-color: #28a745;
+    --background-light: #f5f5f5;
+    --background-form: #f0f7ff;
+    --background-white: #FCFCFC;
+    --border-color: #C7D9E5;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+    --text-placeholder: #577C8E;
+    --text-white: #ffffff;
 
     --box-shadow-light: 0 2px 6px rgba(0,0,0,0.05);
     --box-shadow-medium: 0 4px 10px rgba(0, 0, 0, 0.05);
@@ -33,7 +33,7 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     background: var(--background-light);
     color: var(--text-dark);
-    padding-bottom: 70px; /* Залишаємо місце для моб. навігації */
+    padding-bottom: 70px;
 }
 
 a {
@@ -67,7 +67,6 @@ h3 {
 /* 1. HEADER & NAVIGATION */
 /* ==================================== */
 
-/* --- Main Header --- */
 .main-header {
     display: flex;
     justify-content: space-between;
@@ -92,17 +91,15 @@ h3 {
 .user-avatar {
     width: 35px;
     height: 35px;
-    /* --- Змінено: background-image встановлюється через JS --- */
     background-size: cover;
-    background-position: center; /* Додано */
+    background-position: center;
     border-radius: 50%;
     border: 2px solid var(--primary-color);
 }
 
 
-/* --- Desktop Navigation --- */
 .desktop-nav {
-    display: none; /* Mobile-first */
+    display: none;
     gap: 20px;
     font-weight: 600;
     color: var(--text-light);
@@ -112,7 +109,6 @@ h3 {
     color: var(--primary-color);
 }
 
-/* --- Mobile Bottom Bar --- */
 .mobile-nav-bar {
     position: fixed;
     bottom: 0;
@@ -142,7 +138,6 @@ h3 {
     color: var(--primary-color);
 }
 
-/* --- Mobile Menu Toggle & Sidebar --- */
 .mobile-menu-toggle {
     display: block;
     font-size: 1.2rem;
@@ -174,7 +169,7 @@ h3 {
     justify-content: flex-end;
     margin-bottom: 2rem;
 }
-#btnCloseMenu, #btnCloseFilters, #btnCloseNotifications { /* Спільний стиль для хрестиків */
+#btnCloseMenu, #btnCloseFilters, #btnCloseNotifications {
     font-size: 1.5rem;
     cursor: pointer;
     color: var(--text-light);
@@ -195,7 +190,6 @@ h3 {
     color: var(--primary-color);
 }
 
-/* --- Notifications --- */
 .notification-icon-container {
     position: relative;
     cursor: pointer;
@@ -302,7 +296,6 @@ h3 {
     opacity: 0.9;
 }
 
-/* --- Overlay --- */
 #overlay {
     position: fixed;
     top: 0;
@@ -324,14 +317,12 @@ h3 {
 /* 2. FORMS (Profile, Add Listing, Filters) */
 /* ==================================== */
 
-/* --- General Form Styles --- */
 .profile-form, .listing-form, .filters-form {
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Стандартний відступ між елементами форми */
+    gap: 15px;
 }
 
-/* Обгортки для полів (якщо використовуються, напр., .form-group) */
 .form-group {
     margin-bottom: 1rem;
 }
@@ -343,7 +334,6 @@ h3 {
     color: var(--secondary-color);
 }
 
-/* Розміщення полів у рядку */
 .form-row {
     display: flex;
     gap: 15px;
@@ -353,7 +343,6 @@ h3 {
     min-width: 0;
 }
 
-/* Стилі для input, select, textarea */
 .profile-form input, .profile-form select, .profile-form textarea,
 .listing-form input:not([type="radio"]):not([type="checkbox"]), .listing-form select, .listing-form textarea,
 .filters-form input[type="number"], .filters-form select {
@@ -371,7 +360,6 @@ h3 {
     resize: vertical;
 }
 
-/* Стилі фокусу */
 .profile-form input:focus, .profile-form select:focus, .profile-form textarea:focus,
 .listing-form input:not([type="radio"]):not([type="checkbox"]):focus, .listing-form select:focus, .listing-form textarea:focus,
 .filters-form input[type="number"]:focus, .filters-form select:focus {
@@ -380,29 +368,24 @@ h3 {
     background: var(--background-white);
 }
 
-/* Стилі плейсхолдерів */
 input::placeholder, textarea::placeholder {
     color: var(--text-placeholder);
     opacity: 1;
 }
-/* Firefox */
 input::-moz-placeholder, textarea::-moz-placeholder { color: var(--text-placeholder); opacity: 1; }
-/* Edge & IE */
 input:-ms-input-placeholder, textarea:-ms-input-placeholder { color: var(--text-placeholder); }
 input::-ms-input-placeholder, textarea::-ms-input-placeholder { color: var(--text-placeholder); }
 
-/* Плейсхолдер для select (коли нічого не обрано) */
 select:invalid {
     color: var(--text-placeholder);
 }
 select option {
     color: var(--text-dark);
 }
-select option[disabled] { /* Приховуємо "Виберіть..." */
+select option[disabled] {
     display: none;
 }
 
-/* --- Radio & Checkbox Options --- */
 .radio-options, .checkbox-options {
     display: flex;
     flex-wrap: wrap;
@@ -434,7 +417,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     border-color: var(--primary-color);
 }
 
-/* --- Specific Form Buttons --- */
 .profile-form button[type="submit"],
 .submit-listing-btn,
 .apply-filters-btn {
@@ -456,14 +438,12 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     background: var(--primary-color);
 }
 
-/* Кнопка "Зберегти" в профілі - вирівнювання */
 .profile-form button[type="submit"] {
     width: fit-content;
     align-self: flex-end;
     padding: 10px 20px;
 }
 
-/* Кнопка "Скинути фільтри" */
 .reset-filters-btn {
     width: 100%;
     padding: 12px;
@@ -481,7 +461,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     background-color: var(--background-light);
 }
 
-/* Кнопка "Видалити" */
 .delete-btn {
     width: 100%;
     padding: 12px;
@@ -507,7 +486,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* 3. HOMEPAGE SPECIFIC (Search, Actions, Filters Sidebar) */
 /* ==================================== */
 
-/* --- Search Block --- */
 .search-block {
     display: flex;
     align-items: center;
@@ -545,7 +523,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     font-size: 1.1rem;
 }
 
-/* --- Main Action Buttons --- */
 .main-actions-menu {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -577,7 +554,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     opacity: 0.95;
 }
 
-/* --- Filter Sidebar --- */
 .filter-sidebar {
     position: fixed;
     top: 0;
@@ -614,7 +590,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     padding-bottom: 0;
 }
 
-/* --- Динамічні секції в фільтрах --- */
 .filter-sidebar #housingFilters,
 .filter-sidebar #listingDetails,
 .filter-sidebar #aboutMe,
@@ -730,7 +705,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* 5. PROFILE PAGE */
 /* ==================================== */
 .profile-page {
-    /* Можливо, потрібно буде додати max-width: 1000px; margin: auto; */
     padding: 40px;
     background: transparent;
 }
@@ -768,26 +742,25 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     height: 120px;
     border-radius: 50%;
     border: 5px solid var(--border-color);
-    object-fit: cover; /* Додано, щоб зображення не спотворювалось */
+    object-fit: cover;
 }
 .edit-icon {
     position: absolute;
     bottom: 20px;
-    /* Оновлено позиціонування іконки редагування */
-    right: calc(50% - 60px); /* 60px - половина ширини аватара */
+    right: calc(50% - 60px);
     background: var(--background-white);
     border: 1px solid var(--border-color);
     border-radius: 50%;
-    width: 30px; /* Збільшено розмір */
-    height: 30px; /* Збільшено розмір */
-    display: flex; /* Для центрування іконки */
-    align-items: center; /* Для центрування іконки */
-    justify-content: center; /* Для центрування іконки */
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     font-size: 14px;
-    line-height: 1; /* Для кращого центрування */
-    transform: translateX(50%); /* Точне центрування під аватаром */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Легка тінь */
+    line-height: 1;
+    transform: translateX(50%);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 .profile-avatar p {
     margin-top: 10px;
@@ -819,7 +792,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 }
 
 .profile-info {
-    flex: 1; /* Займає решту місця */
+    flex: 1;
     background: var(--background-white);
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -831,7 +804,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     color: var(--secondary-color);
 }
 
-/* --- ПУНКТ 4: Стилі для верифікації в профілі --- */
 .form-group-with-verify {
     display: flex;
     gap: 10px;
@@ -851,17 +823,15 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     height: 20px;
     display: inline-block;
 }
-/* Статус "Не підтверджено" */
 .verify-status .status-icon[data-verified="false"]::before {
-    content: '\f057'; /* "times-circle" */
+    content: '\f057';
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     color: var(--danger-color);
     font-size: 1.2rem;
 }
-/* Статус "Підтверджено" */
 .verify-status .status-icon[data-verified="true"]::before {
-    content: '\f058'; /* "check-circle" */
+    content: '\f058';
     font-family: "Font Awesome 5 Free";
     font-weight: 900;
     color: var(--success-color);
@@ -881,11 +851,9 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 .verify-btn:hover {
     background-color: #f0f0f0;
 }
-/* Ховаємо кнопку, якщо вже підтверджено */
 .verify-status .status-icon[data-verified="true"] + .verify-btn {
     display: none;
 }
-/* Ховаємо кнопку, якщо телефон не введено */
 .verify-status[data-phone-empty="true"] .verify-btn {
     display: none;
 }
@@ -945,15 +913,11 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     font-size: 2.5rem;
     font-weight: 300;
     position: relative;
-    overflow: hidden; /* Щоб діти не виходили за межі */
+    overflow: hidden;
 }
 
-/* Прибираємо стандартний плюсик */
-/*.photo-upload-placeholder::before {*/
-/* content: '+';*/
-/*}*/
 .photo-upload-placeholder.add-photo-btn {
-    border-style: solid; /* Змінюємо на суцільну для кнопки */
+    border-style: solid;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--primary-color);
@@ -961,64 +925,59 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     line-height: 1.3;
     text-align: center;
     padding: 5px;
-    background-color: var(--background-white); /* Трохи інший фон */
+    background-color: var(--background-white);
 }
-/* Прибираємо контент для кнопки */
 .photo-upload-placeholder.add-photo-btn::before {
     content: none;
 }
 
-/* Стиль для прев'ю зображення */
 .photo-upload-placeholder.preview {
     border-style: solid;
-    border-color: var(--border-color); /* Звичайна рамка */
+    border-color: var(--border-color);
     font-size: 0;
-    cursor: default; /* Не показувати курсор "рука" на прев'ю */
-    position: relative; /* Для позиціонування кнопки видалення */
-    background-size: cover; /* Важливо для background-image */
-    background-position: center; /* Важливо для background-image */
+    cursor: default;
+    position: relative;
+    background-size: cover;
+    background-position: center;
 }
-/* Прибираємо контент для прев'ю */
 .photo-upload-placeholder.preview::before {
     content: none;
 }
 
-/* Кнопка видалення фото */
 .photo-delete-btn {
     position: absolute;
-    top: 4px; /* Трохи змістимо */
-    right: 4px; /* Трохи змістимо */
-    background-color: rgba(231, 76, 60, 0.8); /* Напівпрозорий червоний */
+    top: 4px;
+    right: 4px;
+    background-color: rgba(231, 76, 60, 0.8);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 24px; /* Трохи збільшимо */
-    height: 24px; /* Трохи збільшимо */
-    font-size: 16px; /* Збільшимо хрестик */
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
     font-weight: bold;
-    line-height: 22px; /* Центрування хрестика */
+    line-height: 22px;
     text-align: center;
     cursor: pointer;
-    opacity: 0.7; /* Спочатку трохи прозора */
+    opacity: 0.7;
     transition: opacity 0.2s, background-color 0.2s;
-    z-index: 1; /* Щоб була над міткою */
+    z-index: 1;
 }
 .photo-delete-btn:hover {
-    background-color: rgba(192, 57, 43, 1); /* Непрозорий червоний при наведенні */
+    background-color: rgba(192, 57, 43, 1);
     opacity: 1;
 }
 
-/* Мітка "Головне" */
 .photo-main-label {
     position: absolute;
-    bottom: 4px; /* Трохи змістимо */
-    left: 4px; /* Трохи змістимо */
+    bottom: 4px;
+    left: 4px;
     background: rgba(0,0,0,0.6);
     color: white;
     font-size: 0.7rem;
-    padding: 2px 5px; /* Змінимо падінг */
+    padding: 2px 5px;
     border-radius: 3px;
-    z-index: 0; /* Щоб була під кнопкою */
+    z-index: 0;
 }
 
 #addListingForm #housingFilters,
@@ -1062,40 +1021,39 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     object-fit: cover;
     border-radius: 12px;
     border: 1px solid #eee;
-    box-shadow: var(--box-shadow-light); /* Додаємо тінь */
+    box-shadow: var(--box-shadow-light);
 }
 .thumbnail-gallery {
     display: flex;
-    gap: 15px; /* Збільшуємо відступ */
+    gap: 15px;
     flex-wrap: wrap;
-    margin-top: 15px; /* Збільшуємо відступ */
+    margin-top: 15px;
 }
 .gallery-thumbnail {
-    /* === ОНОВЛЕНО: Збільшуємо розмір мініатюр === */
     width: 120px;
     height: 90px;
     object-fit: cover;
-    border-radius: 8px; /* Робимо кути трохи більшими */
+    border-radius: 8px;
     cursor: pointer;
     opacity: 0.7;
     transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
-    border: 2px solid transparent; /* Додаємо прозору рамку для анімації */
+    border: 2px solid transparent;
 }
 .gallery-thumbnail:hover {
     opacity: 1;
-    transform: scale(1.05); /* Легке збільшення при наведенні */
+    transform: scale(1.05);
 }
 .gallery-thumbnail.active {
     opacity: 1;
-    border-color: var(--primary-color); /* Активна рамка */
+    border-color: var(--primary-color);
 }
-.gallery-thumbnail.inactive { /* Стиль для заглушки, якщо фото немає */
+.gallery-thumbnail.inactive {
     opacity: 0.5;
     cursor: default;
     border: 1px dashed #ccc;
 }
 .gallery-thumbnail.inactive:hover {
-    transform: none; /* Забороняємо збільшення */
+    transform: none;
 }
 
 .listing-detail-info {
@@ -1172,17 +1130,16 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     margin-bottom: 15px;
 }
 .author-avatar img {
-    width: 80px; /* Зменшуємо розмір аватара */
-    height: 80px; /* Зменшуємо розмір аватара */
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    border: 3px solid var(--border-color); /* Тонша рамка */
-    object-fit: cover; /* Щоб зображення не спотворювалось */
-    display: block; /* Забирає зайвий відступ знизу */
-    margin: 0 auto; /* Центруємо */
-    box-shadow: var(--box-shadow-light); /* Легка тінь */
+    border: 3px solid var(--border-color);
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+    box-shadow: var(--box-shadow-light);
 }
 .author-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; }
-/* --- ПУНКТ 2: Посилання на профіль автора --- */
 .author-name-link {
     text-decoration: none;
     color: var(--text-dark);
@@ -1194,8 +1151,8 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 
 .contact-btn {
     display: inline-block;
-    width: auto; /* Автоматична ширина */
-    max-width: 100%; /* Обмеження ширини на малих екранах */
+    width: auto;
+    max-width: 100%;
     background: var(--primary-color);
     color: var(--text-white);
     padding: 10px 20px;
@@ -1205,20 +1162,19 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     transition: background-color 0.2s;
     border: none;
     cursor: pointer;
-    white-space: nowrap; /* Заборона переносу тексту */
-    overflow: hidden; /* Обрізання тексту */
-    text-overflow: ellipsis; /* Додавання "..." */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .contact-btn i { margin-right: 8px; }
 .contact-btn:hover { background: #2c2c8c; }
-.contact-btn[style*="background: #7f8c8d"] { /* Стиль для кнопки "Це ваше оголошення" */
+.contact-btn[style*="background: #7f8c8d"] {
     cursor: default;
 }
 .contact-btn[style*="background: #7f8c8d"]:hover {
     background: #7f8c8d;
 }
 
-/* --- Посилання на профіль автора --- */
 .author-name-link {
     text-decoration: none;
     color: var(--text-dark);
@@ -1238,19 +1194,17 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     color: var(--text-light);
     cursor: pointer;
     transition: all 0.2s;
-    flex-shrink: 0; /* Кнопка не стискається */
-    display: flex; /* Для центрування іконки */
+    flex-shrink: 0;
+    display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 5px; /* Невеликий відступ зверху, щоб вирівняти з текстом */
-    /* display: none; */ /* Ховаємо спочатку, JS покаже якщо треба */
+    margin-top: 5px;
 }
 
 /* ==================================== */
 /* 8. CHAT PAGE */
 /* ==================================== */
 .chat-page {
-    /* Можливо, додати max-width та margin: auto */
 }
 .chat-container {
     display: flex;
@@ -1348,37 +1302,26 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 /* 9. OTHER PAGES (Favorites, Settings, Login, Register) */
 /* ==================================== */
 .favorites-page, .settings-page, .report-bug-page {
-    /* Можна додати спільні стилі, якщо потрібно */
 }
 
-
-/* REPORT-BUG PAGE  */
 .report-page {
     max-width: 800px;
-    margin: 80px auto; /* центрування по горизонталі + трохи зверху */
+    margin: 80px auto;
     background: #fff;
     padding: 40px 30px;
     border-radius: 16px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border: 1px solid #ddd; /* 🔹 рамка довкола всього */
+    border: 1px solid #ddd;
     color: var(--border-color);
-
-    /* 1. РОБИМО ВІДНОСНО ПОЗИЦІОНОВАНИМ */
     position: relative;
-
-    /* Додатковий верхній відступ, щоб дати місце для h1 */
-    /* Збільшимо верхній відступ, бо h1 буде вилізати за межі */
-    padding-top: 40px; /* Збільшуємо, щоб h1 не накладався на вміст форми */
+    padding-top: 40px;
 }
 
-/* Заголовок */
 .report-page h1 {
-    /* 2. АБСОЛЮТНЕ ПОЗИЦІОНУВАННЯ */
     position: absolute;
-    top: -60px; /* Підніміть його на -60px від верхнього краю рамки */
-    left: 50%; /* Центруємо його по горизонталі */
-    transform: translateX(-50%); /* Зсуваємо на половину його ширини для точного центрування */
-
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
     text-align: center;
     font-size: 1.8rem;
     font-weight: 700;
@@ -1387,7 +1330,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     padding-left: 5px;
 }
 
-/* Поле опису */
 .report-form textarea {
     top: -60px;
     width: 100%;
@@ -1401,7 +1343,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     margin-bottom: 30px;
 }
 
-/* Підпис */
 .problem-label {
     display: block;
     margin-bottom: 25px;
@@ -1411,13 +1352,12 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     padding-left: 5px;
 }
 
-/* Теги проблем */
 .problem-types {
     width: 100%;
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
-    justify-content: left; /* 🔹 центрує теги по центру */
+    justify-content: left;
     margin-bottom: 25px;
 }
 
@@ -1442,11 +1382,10 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     border-color: var(--secondary-color);
 }
 
-/* Завантаження файлів */
 .file-upload {
     padding-left: 15px;
     margin-bottom: 40px;
-    text-align: left; /* 🔹 вирівняно по лівому краю */
+    text-align: left;
 }
 
 .file-label {
@@ -1464,11 +1403,10 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     color: var(--primary-color);
 }
 
-/* Кнопки */
 .report-buttons {
     display: flex;
-    justify-content: right; /* 🔹 вправо кнопки */
-    gap: 30px; /* відстані між кнопками скасувати та надіслати */
+    justify-content: right;
+    gap: 30px;
     margin-top: 20px;
 }
 
@@ -1502,8 +1440,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     background: var(--primary-color);
 }
 
-/* --- /////////////// --- */
-
 /* ======================================================= */
 /* ОСНОВНИЙ КОНТЕЙНЕР НАЛАШТУВАНЬ (settings.html) */
 /* ======================================================= */
@@ -1520,7 +1456,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     color: var(--secondary-color);
 }
 
-/* Заголовок H1 над рамкою */
 .settings-page h1 {
     position: absolute;
     top: -60px;
@@ -1547,37 +1482,33 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 }
 
 .setting-switch-row {
-    display: flex;           /* горизонтально */
-    align-items: center;     /* по центру вертикально */
-    gap: 10px;               /* відстань між кнопкою і текстом */
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 10px 14px;
-    /*border: 1px solid var(--border-color);
-    border-radius: 10px;*/
     background: #fff;
     margin-bottom: 5px;
 }
 
 .switch-toggle {
-    display: inline-block;   /* дозволяє тексту стояти збоку */
-    flex-shrink: 0;          /* не зменшуємо кнопку */
-    width: 40px;             /* ширина кнопки */
+    display: inline-block;
+    flex-shrink: 0;
+    width: 40px;
     height: 22px;
 }
 
 .switch-label {
-    flex-grow: 1;            /* текст займає простір праворуч */
+    flex-grow: 1;
     color: var(--text-dark);
     font-size: 0.95rem;
 }
 
-/* Текст опису */
 .setting-switch-row .switch-label {
-    display: inline-block; /* важливо, щоб був на одному рядку з кнопкою */
+    display: inline-block;
     color: var(--text-dark);
     font-size: 0.95rem;
 }
 
-/* Ефект при наведенні */
 .setting-switch-row:hover {
     background: #f8faff;
     border-color: #cfd8e3;
@@ -1597,14 +1528,12 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     flex-shrink: 0;
 }
 
-/* Приховуємо стандартний чекбокс */
 .switch-toggle input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-/* Сам повзунок */
 .slider {
     position: absolute;
     cursor: pointer;
@@ -1617,7 +1546,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     border-radius: 22px;
 }
 
-/* Кнопка на повзунку */
 .slider:before {
     position: absolute;
     content: "";
@@ -1630,7 +1558,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     border-radius: 50%;
 }
 
-/* Активований стан */
 input:checked + .slider {
     background-color: var(--secondary-color);
 }
@@ -1639,7 +1566,6 @@ input:checked + .slider:before {
     transform: translateX(18px);
 }
 
-/* Закруглення для "pill" форми */
 .slider.round {
     border-radius: 22px;
 }
@@ -1650,13 +1576,13 @@ input:checked + .slider:before {
 
 .settings-actions {
     display: flex;
-    justify-content: center; /* центр по горизонталі */
-    margin-top: 0;           /* прибираємо зайвий margin */
-    padding-top: 0;          /* прибираємо padding */
+    justify-content: center;
+    margin-top: 0;
+    padding-top: 0;
 }
 .save-btn {
     display: block;
-    margin: -10px auto 20px auto; /* невеликий верхній відступ від останнього рядка */
+    margin: -10px auto 20px auto;
     background: var(--secondary-color);
     color: #fff;
     border: none;
@@ -1672,9 +1598,6 @@ input:checked + .slider:before {
     background: var(--primary-color);
 }
 
-
-
-/* --- рамка для видалення акаунту --- */
 .delete-account-box {
     border: 1px solid var(--border-color);
     border-radius: 12px;
@@ -1688,13 +1611,11 @@ input:checked + .slider:before {
 .delete-btn {
     width: auto !important;
     text-align: center;
-    /*display: inline-block;              /* замість block */
-    /*margin: 5px auto 0 auto;*/
     background: var(--danger-color);
     color: #fff;
     border: none;
     border-radius: 10px;
-    padding: 12px 35px;                /* трохи ширше, як Save */
+    padding: 12px 35px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -1702,7 +1623,6 @@ input:checked + .slider:before {
 
 }
 
-/* Центрування тільки для цієї кнопки */
 .delete-btn {
     display: block;
     width: fit-content;
@@ -1711,30 +1631,22 @@ input:checked + .slider:before {
 
 
 .delete-btn:hover {
-    background-color: rgba(192, 57, 43, 1); /* Непрозорий червоний при наведенні */
+    background-color: rgba(192, 57, 43, 1);
 }
 
-
-/* End of settings part */
-
-
-
-
-/* Login/Register наслідують стилі add-listing-page */
-.login-page h1, .register-page h1 { /* Якщо додасте класи */
+.login-page h1, .register-page h1 {
     text-align: center;
 }
 
-/* --- ПУНКТ 2: Сторінка публічного профілю --- */
 .public-profile-page .profile-container {
     align-items: flex-start;
 }
 .public-profile-page .profile-sidebar {
-    position: sticky; /* Робимо сайдбар "липким" */
+    position: sticky;
     top: 20px;
 }
 .public-profile-page .profile-sidebar .contact-btn {
-    width: 100%; /* Кнопка на всю ширину */
+    width: 100%;
     margin-top: 20px;
 }
 .profile-verification-info {
@@ -1774,7 +1686,7 @@ input:checked + .slider:before {
     font-weight: 600;
 }
 .public-profile-page .listings-container {
-    grid-template-columns: 1fr; /* 1 колонка в профілі */
+    grid-template-columns: 1fr;
 }
 
 .public-profile-page .profile-container {
@@ -1793,7 +1705,7 @@ input:checked + .slider:before {
     border: 1px solid var(--border-color);
     box-shadow: var(--box-shadow-light);
     padding: 20px;
-    position: sticky; /* Робимо сайдбар "липким" */
+    position: sticky;
     top: 20px;
 }
 .public-profile-page .profile-sidebar .profile-avatar {
@@ -1813,7 +1725,7 @@ input:checked + .slider:before {
     font-weight: 600;
 }
 .public-profile-page .profile-sidebar .contact-btn {
-    width: 100%; /* Кнопка на всю ширину */
+    width: 100%;
     margin-top: 20px;
     display: inline-block;
     background: var(--primary-color);
@@ -1866,14 +1778,13 @@ input:checked + .slider:before {
     font-weight: 600;
 }
 .public-profile-page .listings-container {
-    grid-template-columns: 1fr; /* 1 колонка в профілі */
+    grid-template-columns: 1fr;
 }
 
-/* Адаптація для мобільних */
 @media (max-width: 767px) {
     .public-profile-page .profile-container { flex-direction: column; }
     .public-profile-page .profile-sidebar {
-        position: static; /* Вимикаємо "липкість" на мобілках */
+        position: static;
         width: 100%;
         max-width: 400px;
         margin: 0 auto 20px auto;
@@ -1884,17 +1795,16 @@ input:checked + .slider:before {
 }
 @media (min-width: 768px) {
     .public-profile-page .listings-container {
-        grid-template-columns: repeat(2, 1fr); /* 2 колонки в профілі на планшеті */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 .public-profile-page .profile-sidebar .contact-btn {
-    margin-bottom: 15px; /* Додаємо відступ знизу, щоб телефон не прилипав */
+    margin-bottom: 15px;
 }
 
-/* НОВІ СТИЛІ для телефону */
 .profile-phone-public {
-    display: flex; /* 'none' в інлайновому стилі, 'flex' в app.js */
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
@@ -1920,7 +1830,6 @@ input:checked + .slider:before {
 /* 10. MEDIA QUERIES (ADAPTATION) */
 /* ==================================== */
 
-/* --- Tablet & Small Desktop --- */
 @media (min-width: 768px) {
     body { padding-bottom: 0; }
     main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
@@ -1938,39 +1847,35 @@ input:checked + .slider:before {
 
     .chat-container { height: calc(100vh - 120px);}
 
-    /* Збільшуємо мініатюри на планшетах/десктопах ще трохи */
     .gallery-thumbnail {
         width: 140px;
         height: 105px;
     }
     .public-profile-page .listings-container {
-        grid-template-columns: repeat(2, 1fr); /* 2 колонки в профілі на планшеті */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* --- Larger Desktop --- */
 @media (min-width: 1024px) {
     .listings-container { grid-template-columns: repeat(3, 1fr); }
-    .listing-detail-layout { grid-template-columns: 2fr 3fr 1.5fr; } /* Повертаємо три колонки */
+    .listing-detail-layout { grid-template-columns: 2fr 3fr 1.5fr; }
 
     .gallery-thumbnail {
-        width: 150px; /* Ще трохи збільшуємо */
+        width: 150px;
         height: 112px;
     }
 
-    .author-avatar img { /* Збільшуємо аватар автора */
+    .author-avatar img {
         width: 100px;
         height: 100px;
     }
 }
 
-
-/* --- Mobile Fixes --- */
 @media (max-width: 767px) {
     .profile-container { flex-direction: column; }
     .profile-sidebar { width: 100%; max-width: 400px; margin: 0 auto 20px auto; }
     .public-profile-page .profile-sidebar {
-        position: static; /* Вимикаємо "липкість" на мобілках */
+        position: static;
     }
 
 
@@ -1979,9 +1884,8 @@ input:checked + .slider:before {
     .chat-window { width: 100%; height: 60%; }
     .message { max-width: 85%; }
 
-    .form-row { flex-direction: column; gap: 15px; } /* Завжди в стовпчик на мобілках */
+    .form-row { flex-direction: column; gap: 15px; }
 
-    /* Залишаємо мініатюри меншими на мобілках */
     .gallery-thumbnail {
         width: 90px;
         height: 67px;
@@ -1997,13 +1901,13 @@ input:checked + .slider:before {
     .profile-page, .add-listing-page { padding: 15px; }
     .profile-info, .listing-form { padding: 20px; }
 
-    .gallery-thumbnail { /* Ще менші на дуже малих екранах */
+    .gallery-thumbnail {
         width: 80px;
         height: 60px;
     }
 
-    .listing-detail-layout { grid-template-columns: 1fr; } /* Завжди одна колонка */
-    .listing-detail-author { grid-row: 3; } /* Переміщаємо блок автора вниз */
+    .listing-detail-layout { grid-template-columns: 1fr; }
+    .listing-detail-author { grid-row: 3; }
 }
 
 /* ==================================== */
@@ -2015,7 +1919,7 @@ input:checked + .slider:before {
 
 .my-listings-container {
     display: grid;
-    grid-template-columns: 1fr; /* По замовчуванню одна колонка */
+    grid-template-columns: 1fr;
     gap: 20px;
     margin-top: 1.5rem;
 }
@@ -2025,32 +1929,32 @@ input:checked + .slider:before {
     border-radius: 12px;
     box-shadow: var(--box-shadow-medium);
     border: 1px solid var(--border-color);
-    display: flex; /* Розміщуємо зображення, інфо та кнопки в ряд */
+    display: flex;
     overflow: hidden;
     transition: opacity 0.3s, border-color 0.3s;
 }
 
 .my-listing-card.inactive {
     opacity: 0.6;
-    border-left: 5px solid var(--danger-color); /* Позначаємо неактивні */
+    border-left: 5px solid var(--danger-color);
 }
 .my-listing-card.inactive .my-listing-image {
     filter: grayscale(80%);
 }
 
 .my-listing-link {
-    display: flex; /* Дозволяє зображенню та інфо займати місце */
-    flex-grow: 1; /* Основна частина картки розтягується */
+    display: flex;
+    flex-grow: 1;
     text-decoration: none;
     color: inherit;
-    min-width: 0; /* Дозволяє тексту скорочуватись */
+    min-width: 0;
 }
 
 .my-listing-image {
     width: 100px;
     height: 100px;
     object-fit: cover;
-    flex-shrink: 0; /* Зображення не стискається */
+    flex-shrink: 0;
     border-right: 1px solid var(--border-color);
 }
 
@@ -2058,9 +1962,9 @@ input:checked + .slider:before {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Центруємо текст вертикально */
+    justify-content: center;
     flex-grow: 1;
-    min-width: 0; /* Важливо для перенесення тексту */
+    min-width: 0;
 }
 
 .my-listing-info h3 {
@@ -2068,7 +1972,7 @@ input:checked + .slider:before {
     margin-bottom: 5px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Додаємо '...' якщо заголовок задовгий */
+    text-overflow: ellipsis;
 }
 
 .my-listing-info p {
@@ -2080,13 +1984,13 @@ input:checked + .slider:before {
 }
 .my-listing-info p i {
     margin-right: 6px;
-    width: 15px; /* Вирівнюємо іконки */
+    width: 15px;
 }
 .my-listing-status {
     font-weight: 500;
 }
-.my-listing-info .type-tag { /* Позиціонуємо тег типу */
-    align-self: flex-start; /* Розміщуємо зліва */
+.my-listing-info .type-tag {
+    align-self: flex-start;
     margin-top: 5px;
     font-size: 0.75rem;
     padding: 3px 6px;
@@ -2094,13 +1998,13 @@ input:checked + .slider:before {
 
 .my-listing-actions {
     display: flex;
-    flex-direction: column; /* Кнопки в стовпчик */
-    justify-content: space-around; /* Рівномірно розподіляємо */
+    flex-direction: column;
+    justify-content: space-around;
     align-items: center;
     padding: 10px;
     border-left: 1px solid var(--border-color);
-    background: #f8f9fa; /* Світлий фон для кнопок */
-    flex-shrink: 0; /* Блок кнопок не стискається */
+    background: #f8f9fa;
+    flex-shrink: 0;
 }
 
 .my-listing-actions .action-btn {
@@ -2109,9 +2013,9 @@ input:checked + .slider:before {
     color: var(--text-light);
     font-size: 1.2rem;
     cursor: pointer;
-    padding: 8px; /* Робимо область кліку більшою */
+    padding: 8px;
     transition: color 0.2s;
-    border-radius: 50%; /* Круглі кнопки */
+    border-radius: 50%;
     width: 35px;
     height: 35px;
     display: flex;
@@ -2121,7 +2025,7 @@ input:checked + .slider:before {
 
 .my-listing-actions .action-btn:hover {
     color: var(--text-dark);
-    background-color: #e9ecef; /* Фон при наведенні */
+    background-color: #e9ecef;
 }
 
 .my-listing-actions .action-btn.edit:hover { color: var(--accent-color-blue); }
@@ -2129,15 +2033,14 @@ input:checked + .slider:before {
 .my-listing-actions .action-btn.delete:hover { color: var(--danger-color); }
 
 
-/* Адаптація для планшетів/десктопів */
 @media (min-width: 768px) {
     .my-listings-container {
-        grid-template-columns: repeat(2, 1fr); /* Дві колонки */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 @media (min-width: 1024px) {
     .my-listings-container {
-        grid-template-columns: repeat(3, 1fr); /* Три колонки */
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -2152,7 +2055,7 @@ input:checked + .slider:before {
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
     z-index: 200;
-    display: none; /* Приховано за замовчуванням */
+    display: none;
     opacity: 0;
     transition: opacity 0.3s ease;
     align-items: center;
@@ -2219,7 +2122,6 @@ input:checked + .slider:before {
     font-size: 1rem;
     transition: background-color 0.2s;
 }
-/* Кнопка для "success" та "info" */
 .modal-confirm-btn.default {
     background: var(--secondary-color);
     color: var(--text-white);
@@ -2227,7 +2129,6 @@ input:checked + .slider:before {
 .modal-confirm-btn.default:hover {
     background: var(--primary-color);
 }
-/* Кнопка для "error" */
 .modal-confirm-btn.error {
     background: var(--danger-color);
     color: var(--text-white);
@@ -2240,18 +2141,17 @@ input:checked + .slider:before {
 /* 14. FAVORITES FEATURE */
 /* ==================================== */
 
-/* --- Кнопка "Сердечко" на сторінці деталей --- */
 .listing-title-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; /* Вирівнюємо по верху */
+    align-items: flex-start;
     gap: 15px;
-    margin-bottom: 10px; /* Відступ, який раніше був у h1 */
+    margin-bottom: 10px;
 }
 
 .listing-title-header h1 {
-    flex-grow: 1; /* Заголовок займає максимум місця */
-    margin-bottom: 0; /* Прибираємо відступ у h1 */
+    flex-grow: 1;
+    margin-bottom: 0;
 }
 
 .favorite-btn:hover {
@@ -2260,26 +2160,23 @@ input:checked + .slider:before {
 }
 
 .favorite-btn.favorited {
-    background: #fdeaea; /* Світло-червоний фон */
+    background: #fdeaea;
     border-color: var(--danger-color);
     color: var(--danger-color);
-    font-weight: 900; /* Це змусить іконку стати суцільною (fas) */
+    font-weight: 900;
 }
 
 .favorite-btn.favorited:hover {
     background: #fddddd;
 }
 
-/* --- Контейнер на сторінці favorites.html --- */
 .favorites-page .listings-container {
     display: grid;
-    /* Використовуємо той самий стиль, що й на головній */
     grid-template-columns: 1fr;
     gap: 20px;
     margin-top: 1.5rem;
 }
 
-/* Адаптація для планшетів і десктопів */
 @media (min-width: 768px) {
     .favorites-page .listings-container {
         grid-template-columns: repeat(2, 1fr);
@@ -2292,70 +2189,60 @@ input:checked + .slider:before {
     }
 }
 
-/* --- Report Bug Page - File List Styles --- */
 .file-list-container {
-    margin-top: 15px; /* Відступ від кнопки */
+    margin-top: 15px;
     font-size: 0.9rem;
-    color: var(--text-light); /* Світліший колір тексту */
+    color: var(--text-light);
 }
 
 .file-list-item {
-    display: flex; /* Розміщуємо іконку та назву в ряд */
-    align-items: center; /* Вирівнюємо по центру */
-    gap: 8px; /* Відстань між іконкою та текстом */
-    padding: 4px 0; /* Невеликий вертикальний відступ */
-    border-bottom: 1px dashed var(--border-color); /* Розділювач */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px dashed var(--border-color);
 }
 .file-list-item:last-child {
-    border-bottom: none; /* Прибираємо лінію для останнього елемента */
+    border-bottom: none;
 }
 
 .file-list-item i {
-    color: var(--secondary-color); /* Колір іконки */
-    font-size: 1rem; /* Розмір іконки */
+    color: var(--secondary-color);
+    font-size: 1rem;
 }
 
 .file-list-item span {
-    /* Стилі для назви файлу, якщо потрібно (наприклад, обмеження довжини) */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* Додаткові стилі для видимості секцій та питань */
 .filter-section { display: none; border-top: 2px solid var(--border-color); padding-top: 15px; margin-top: 15px; }
 .filter-section h3 { margin-bottom: 1rem; font-size: 1.1rem; }
 .filter-trigger-question { margin-top: 15px; padding: 10px; background-color: #f9f9f9; border-radius: 6px; border: 1px solid #eee; }
 .filter-trigger-question label { margin-bottom: 5px; font-weight: 500;}
-/* Стилі для підкласів */
-#filter_basic h3 { color: var(--secondary-color); } /* Підклас 1 */
-#filter_desired_housing h3 { color: var(--accent-color-blue); } /* Підклас 2 */
-#filter_current_housing h3 { color: var(--primary-color); } /* Підклас 3 */
-#filter_desired_roommate h3 { color: var(--accent-color-orange); } /* Підклас 4 */
-#filter_my_chars h3 { color: var(--accent-color-green); } /* Підклас 5 */
-#filter_desired_tenant h3 { color: #5a6268; } /* Підклас 6 */
+#filter_basic h3 { color: var(--secondary-color); }
+#filter_desired_housing h3 { color: var(--accent-color-blue); }
+#filter_current_housing h3 { color: var(--primary-color); }
+#filter_desired_roommate h3 { color: var(--accent-color-orange); }
+#filter_my_chars h3 { color: var(--accent-color-green); }
+#filter_desired_tenant h3 { color: #5a6268; }
 
-/* Стилі для карти (приклад) */
 #map { height: 300px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-.hidden-other-input { display: none; margin-top: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem;} /* Стиль для прихованого поля "Інше" */
-/* Стилі для опції "Інше" в характеристиках */
+.hidden-other-input { display: none; margin-top: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem;}
 .checkbox-option-item.other-characteristic-option {
-    /* Можна додати стилі, якщо потрібно виділити */
-    /* Ensure it aligns well within flex container */
-    width: 100%; /* Make 'Other' checkbox take full width to push input below */
+    width: 100%;
 }
 
 .characteristics-other-text {
-    display: none; /* Сховано за замовчуванням */
+    display: none;
 }
 
 .checkbox-options {
-    /* Дозволяємо полю вводу займати всю ширину */
     flex-wrap: wrap;
 }
-/* Style for the 'Other' checkbox item itself if needed */
 .checkbox-option-item {
-    display: inline-flex; /* Align label and checkbox */
-    align-items: center; /* Vertically align */
-    margin-bottom: 5px; /* Add some space */
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 5px;
 }
