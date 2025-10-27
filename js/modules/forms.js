@@ -1,13 +1,8 @@
-// =================================================================================
-// FORMS MODULE
-// =================================================================================
-
 import { getAuthHeaders, MY_USER_ID } from './auth.js';
 import { universitiesData } from './universities.js';
 import { fetchAndDisplayListings } from '../app.js';
 import { toggleFilters } from './navigation.js';
 
-// --- Глобальні змінні для фото (специфічні для форм оголошень) ---
 let addListingSelectedFiles = [];
 let editListingCurrentPhotos = [];
 let editListingPhotosToDelete = new Set();
@@ -17,7 +12,7 @@ const MAX_PHOTOS = 8;
 let map = null; // Змінна для зберігання екземпляру карти
 let marker = null; // Змінна для зберігання маркера
 
-const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) => { // Координати Львова за замовчуванням
+const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) => { // Координати Львова
     const mapElement = formElement.querySelector('#map');
     const latitudeInput = formElement.querySelector('#latitude');
     const longitudeInput = formElement.querySelector('#longitude');
@@ -27,51 +22,41 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
         return;
     }
 
-    // Видаляємо стару карту, якщо вона існує
     if (map) {
         map.remove();
         map = null;
         marker = null;
     }
 
-    // Ініціалізуємо карту
     try {
-        map = L.map(mapElement).setView([initialLat, initialLng], 13); // 13 - рівень масштабування
+        map = L.map(mapElement).setView([initialLat, initialLng], 13);
 
-        // Додаємо базовий шар карти (OpenStreetMap)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        // Якщо є початкові координати (для редагування), ставимо маркер
-        if (initialLat && initialLng && !(initialLat === 49.8397 && initialLng === 24.0297)) { // Перевіряємо, чи не дефолтні координати
+        if (initialLat && initialLng && !(initialLat === 49.8397 && initialLng === 24.0297)) {
             marker = L.marker([initialLat, initialLng]).addTo(map);
-            // Важливо оновити input тут, бо вони могли бути порожніми
             latitudeInput.value = initialLat.toFixed(6);
             longitudeInput.value = initialLng.toFixed(6);
         }
 
-        // Обробник кліку на карті
-        map.on('click', async function(e) { // Зробимо функцію асинхронною
+        map.on('click', async function(e) {
             const lat = e.latlng.lat;
             const lng = e.latlng.lng;
 
-            // Видаляємо старий маркер, якщо він є
             if (marker) {
                 map.removeLayer(marker);
             }
 
-            // Додаємо новий маркер
             marker = L.marker([lat, lng]).addTo(map);
-
-            // Зберігаємо координати у приховані поля форми
             latitudeInput.value = lat.toFixed(6);
             longitudeInput.value = lng.toFixed(6);
 
             // --- ЗВОРОТНЄ ГЕОКОДУВАННЯ (Nominatim) ---
             const mapErrorElement = formElement.querySelector('#mapError');
-            if(mapErrorElement) mapErrorElement.style.display = 'none'; // Сховаємо попередню помилку
+            if(mapErrorElement) mapErrorElement.style.display = 'none';
 
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=uk`);
@@ -83,16 +68,13 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
                 if (data && data.address) {
                     const addr = data.address;
                     const city = addr.city || addr.town || addr.village || '';
-                    const district = addr.suburb || addr.county || ''; // 'suburb' часто район міста, 'county' - район області
+                    const district = addr.suburb || addr.county || ''; // 'suburb' район міста, 'county' - район області
                     const street = addr.road || '';
                     const houseNumber = addr.house_number || '';
-
-                    // Оновлюємо поля (якщо вони існують у формі)
                     const citySelect = formElement.querySelector('#city');
                     const districtSelect = formElement.querySelector('#district');
                     const addressInput = formElement.querySelector('#address');
 
-                    // Оновлення міста (з перевіркою опцій)
                     if (citySelect) {
                         let cityFoundInOptions = false;
                         for (let option of citySelect.options) {
@@ -102,7 +84,6 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
                                 break;
                             }
                         }
-                        // Якщо місто не знайдено в опціях, вибираємо "Інше" і заповнюємо поле
                         if (!cityFoundInOptions && city) {
                             citySelect.value = 'other';
                             const cityOtherInput = formElement.querySelector('#city_other_text');
@@ -112,11 +93,9 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
                                 cityOtherInput.classList.remove('hidden-other-input');
                             }
                         }
-                        // Викликаємо оновлення стану, якщо місто змінилось (для підвантаження університетів)
                         updateFormState(formElement);
                     }
 
-                    // Оновлення району (подібно до міста)
                     if (districtSelect) {
                         let districtFound = false;
                         for (let option of districtSelect.options) {
@@ -128,7 +107,7 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
                         }
                         if (!districtFound && district) {
                             districtSelect.value = 'other';
-                            const districtOtherInput = formElement.querySelector('#district_other_text'); // Виправлено ID
+                            const districtOtherInput = formElement.querySelector('#district_other_text');
                             if (districtOtherInput) {
                                 districtOtherInput.value = district;
                                 districtOtherInput.style.display = 'block';
@@ -140,11 +119,9 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
                         }
                     }
 
-                    // Оновлення адреси
                     if (addressInput) {
                         addressInput.value = `${street}${houseNumber ? ' ' + houseNumber : ''}`.trim();
                     }
-
                     console.log("Reverse geocoded address:", data.display_name);
                 } else {
                     console.warn("Could not reverse geocode coordinates.");
@@ -162,20 +139,19 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
             }
         });
 
-        // Викликаємо invalidateSize після короткої затримки, щоб дозволити DOM оновитись
         setTimeout(() => {
-            if (map) { // Перевіряємо, чи карта ще існує
+            if (map) {
                 map.invalidateSize();
                 console.log("Map size invalidated after initialization.");
             }
-        }, 10); // Невелика затримка (10 мс) зазвичай достатньо
+        }, 100); //затримка
 
     } catch (error) {
         console.error("Помилка ініціалізації карти Leaflet:", error);
-        if (mapElement) { // Показуємо помилку в контейнері карти
+        if (mapElement) {
             mapElement.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Помилка завантаження карти. Деталі в консолі.</p>`;
         }
-        map = null; // Скидаємо змінну карти
+        map = null;
     }
 };
 
@@ -184,8 +160,11 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
  * @param {HTMLFormElement} formElement - Елемент форми.
  */
 const geocodeAddressAndShowOnMap = async (formElement) => {
+    console.log("geocodeAddressAndShowOnMap called for form:", formElement.id);
+
     if (!map) {
         console.error("Map is not initialized yet.");
+        alert("Помилка: Карта ще не завантажена. Зачекайте або перезавантажте сторінку.");
         return;
     }
 
@@ -199,15 +178,25 @@ const geocodeAddressAndShowOnMap = async (formElement) => {
     const mapErrorElement = formElement.querySelector('#mapError');
     const findButton = formElement.querySelector('#findOnMapBtn');
 
-    if (!addressInput || !latitudeInput || !longitudeInput || !mapErrorElement || !findButton) return;
+    console.log({
+        citySelect, cityOtherInput, districtSelect, districtOtherInput,
+        addressInput, latitudeInput, longitudeInput, mapErrorElement, findButton
+    });
 
-    // Збираємо адресу
-    const city = citySelect.value === 'other' ? cityOtherInput.value : citySelect.value;
-    const district = districtSelect.value === 'other' ? districtOtherInput.value : districtSelect.value;
-    const address = addressInput.value;
+    if (!citySelect || !latitudeInput || !longitudeInput || !mapErrorElement || !findButton) {
+        console.error("One or more required map elements not found in the form:", formElement.id);
+        alert("Помилка: Не знайдено необхідні елементи форми для роботи з картою.");
+        return;
+    }
 
-    if (!city || !address) {
-        mapErrorElement.textContent = 'Будь ласка, введіть місто та адресу для пошуку.';
+    const city = (citySelect.value === 'other' && cityOtherInput) ? cityOtherInput.value.trim() : citySelect.value;
+    const district = (districtSelect && districtSelect.value === 'other' && districtOtherInput) ? districtOtherInput.value.trim() : (districtSelect ? districtSelect.value : '');
+    const address = addressInput ? addressInput.value.trim() : '';
+
+    console.log("Geocoding data:", { city, district, address });
+
+    if (!city) {
+        mapErrorElement.textContent = 'Будь ласка, введіть хоча б місто для пошуку.';
         mapErrorElement.style.display = 'block';
         return;
     }
@@ -216,16 +205,35 @@ const geocodeAddressAndShowOnMap = async (formElement) => {
     findButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     findButton.disabled = true;
 
-    // Формуємо рядок запиту для Nominatim
-    const query = `${address}, ${district ? district + ',' : ''} ${city}`;
+    let query = '';
+    let zoomLevel = 13;
+    if (address) {
+        query = `${address}, ${district ? district + ',' : ''} ${city}`;
+        zoomLevel = 16; // Ближче для вулиці
+    } else if (district) {
+        query = `${district}, ${city}`;
+        zoomLevel = 14; // Середній зум для району
+    } else {
+        query = city;
+        zoomLevel = 12; // Далі для міста
+    }
+    console.log("Nominatim query:", query, "Zoom:", zoomLevel);
+
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1&accept-language=uk`;
 
     try {
         const response = await fetch(url);
+        console.log("Nominatim response status:", response.status);
         if (!response.ok) {
-            throw new Error(`Nominatim error! status: ${response.status}`);
+            let errorText = `Nominatim error! status: ${response.status}`;
+            try {
+                const errorBody = await response.text();
+                errorText += ` - ${errorBody}`;
+            } catch (e) {}
+            throw new Error(errorText);
         }
         const data = await response.json();
+        console.log("Nominatim response data:", data);
 
         if (data && data.length > 0) {
             const result = data[0];
@@ -235,48 +243,52 @@ const geocodeAddressAndShowOnMap = async (formElement) => {
             console.log("Geocoded address:", result.display_name);
             console.log("Coordinates:", lat, lng);
 
-            // Видаляємо старий маркер
-            if (marker) {
-                map.removeLayer(marker);
+            if (isNaN(lat) || isNaN(lng)) {
+                console.error("Invalid coordinates received:", result);
+                throw new Error("Отримано недійсні координати від сервісу геокодування.");
             }
 
-            // Додаємо новий маркер
+            if (marker) {
+                console.log("Removing old marker.");
+                map.removeLayer(marker);
+                marker = null;
+            }
+
+            console.log("Adding new marker at:", [lat, lng]);
             marker = L.marker([lat, lng]).addTo(map);
 
-            // Центруємо карту
-            map.setView([lat, lng], 16); // Більш детальний зум при пошуку
+            console.log("Setting map view to:", [lat, lng], "zoom:", zoomLevel);
+            map.setView([lat, lng], zoomLevel);
+            setTimeout(() => map.invalidateSize(), 100);
 
-            // Оновлюємо приховані поля
             latitudeInput.value = lat.toFixed(6);
             longitudeInput.value = lng.toFixed(6);
+            console.log("Updated hidden coordinate inputs.");
 
         } else {
-            console.warn("Address not found by Nominatim.");
-            mapErrorElement.textContent = 'Адресу не знайдено. Спробуйте уточнити запит або вказати точку на карті вручну.';
+            console.warn("Address not found by Nominatim for query:", query);
+            mapErrorElement.textContent = 'Локацію не знайдено. Спробуйте уточнити запит або вказати точку на карті вручну.';
             mapErrorElement.style.display = 'block';
-            // Не видаляємо існуючий маркер, якщо він є
         }
     } catch (error) {
         console.error("Geocoding failed:", error);
-        mapErrorElement.textContent = 'Помилка пошуку адреси.';
+        mapErrorElement.textContent = `Помилка пошуку адреси: ${error.message}`;
         mapErrorElement.style.display = 'block';
     } finally {
-        findButton.innerHTML = '<i class="fas fa-search-location"></i>'; // Повертаємо іконку
+        findButton.innerHTML = '<i class="fas fa-search-location"></i>';
         findButton.disabled = false;
+        console.log("Geocoding process finished.");
     }
 };
 
 // =================================================================================
-// 4.1. ЛОГІКА ФОРМ СТВОРЕННЯ/РЕДАГУВАННЯ ОГОЛОШЕННЯ
+// ЛОГІКА ФОРМ СТВОРЕННЯ/РЕДАГУВАННЯ ОГОЛОШЕННЯ
 // =================================================================================
 
-/**
- * Універсальна функція оновлення стану форми оголошення (видимість, required).
- */
+//Функція оновлення стану форми оголошення
 export const updateFormState = (formElement) => {
     if (!formElement) return;
 
-    // --- Отримуємо елементи В МЕЖАХ КОНКРЕТНОЇ ФОРМИ ---
     const roommatePrefs = formElement.querySelector('#roommatePreferences');
     const housingFilters = formElement.querySelector('#housingFilters');
     const listingDetails = formElement.querySelector('#listingDetails');
@@ -294,9 +306,9 @@ export const updateFormState = (formElement) => {
     const myGroupSizeGroup = formElement.querySelector('#myGroupSizeGroup');
     const myGroupCountSelect = formElement.querySelector('#my_group_count');
     const targetRoommatesTotalGroup = formElement.querySelector('#targetRoommatesTotalGroup');
-    const petDetailsDiv = formElement.querySelector('#pet_details'); // Для політики щодо тварин
+    const petDetailsDiv = formElement.querySelector('#pet_details');
     const photoRequiredIndicator = formElement.querySelector('#photoRequiredIndicator');
-    const citySelect = formElement.querySelector('#city'); // Потрібен для університетів
+    const citySelect = formElement.querySelector('#city');
 
     const priceInput = formElement.querySelector('#price');
     const targetPriceMaxInput = formElement.querySelector('#target_price_max');
@@ -320,13 +332,11 @@ export const updateFormState = (formElement) => {
     if (formElement.id === 'addListingForm') {
         selectedType = formElement.querySelector('input[name="listing_type"]:checked')?.value;
     } else if (formElement.id === 'editListingForm') {
-        // У редагуванні тип беремо з прихованого поля, бо радіокнопок немає
         selectedType = formElement.querySelector('input[name="listing_type"]')?.value;
     }
 
     const selectedCity = citySelect?.value;
 
-    // --- Допоміжні функції ---
     const setRequired = (element, isRequired) => {
         if (!element) return;
         if (element instanceof NodeList) element.forEach(el => el.required = isRequired);
@@ -336,63 +346,53 @@ export const updateFormState = (formElement) => {
         if (element) element.style.display = isVisible ? 'block' : 'none';
     };
 
-    // --- Логіка Університетів (якщо елементи існують у формі) ---
     const universitiesCheckboxesContainer = formElement.querySelector('#nearbyUniversitiesCheckboxes');
-    const targetUniversitySelect = formElement.querySelector('#target_university'); // Припускаємо select
+    const targetUniversitySelect = formElement.querySelector('#target_university');
 
     const populateUniversities = (city) => {
         const unis = universitiesData[city] || [];
         const universitiesCheckboxesContainer = formElement.querySelector('#nearbyUniversitiesCheckboxes');
-        const universityOtherTextInputForCheckboxes = formElement.querySelector('#university_other_text'); // Для чекбоксів "Університети поруч"
-        const targetUniversitySelect = formElement.querySelector('#target_university'); // Select для "Бажаний Університет"
-        const targetUniversityOtherTextInput = formElement.querySelector('#target_university_other_text'); // Text input для select
+        const universityOtherTextInputForCheckboxes = formElement.querySelector('#university_other_text');
+        const targetUniversitySelect = formElement.querySelector('#target_university');
+        const targetUniversityOtherTextInput = formElement.querySelector('#target_university_other_text');
 
-        // --- 1. Обробка Select "Бажаний Університет" ---
         if (targetUniversitySelect) {
-            const currentSelectedValue = targetUniversitySelect.value; // Зберігаємо поточне значення (для редагування)
-            // Повністю очищуємо select
+            const currentSelectedValue = targetUniversitySelect.value;
             targetUniversitySelect.innerHTML = '';
 
-            // Додаємо опцію "Будь-який"
             const anyOption = document.createElement('option');
             anyOption.value = '';
             anyOption.textContent = 'Будь-який';
             targetUniversitySelect.appendChild(anyOption);
 
-            // Додаємо університети зі списку
             if (unis.length > 0) {
                 unis.forEach(uni => {
                     const option = document.createElement('option');
-                    option.value = uni.value; // Використовуємо системний ключ
+                    option.value = uni.value;
                     option.textContent = uni.text;
                     targetUniversitySelect.appendChild(option);
                 });
             }
 
-            // Додаємо опцію "Інший"
             const otherOption = document.createElement('option');
             otherOption.value = 'other';
             otherOption.textContent = 'Інший (вказати)';
             targetUniversitySelect.appendChild(otherOption);
 
-            // Відновлюємо вибране значення, якщо воно було
             if (currentSelectedValue && targetUniversitySelect.querySelector(`option[value="${currentSelectedValue}"]`)) {
                 targetUniversitySelect.value = currentSelectedValue;
             } else {
-                anyOption.selected = true; // Інакше робимо "Будь-який" активним
+                anyOption.selected = true;
             }
 
-
-            // Показуємо/ховаємо текстове поле "Інше" для select
             if (targetUniversityOtherTextInput) {
                 targetUniversityOtherTextInput.style.display = targetUniversitySelect.value === 'other' ? 'block' : 'none';
                 targetUniversityOtherTextInput.classList.toggle('hidden-other-input', targetUniversitySelect.value !== 'other');
             }
         }
 
-        // --- 2. Обробка Checkboxes "Університети поруч" ---
         if (universitiesCheckboxesContainer) {
-            universitiesCheckboxesContainer.innerHTML = ''; // Очищуємо
+            universitiesCheckboxesContainer.innerHTML = '';
 
             if (unis.length === 0) {
                 universitiesCheckboxesContainer.innerHTML = '<p style="color: var(--text-light)">Університети для цього міста не вказані.</p>';
@@ -406,48 +406,40 @@ export const updateFormState = (formElement) => {
             }
         }
 
-        // --- 3. Поле "Інше" для Checkboxes "Університети поруч" ---
-        // (Завжди видиме, коли видима вся секція nearbyUniversitiesGroup)
         if (universityOtherTextInputForCheckboxes) {
             universityOtherTextInputForCheckboxes.style.display = 'block';
             universityOtherTextInputForCheckboxes.classList.remove('hidden-other-input');
         }
     };
-
-
     // === Основна логіка ===
 
-    // 1. Скидаємо 'required' для всіх потенційно обов'язкових полів
     [priceInput, targetPriceMaxInput, myAgeInput, maxOccupantsSelect, currentOccupantsSelect,
         seekingRoommatesSelect, roomsSelect, floorInput, totalFloorsInput, totalAreaInput, kitchenAreaInput,
         myGenderRadios, furnishingRadios, readyToShareRadios].forEach(el => setRequired(el, false));
 
-    // 2. Встановлюємо 'required' для базових (крім типу, бо він різний)
     setRequired(titleInput, true);
     setRequired(descriptionInput, true);
     setRequired(citySelect, true);
 
-    // 3. Скидаємо видимість для всіх динамічних блоків
     [roommatePrefs, housingFilters, listingDetails, aboutMe, priceGroup, addressGroup, photoGroup,
         studyConditionsGroup, ownerRulesGroup, nearbyUniversitiesGroup, studentParams, isStudentGroup,
         maxOccupantsGroup, findMateGroups, myGroupSizeGroup, myGroupCountSelect, targetRoommatesTotalGroup]
         .filter(el => el).forEach(el => setVisible(el, false));
 
-    // 4. Налаштування видимості та required залежно від типу
     const isRentOut = selectedType === 'rent_out';
     const isFindMate = selectedType === 'find_mate';
     const isFindHome = selectedType === 'find_home';
 
-    setVisible(photoGroup, true); // Завжди показуємо секцію фото (якщо вона є)
+    setVisible(photoGroup, true);
     setVisible(studyConditionsGroup, !!selectedType);
 
     if (isRentOut || isFindMate) {
         setVisible(priceGroup, true);
         setRequired(priceInput, true);
-        setVisible(addressGroup, true); // Адреса для rent_out/find_mate
+        setVisible(addressGroup, true);
         setVisible(listingDetails, true);
-        setVisible(nearbyUniversitiesGroup, true); // Університети поруч
-        if (citySelect) populateUniversities(selectedCity); // Заповнюємо університети
+        setVisible(nearbyUniversitiesGroup, true);
+        if (citySelect) populateUniversities(selectedCity);
     }
 
     if (isRentOut) {
@@ -459,7 +451,7 @@ export const updateFormState = (formElement) => {
         setVisible(findMateGroups, true);
         setVisible(aboutMe, true);
         setVisible(roommatePrefs, true);
-        setVisible(isStudentGroup, true); // "Чи студент?"
+        setVisible(isStudentGroup, true);
         const isStudent = formElement.querySelector('input[name="is_student"]:checked')?.value;
         setVisible(studentParams, isStudent === 'yes');
     }
@@ -468,34 +460,27 @@ export const updateFormState = (formElement) => {
         setVisible(housingFilters, true);
         setRequired(readyToShareRadios, true);
         setVisible(aboutMe, true);
-        // Вимоги до сусіда показуємо, якщо ready_to_share не 'no'
         const isSharing = formElement.querySelector('input[name="ready_to_share"]:checked')?.value;
         setVisible(roommatePrefs, isSharing !== 'no');
-        setVisible(isStudentGroup, true); // "Чи студент?"
         const isStudent = formElement.querySelector('input[name="is_student"]:checked')?.value;
         setVisible(studentParams, isStudent === 'yes');
-        setVisible(myGroupSizeGroup, true); // "Скільки людей шукає?"
         const myGroupSize = formElement.querySelector('input[name="my_group_size"]:checked')?.value;
         setVisible(myGroupCountSelect, myGroupSize === 'more');
-        setVisible(targetRoommatesTotalGroup, true); // "Бажана к-ть людей у квартирі"
-        if (citySelect) populateUniversities(selectedCity); // Заповнюємо університети (для target_university)
+        setVisible(targetRoommatesTotalGroup, true);
+        if (citySelect) populateUniversities(selectedCity);
     }
 
-    // Оновлення індикатора required для фото (тільки якщо елемент існує)
     if (photoRequiredIndicator) {
         const photoIsRequired = isRentOut || isFindMate;
         photoRequiredIndicator.textContent = photoIsRequired ? '*' : '';
     }
 };
 
-/**
- * Налаштовує логіку форми СТВОРЕННЯ оголошення.
- */
+//Налаштовує логіку форми СТВОРЕННЯ оголошення
 export const setupAddListingFormLogic = () => {
     const form = document.getElementById('addListingForm');
     if (!form) return;
 
-    // Отримуємо елементи, на які вішаємо слухачі
     const listingTypeRadios = form.querySelectorAll('input[name="listing_type"]');
     const citySelect = form.querySelector('#city');
     const otherOptionSelects = form.querySelectorAll('.other-option-select');
@@ -509,7 +494,6 @@ export const setupAddListingFormLogic = () => {
     const myGroupSizeRadios = form.querySelectorAll('input[name="my_group_size"]');
     const petDetailsDiv = form.querySelector('#pet_details');
 
-    // --- Логіка подій (викликає зовнішню updateFormState) ---
     const updateHandler = () => updateFormState(form);
 
     listingTypeRadios.forEach(radio => radio.addEventListener('change', updateHandler));
@@ -518,15 +502,18 @@ export const setupAddListingFormLogic = () => {
     isStudentRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     myGroupSizeRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
 
-    // Додаємо слухач для кнопки "Знайти на карті"
     const findButton = form.querySelector('#findOnMapBtn');
     if (findButton) {
-        findButton.addEventListener('click', () => {
+        findButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            console.log("Find on map button clicked for form:", form.id);
             geocodeAddressAndShowOnMap(form);
         });
+        console.log("Event listener added to #findOnMapBtn for form:", form.id);
+    } else {
+        console.warn("#findOnMapBtn not found in form:", form.id);
     }
 
-    // Логіка для "Інше" (залишається специфічною для форми)
     otherOptionSelects.forEach(select => {
         select.addEventListener('change', (e) => {
             const otherInput = e.target.nextElementSibling;
@@ -541,7 +528,6 @@ export const setupAddListingFormLogic = () => {
         }
     });
 
-    // Логіка для Тварин
     petPolicyRadios?.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (petDetailsDiv) {
@@ -553,7 +539,6 @@ export const setupAddListingFormLogic = () => {
         });
     });
 
-    // 1. Мої тварини
     const myPetsPolicyRadios = form.querySelectorAll('input[name="my_pets_policy"]');
     const myPetDetailsDiv = form.querySelector('#my_pet_details');
 
@@ -564,14 +549,14 @@ export const setupAddListingFormLogic = () => {
                 myPetDetailsDiv.style.display = e.target.value === 'yes' ? 'block' : 'none';
                 if (e.target.value === 'no') {
                     myPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                    if (noPetCheckbox) noPetCheckbox.checked = true; // Позначаємо "Не маю тварин"
+                    if (noPetCheckbox) noPetCheckbox.checked = true;
                 } else {
-                    if (noPetCheckbox) noPetCheckbox.checked = false; // Знімаємо позначку "Не маю тварин"
+                    if (noPetCheckbox) noPetCheckbox.checked = false;
                 }
             }
         });
     });
-    // Ініціалізація стану "Мої тварини"
+
     const initialMyPetsPolicy = form.querySelector('input[name="my_pets_policy"]:checked');
     if (myPetDetailsDiv && initialMyPetsPolicy) {
         myPetDetailsDiv.style.display = initialMyPetsPolicy.value === 'yes' ? 'block' : 'none';
@@ -579,8 +564,6 @@ export const setupAddListingFormLogic = () => {
         if (noPetCheckboxInitial) noPetCheckboxInitial.checked = (initialMyPetsPolicy.value === 'no');
     }
 
-
-    // 2. Тварини у сусіда
     const matePetsPolicyRadios = form.querySelectorAll('input[name="mate_pets_policy"]');
     const matePetDetailsDiv = form.querySelector('#mate_pet_details');
 
@@ -598,7 +581,7 @@ export const setupAddListingFormLogic = () => {
             }
         });
     });
-    // Ініціалізація стану "Тварини у сусіда"
+
     const initialMatePetsPolicy = form.querySelector('input[name="mate_pets_policy"]:checked');
     if (matePetDetailsDiv && initialMatePetsPolicy) {
         matePetDetailsDiv.style.display = (initialMatePetsPolicy.value === 'yes' || initialMatePetsPolicy.value === 'maybe') ? 'block' : 'none';
@@ -606,10 +589,8 @@ export const setupAddListingFormLogic = () => {
         if (noMatePetCheckboxInitial) noMatePetCheckboxInitial.checked = (initialMatePetsPolicy.value === 'no');
     }
 
-
-    // 3. Бажана політика щодо тварин (у фільтрах пошуку)
     const searchPetPolicyRadios = form.querySelectorAll('input[name="search_pet_policy"]');
-    const searchPetDetailsDiv = form.querySelector('#search_pet_details'); // Використовуємо новий ID
+    const searchPetDetailsDiv = form.querySelector('#search_pet_details');
     searchPetPolicyRadios?.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (searchPetDetailsDiv) {
@@ -620,20 +601,17 @@ export const setupAddListingFormLogic = () => {
             }
         });
     });
-    // Ініціалізація стану "Бажана політика"
+
     const initialSearchPetPolicy = form.querySelector('input[name="search_pet_policy"]:checked');
     if (searchPetDetailsDiv && initialSearchPetPolicy) {
         searchPetDetailsDiv.style.display = initialSearchPetPolicy.value === 'yes' ? 'block' : 'none';
     }
-
 
     const initialPetPolicy = form.querySelector('input[name="pet_policy"]:checked');
     if (petDetailsDiv && initialPetPolicy) {
         petDetailsDiv.style.display = initialPetPolicy.value === 'yes' ? 'flex' : 'none';
     }
 
-
-    // Логіка для чекбоксів "Мої тварини"
     myPetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!myPetNoCheckbox) return;
@@ -645,7 +623,6 @@ export const setupAddListingFormLogic = () => {
         });
     });
 
-    // Логіка для чекбоксів "Тварини сусіда"
     matePetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!matePetNoCheckbox) return;
@@ -662,7 +639,6 @@ export const setupAddListingFormLogic = () => {
         });
     });
 
-    // Логіка для select "Бажаний університет"
     const targetUniversitySelect = form.querySelector('#target_university');
     const targetUniversityOtherTextInput = form.querySelector('#target_university_other_text');
 
@@ -671,35 +647,29 @@ export const setupAddListingFormLogic = () => {
             targetUniversityOtherTextInput.style.display = e.target.value === 'other' ? 'block' : 'none';
             targetUniversityOtherTextInput.classList.toggle('hidden-other-input', e.target.value !== 'other');
             if (e.target.value !== 'other') {
-                targetUniversityOtherTextInput.value = ''; // Очищуємо поле, якщо вибрано не "Інше"
+                targetUniversityOtherTextInput.value = '';
             }
         }
     });
 
-    // Ініціалізація стану поля "Інше" при завантаженні (важливо для редагування)
     if (targetUniversitySelect && targetUniversityOtherTextInput) {
         targetUniversityOtherTextInput.style.display = targetUniversitySelect.value === 'other' ? 'block' : 'none';
         targetUniversityOtherTextInput.classList.toggle('hidden-other-input', targetUniversitySelect.value !== 'other');
     }
 
-    // Ініціалізація стану форми при завантаженні
     updateFormState(form);
-    // Ініціалізація карти з невеликою затримкою
     setTimeout(() => {
         initializeMap(form);
         console.log("Map initialized via setupAddListingFormLogic after delay.");
-    }, 50); // Затримка 50 мс (можна спробувати 0 або 10, якщо 50 забагато)
+    }, 50);
     //
 };
 
-/**
- * Налаштовує логіку форми РЕДАГУВАННЯ оголошення.
- */
+//Налаштовує логіку форми РЕДАГУВАННЯ оголошення.
 export const setupEditListingFormLogic = () => {
     const form = document.getElementById('editListingForm');
     if (!form) return;
 
-    // Отримуємо елементи, на які вішаємо слухачі (аналогічно add, але без listingTypeRadios)
     const citySelect = form.querySelector('#city');
     const otherOptionSelects = form.querySelectorAll('.other-option-select');
     const petPolicyRadios = form.querySelectorAll('input[name="pet_policy"]');
@@ -712,23 +682,25 @@ export const setupEditListingFormLogic = () => {
     const myGroupSizeRadios = form.querySelectorAll('input[name="my_group_size"]');
     const petDetailsDiv = form.querySelector('#pet_details');
 
-    // --- Логіка подій (викликає зовнішню updateFormState) ---
-    const updateHandler = () => updateFormState(form); // Обгортка
+    const updateHandler = () => updateFormState(form);
 
     citySelect?.addEventListener('change', updateHandler);
     readyToShareRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     isStudentRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     myGroupSizeRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
 
-    // Додаємо слухач для кнопки "Знайти на карті"
     const findButton = form.querySelector('#findOnMapBtn');
     if (findButton) {
-        findButton.addEventListener('click', () => {
+        findButton.addEventListener('click', (event) => {
+            event.preventDefault();
+            console.log("Find on map button clicked for form:", form.id);
             geocodeAddressAndShowOnMap(form);
         });
+        console.log("Event listener added to #findOnMapBtn for form:", form.id);
+    } else {
+        console.warn("#findOnMapBtn not found in form:", form.id);
     }
 
-    // Логіка для "Інше" (копія з add)
     otherOptionSelects.forEach(select => {
         select.addEventListener('change', (e) => {
             const otherInput = e.target.nextElementSibling;
@@ -737,14 +709,12 @@ export const setupEditListingFormLogic = () => {
                 if (e.target.value !== 'other') otherInput.value = '';
             }
         });
-        // Initial state
         const otherInputInitial = select.nextElementSibling;
         if (otherInputInitial?.classList.contains('hidden-other-input')) {
             otherInputInitial.style.display = select.value === 'other' ? 'block' : 'none';
         }
     });
 
-    // Логіка для Тварин (policy) (копія з add)
     petPolicyRadios?.forEach(radio => {
         radio.addEventListener('change', (e) => {
             if (petDetailsDiv) {
@@ -755,13 +725,12 @@ export const setupEditListingFormLogic = () => {
             }
         });
     });
-    // Initial state for pet policy (викликається ПІСЛЯ завантаження даних)
+
     const initialPetPolicy = form.querySelector('input[name="pet_policy"]:checked');
     if (petDetailsDiv && initialPetPolicy) {
         petDetailsDiv.style.display = initialPetPolicy.value === 'yes' ? 'flex' : 'none';
     }
 
-    // Логіка для чекбоксів "Мої тварини" (копія з add)
     myPetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!myPetNoCheckbox) return;
@@ -773,7 +742,6 @@ export const setupEditListingFormLogic = () => {
         });
     });
 
-    // Логіка для чекбоксів "Тварини сусіда" (копія з add)
     matePetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!matePetNoCheckbox) return;
@@ -805,22 +773,19 @@ export const setupPhotoUploadLogic = (formId) => {
 
     const isEditMode = formId === 'editListingForm';
 
-    // --- Функції для керування фото ---
     const updatePhotoDisplay = () => {
         if (!previewContainer) return;
-        previewContainer.innerHTML = ''; // Очищуємо контейнер
+        previewContainer.innerHTML = '';
 
         const filesToShow = isEditMode ? editListingNewFilesToUpload : addListingSelectedFiles;
         const existingPhotosToShow = isEditMode ? editListingCurrentPhotos.filter(p => !editListingPhotosToDelete.has(p.photo_id)) : [];
         const totalVisiblePhotos = existingPhotosToShow.length + filesToShow.length;
 
-        // Відображення існуючих фото (тільки для редагування)
         existingPhotosToShow.forEach((photo, index) => {
             const div = createPhotoElement(index, photo.image_url, true, photo.photo_id, photo.is_main || index === 0);
             previewContainer.appendChild(div);
         });
 
-        // Відображення нових/вибраних фото
         filesToShow.forEach((file, index) => {
             const reader = new FileReader();
             const div = createPhotoElement(index, null, false, null, existingPhotosToShow.length === 0 && index === 0); // isExisting = false
@@ -831,7 +796,6 @@ export const setupPhotoUploadLogic = (formId) => {
             previewContainer.appendChild(div);
         });
 
-        // Кнопка "Додати фото", якщо є місце
         if (totalVisiblePhotos < MAX_PHOTOS) {
             const addButton = document.createElement('div');
             addButton.className = 'photo-upload-placeholder add-photo-btn';
@@ -840,7 +804,6 @@ export const setupPhotoUploadLogic = (formId) => {
             previewContainer.appendChild(addButton);
         }
 
-        // Заповнюємо решту слотів порожніми плейсхолдерами
         for (let i = totalVisiblePhotos + (totalVisiblePhotos < MAX_PHOTOS ? 1 : 0); i < MAX_PHOTOS; i++) {
             const emptyDiv = document.createElement('div');
             emptyDiv.className = 'photo-upload-placeholder';
@@ -848,15 +811,13 @@ export const setupPhotoUploadLogic = (formId) => {
         }
     };
 
-    // Створює DOM елемент для фото (існуючого або нового)
     const createPhotoElement = (index, imageUrl, isExisting, photoId = null, isMain = false) => {
         const div = document.createElement('div');
         div.className = 'photo-upload-placeholder preview';
         if (imageUrl) div.style.backgroundImage = `url('${imageUrl}')`;
-        div.dataset.index = index; // Індекс у відповідному масиві
+        div.dataset.index = index;
         if (isExisting) div.dataset.photoId = photoId;
 
-        // Кнопка видалення
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'photo-delete-btn';
         deleteBtn.innerHTML = '&times;';
@@ -869,10 +830,6 @@ export const setupPhotoUploadLogic = (formId) => {
         };
         div.appendChild(deleteBtn);
 
-        // Мітка "Головне"
-        // Визначаємо, чи це фото головне:
-        // - Для існуючих: перевіряємо photo.is_main АБО якщо це перше існуюче фото І нових фото немає
-        // - Для нових: перевіряємо, чи немає існуючих І це перше нове фото
         let shouldBeMain = false;
         if (isExisting) {
             const mainExisting = editListingCurrentPhotos.find(p => p.is_main && !editListingPhotosToDelete.has(p.photo_id));
@@ -889,14 +846,11 @@ export const setupPhotoUploadLogic = (formId) => {
             div.appendChild(mainLabel);
             div.title = 'Головне фото';
         }
-
         return div;
     };
 
-
     const removeExistingPhoto = (photoId, element) => {
         editListingPhotosToDelete.add(photoId);
-        // element.remove(); // Не видаляємо, просто перемалюємо
         updatePhotoDisplay();
     };
 
@@ -907,7 +861,6 @@ export const setupPhotoUploadLogic = (formId) => {
         updatePhotoDisplay();
     };
 
-    // Обробник вибору файлів
     photoInput.addEventListener('change', (event) => {
         const files = event.target.files;
         if (!files) return;
@@ -926,27 +879,23 @@ export const setupPhotoUploadLogic = (formId) => {
         updatePhotoDisplay();
     });
 
-    // Ініціалізація відображення
     updatePhotoDisplay();
 
-    // Повертаємо функцію для завантаження початкових фото (для редагування)
     if (isEditMode) {
         return {
             loadInitialPhotos: (photos) => {
                 editListingCurrentPhotos = photos || [];
-                editListingPhotosToDelete.clear(); // Скидаємо при завантаженні даних
-                editListingNewFilesToUpload = []; // Скидаємо при завантаженні даних
+                editListingPhotosToDelete.clear();
+                editListingNewFilesToUpload = [];
                 updatePhotoDisplay();
             }
         };
     }
-    return null; // Для режиму додавання нічого не повертаємо
+    return null;
 };
 
 
-/**
- * Обробляє відправку форми СТВОРЕННЯ оголошення.
- */
+//Обробляє відправку форми СТВОРЕННЯ оголошення.
 export const handleListingSubmission = async () => {
     const form = document.getElementById('addListingForm');
     const photoInput = document.getElementById('listingPhotosInput');
@@ -966,26 +915,23 @@ export const handleListingSubmission = async () => {
         return;
     }
 
-    let selectedFiles = []; // Масив файлів
+    let selectedFiles = [];
     const MAX_PHOTOS = 8;
 
-    // --- Функції для керування фото (винесені) ---
     const updatePhotoDisplay = () => {
         if (!previewContainer) return;
-        previewContainer.innerHTML = ''; // Очищуємо контейнер
+        previewContainer.innerHTML = '';
         for (let i = 0; i < MAX_PHOTOS; i++) {
             const div = document.createElement('div');
             div.className = 'photo-upload-placeholder';
             div.dataset.index = i;
 
             if (i < selectedFiles.length) {
-                // Показуємо прев'ю
                 const file = selectedFiles[i];
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     div.classList.add('preview');
                     div.style.backgroundImage = `url('${e.target.result}')`;
-                    // Кнопка видалення
                     const deleteBtn = document.createElement('button');
                     deleteBtn.className = 'photo-delete-btn';
                     deleteBtn.innerHTML = '&times;';
@@ -993,7 +939,6 @@ export const handleListingSubmission = async () => {
                     deleteBtn.type = 'button';
                     deleteBtn.onclick = (event) => { event.stopPropagation(); removeFile(i); };
                     div.appendChild(deleteBtn);
-                    // Мітка "Головне"
                     if (i === 0) {
                         const mainLabel = document.createElement('span');
                         mainLabel.className = 'photo-main-label';
@@ -1004,12 +949,10 @@ export const handleListingSubmission = async () => {
                 }
                 reader.readAsDataURL(file);
             } else if (i === selectedFiles.length) {
-                // Кнопка "Додати"
                 div.classList.add('add-photo-btn');
                 div.innerHTML = '+ Додати фото';
                 div.onclick = triggerFileInput;
             } else {
-                // Порожній слот
             }
             previewContainer.appendChild(div);
         }
@@ -1038,7 +981,6 @@ export const handleListingSubmission = async () => {
         updatePhotoDisplay();
     });
 
-    // --- Обробник відправки ---
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         listingTypeHint.style.display = 'none';
@@ -1047,7 +989,7 @@ export const handleListingSubmission = async () => {
         if (!selectedTypeRadio) {
             listingTypeHint.style.display = 'block';
             listingTypeHint.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return; // Зупинити, якщо тип не вибрано
+            return;
         }
         const selectedType = selectedTypeRadio.value;
         const photoIsRequired = selectedType === 'rent_out' || selectedType === 'find_mate';
@@ -1070,7 +1012,6 @@ export const handleListingSubmission = async () => {
             const readyToShareChecked = form.querySelector('input[name="ready_to_share"]:checked');
             if (!readyToShareChecked) {
                 alert('Будь ласка, вкажіть, чи готові ви жити з сусідом.');
-                // Знайдемо відповідний блок для прокрутки
                 const readyToShareGroup = form.querySelector('input[name="ready_to_share"]')?.closest('.form-group');
                 readyToShareGroup?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
@@ -1079,28 +1020,24 @@ export const handleListingSubmission = async () => {
 
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        delete data.photos; // Видаляємо поле файлів з текстових даних
+        delete data.photos;
 
-        // Збір характеристик (з обох груп)
         const characteristics = formData.getAll('characteristics');
         const searchCharacteristics = formData.getAll('search_characteristics');
         const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => key && !key.includes('_no')); // Фільтр "no" ключів
         data.characteristics = [...new Set(allCharacteristics)]; // Унікальні
         delete data.search_characteristics;
 
-        // Обробка полів "Інше"
         form.querySelectorAll('.other-option-select').forEach(select => {
             const baseName = select.name;
             const otherInputName = `${baseName}_other`;
-            if (data[baseName] !== 'other') data[otherInputName] = null; // Очистити, якщо не "Інше"
+            if (data[baseName] !== 'other') data[otherInputName] = null;
         });
 
         submitButton.disabled = true;
         submitButton.textContent = 'Публікація...';
-        let listingId; // Оголошуємо тут
-
+        let listingId;
         try {
-            // 1. Створюємо оголошення (текстові дані)
             const listingResponse = await fetch('http://localhost:3000/api/listings', {
                 method: 'POST',
                 headers: getAuthHeaders(),
@@ -1108,17 +1045,15 @@ export const handleListingSubmission = async () => {
             });
 
             if (!listingResponse.ok) {
-                // Обробка помилок створення оголошення
                 if (listingResponse.status === 401 || listingResponse.status === 403) throw new Error('AuthError');
                 const errorData = await listingResponse.json();
                 throw new Error(errorData.error || 'Не вдалося створити оголошення');
             }
 
             const listingResult = await listingResponse.json();
-            listingId = listingResult.listingId; // Отримуємо ID
+            listingId = listingResult.listingId;
             console.log(`Listing created, ID: ${listingId}`);
 
-            // 2. Завантажуємо фото (ЯКЩО вони є і ID отримано)
             if (selectedFiles.length > 0 && listingId) {
                 console.log(`Uploading ${selectedFiles.length} photos for listing ${listingId}...`);
                 const photoFormData = new FormData();
@@ -1126,29 +1061,26 @@ export const handleListingSubmission = async () => {
 
                 const photoResponse = await fetch(`http://localhost:3000/api/upload/listing-photos/${listingId}`, {
                     method: 'POST',
-                    headers: getAuthHeaders(false), // isJson = false
+                    headers: getAuthHeaders(false),
                     body: photoFormData,
                 });
 
                 if (!photoResponse.ok) {
                     const errorData = await photoResponse.json();
-                    // Повідомляємо користувача, але не перериваємо процес, бо оголошення вже створено
                     alert(`Оголошення створено, але сталася помилка при завантаженні фото: ${errorData.error || 'Невідома помилка'}. Ви можете додати фото пізніше, відредагувавши оголошення.`);
                     console.error('Photo upload error:', errorData);
-                    // НЕ кидаємо помилку тут, щоб перейти до успішного завершення
                 } else {
                     const photoResult = await photoResponse.json();
                     console.log(photoResult.message);
                 }
             }
 
-            // 3. Успішне завершення
             alert(`Успіх! ${listingResult.message} (ID: ${listingId})`);
             form.reset();
             selectedFiles = [];
             updatePhotoDisplay();
-            updateFormState(form); // Оновити стан форми після reset
-            window.location.href = `listing_detail.html?id=${listingId}`; // Перехід на сторінку оголошення
+            updateFormState(form);
+            window.location.href = `listing_detail.html?id=${listingId}`;
 
         } catch (error) {
             console.error('Submission error:', error);
@@ -1163,45 +1095,38 @@ export const handleListingSubmission = async () => {
             submitButton.textContent = 'Опублікувати оголошення';
         }
     });
-
-    // Ініціалізація фото та стану форми
     updatePhotoDisplay();
     updateFormState(form);
 };
 
-/**
- * Обробляє відправку форми РЕДАГУВАННЯ оголошення.
- */
+//Обробляє відправку форми РЕДАГУВАННЯ оголошення.
 export const handleListingUpdateSubmission = async () => {
     const form = document.getElementById('editListingForm');
     const submitButton = form?.querySelector('.submit-listing-btn');
-    const photoInput = document.getElementById('listingPhotosInput'); // Для завантаження нових фото
-    const previewContainer = document.getElementById('photoPreviewContainer'); // Для відображення
+    const photoInput = document.getElementById('listingPhotosInput');
+    const previewContainer = document.getElementById('photoPreviewContainer');
 
     if (!form || !submitButton) return;
-    if (!MY_USER_ID) { /* ... перевірка логіну ... */ return; }
+    if (!MY_USER_ID) { return; }
 
     let currentPhotos = []; // { photo_id, image_url, is_main }
     let photosToDelete = new Set(); // photo_id для видалення
     let newFilesToUpload = []; // File об'єкти нових фото
     const MAX_PHOTOS = 8;
 
-    // --- Функції для керування фото в редагуванні (винесені) ---
     const updateEditPhotoDisplay = () => {
         if (!previewContainer) return;
         previewContainer.innerHTML = '';
         const totalSlots = currentPhotos.length + newFilesToUpload.length;
 
-        // Відображення існуючих фото (крім видалених)
         currentPhotos.forEach((photo, index) => {
-            if (photosToDelete.has(photo.photo_id)) return; // Пропустити видалені
+            if (photosToDelete.has(photo.photo_id)) return;
 
             const div = document.createElement('div');
             div.className = 'photo-upload-placeholder preview';
             div.style.backgroundImage = `url('${photo.image_url}')`;
-            div.dataset.index = index; // Зберігаємо індекс поточного фото
+            div.dataset.index = index;
 
-            // Кнопка видалення для ІСНУЮЧИХ
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'photo-delete-btn';
             deleteBtn.innerHTML = '&times;';
@@ -1210,8 +1135,7 @@ export const handleListingUpdateSubmission = async () => {
             deleteBtn.onclick = (event) => { event.stopPropagation(); removeExistingPhoto(photo.photo_id, div); };
             div.appendChild(deleteBtn);
 
-            // Мітка "Головне" (якщо потрібно)
-            if (photo.is_main || (!currentPhotos.some(p => p.is_main) && index === 0 && newFilesToUpload.length === 0)) { // Логіка головного фото
+            if (photo.is_main || (!currentPhotos.some(p => p.is_main) && index === 0 && newFilesToUpload.length === 0)) {
                 const mainLabel = document.createElement('span');
                 mainLabel.className = 'photo-main-label';
                 mainLabel.textContent = 'Головне';
@@ -1221,17 +1145,15 @@ export const handleListingUpdateSubmission = async () => {
             previewContainer.appendChild(div);
         });
 
-        // Відображення НОВИХ фото
         newFilesToUpload.forEach((file, index) => {
             const div = document.createElement('div');
             div.className = 'photo-upload-placeholder preview';
-            div.dataset.newIndex = index; // Зберігаємо індекс нового файлу
+            div.dataset.newIndex = index;
 
             const reader = new FileReader();
             reader.onload = (e) => div.style.backgroundImage = `url('${e.target.result}')`;
             reader.readAsDataURL(file);
 
-            // Кнопка видалення для НОВИХ
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'photo-delete-btn';
             deleteBtn.innerHTML = '&times;';
@@ -1240,7 +1162,6 @@ export const handleListingUpdateSubmission = async () => {
             deleteBtn.onclick = (event) => { event.stopPropagation(); removeNewFile(index); };
             div.appendChild(deleteBtn);
 
-            // Мітка "Головне", якщо це перше фото взагалі
             if (currentPhotos.filter(p => !photosToDelete.has(p.photo_id)).length === 0 && index === 0) {
                 const mainLabel = document.createElement('span');
                 mainLabel.className = 'photo-main-label';
@@ -1250,7 +1171,6 @@ export const handleListingUpdateSubmission = async () => {
             previewContainer.appendChild(div);
         });
 
-        // Кнопка "Додати фото", якщо є місце
         if (totalSlots < MAX_PHOTOS) {
             const addButton = document.createElement('div');
             addButton.className = 'photo-upload-placeholder add-photo-btn';
@@ -1259,7 +1179,6 @@ export const handleListingUpdateSubmission = async () => {
             previewContainer.appendChild(addButton);
         }
 
-        // Заповнюємо решту слотів порожніми плейсхолдерами, якщо потрібно
         for (let i = totalSlots + (totalSlots < MAX_PHOTOS ? 1 : 0); i < MAX_PHOTOS; i++) {
             const emptyDiv = document.createElement('div');
             emptyDiv.className = 'photo-upload-placeholder';
@@ -1269,8 +1188,8 @@ export const handleListingUpdateSubmission = async () => {
 
     const removeExistingPhoto = (photoId, element) => {
         photosToDelete.add(photoId);
-        element.style.display = 'none'; // Просто ховаємо елемент
-        updateEditPhotoDisplay(); // Перемальовуємо, щоб з'явилась кнопка "+"
+        element.style.display = 'none';
+        updateEditPhotoDisplay();
     };
 
     const removeNewFile = (indexToRemove) => {
@@ -1279,7 +1198,7 @@ export const handleListingUpdateSubmission = async () => {
         updateEditPhotoDisplay();
     };
 
-    window.triggerEditFileInput = () => { if (photoInput) photoInput.click(); }; // Глобальна
+    window.triggerEditFileInput = () => { if (photoInput) photoInput.click(); };
 
     if (photoInput) {
         photoInput.addEventListener('change', (event) => {
@@ -1299,14 +1218,13 @@ export const handleListingUpdateSubmission = async () => {
         });
     }
 
-    // --- Обробник відправки ---
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const listingId = document.getElementById('listingIdField')?.value;
-        if (!listingId) { /* ... обробка помилки ID ... */ return; }
+        if (!listingId) { return; }
 
-        // Валідація (включаючи HTML5 required)
+        // Валідація
         if (!form.checkValidity()) {
             alert('Будь ласка, заповніть усі обов\'язкові поля (*), відмічені червоним.');
             const firstInvalid = form.querySelector(':invalid:not(fieldset)');
@@ -1320,14 +1238,12 @@ export const handleListingUpdateSubmission = async () => {
         delete data.photos;
         delete data.listing_id;
 
-        // Збір характеристик
         const characteristics = formData.getAll('characteristics');
         const searchCharacteristics = formData.getAll('search_characteristics');
         const allCharacteristics = [...characteristics, ...searchCharacteristics].filter(key => key && !key.includes('_no'));
         data.characteristics = [...new Set(allCharacteristics)];
         delete data.search_characteristics;
 
-        // Обробка полів "Інше"
         form.querySelectorAll('.other-option-select').forEach(select => {
             const baseName = select.name;
             const otherInputName = `${baseName}_other`;
@@ -1338,7 +1254,6 @@ export const handleListingUpdateSubmission = async () => {
         submitButton.textContent = 'Збереження...';
 
         try {
-            // 1. Оновлюємо текстові дані
             const listingResponse = await fetch(`http://localhost:3000/api/listings/${listingId}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
@@ -1353,24 +1268,11 @@ export const handleListingUpdateSubmission = async () => {
             console.log('Listing data updated successfully.');
 
             // --- ОБРОБКА ФОТО ---
-            // 2. Видаляємо позначені фото
             if (photosToDelete.size > 0) {
                 console.log(`Deleting ${photosToDelete.size} photos...`);
-                // ПОТРІБЕН БЕКЕНД ЕНДПОІНТ для видалення фото (наприклад, DELETE /api/listings/:id/photos з масивом ID в тілі)
-                // Приклад запиту (потрібно реалізувати на бекенді):
-                /*
-                const deleteResponse = await fetch(`http://localhost:3000/api/listings/${listingId}/photos`, {
-                    method: 'DELETE',
-                    headers: getAuthHeaders(),
-                    body: JSON.stringify({ photoIds: Array.from(photosToDelete) })
-                });
-                if (!deleteResponse.ok) console.error("Failed to delete photos on backend.");
-                else photosToDelete.clear(); // Очистити сет після успішного видалення
-                */
                 console.warn("Backend endpoint for photo deletion is not implemented yet."); // Заглушка
             }
 
-            // 3. Завантажуємо нові фото
             if (newFilesToUpload.length > 0) {
                 console.log(`Uploading ${newFilesToUpload.length} new photos...`);
                 const photoFormData = new FormData();
@@ -1386,15 +1288,14 @@ export const handleListingUpdateSubmission = async () => {
                     const errorData = await photoResponse.json();
                     alert(`Дані оголошення оновлено, але виникла помилка при завантаженні нових фото: ${errorData.error || 'Невідома помилка'}`);
                     console.error('New photo upload error:', errorData);
-                    // Не перериваємо, бо текстові дані збережено
                 } else {
                     console.log("New photos uploaded successfully.");
-                    newFilesToUpload = []; // Очистити масив після успішного завантаження
+                    newFilesToUpload = [];
                 }
             }
 
             alert('Успіх! Оголошення оновлено.');
-            window.location.href = `listing_detail.html?id=${listingId}`; // Перехід на сторінку деталей
+            window.location.href = `listing_detail.html?id=${listingId}`;
 
         } catch (error) {
             console.error('Update error:', error);
@@ -1410,7 +1311,6 @@ export const handleListingUpdateSubmission = async () => {
         }
     });
 
-    // Повертаємо функцію для завантаження початкових фото
     return {
         loadInitialPhotos: (photos) => {
             currentPhotos = photos || [];
@@ -1419,9 +1319,7 @@ export const handleListingUpdateSubmission = async () => {
     };
 };
 
-/**
- * Завантажує дані оголошення для форми редагування.
- */
+//Завантажує дані оголошення для форми редагування.
 export const loadListingDataForEdit = async (formId, listingId, loadInitialPhotosCallback) => {
     const form = document.getElementById(formId);
     if (!form || !listingId) return;
@@ -1430,27 +1328,20 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
         if (!response.ok) {
             if (response.status === 404) throw new Error('Оголошення не знайдено.');
-            if (response.status === 403) throw new Error('Ви не маєте доступу до редагування цього оголошення.'); // Припускаємо, що бекенд може повернути 403
+            if (response.status === 403) throw new Error('Ви не маєте доступу до редагування цього оголошення.');
             throw new Error('Не вдалося завантажити дані оголошення.');
         }
         const listing = await response.json();
 
-        // if (listing.user_id !== MY_USER_ID) {
-        //     alert('Ви не є власником цього оголошення.');
-        //     window.location.href = 'my_listings.html';
-        //     return;
-        // }
-
         const initialLat = parseFloat(listing.latitude);
         const initialLng = parseFloat(listing.longitude);
 
-        // Заповнюємо базові поля
         form.querySelector('#listingIdField').value = listing.listing_id;
-        form.querySelector('#initialListingType').value = listing.listing_type; // Зберігаємо тип
+        form.querySelector('#initialListingType').value = listing.listing_type;
         form.querySelector('#title').value = listing.title || '';
         form.querySelector('#description').value = listing.description || '';
         form.querySelector('#city').value = listing.city || '';
-        // Обробка поля "Інше місто"
+
         const cityOtherInput = form.querySelector('#city_other_text');
         if (listing.city === 'other' && cityOtherInput) {
             cityOtherInput.value = listing.city_other || '';
@@ -1460,7 +1351,6 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
             cityOtherInput.style.display = 'none';
         }
 
-        // Заповнюємо поля залежно від типу (використовуючи ті ж ID, що і в add_listing.html)
         const priceInput = form.querySelector('#price');
         if (priceInput) priceInput.value = listing.price || '';
         const addressInput = form.querySelector('#address');
@@ -1468,13 +1358,12 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         const studyConditionsInput = form.querySelector('#study_conditions');
         if (studyConditionsInput) studyConditionsInput.value = listing.study_conditions || '';
 
-        // Заповнення полів для 'rent_out' / 'find_mate' (Характеристики житла)
         const buildingTypeSelect = form.querySelector('#building_type');
         if(buildingTypeSelect) buildingTypeSelect.value = listing.building_type || '';
         const buildingTypeOther = form.querySelector('input[name="building_type_other"]');
         if(buildingTypeOther) {
             buildingTypeOther.value = listing.building_type_other || '';
-            // Показуємо поле "Інше", якщо потрібно
+
             if (buildingTypeSelect && buildingTypeSelect.value === 'other') {
                 buildingTypeOther.style.display = 'block';
                 buildingTypeOther.classList.remove('hidden-other-input');
@@ -1490,7 +1379,6 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         form.querySelector('#kitchen_area').value = listing.kitchen_area || '';
         form.querySelector('#bathroom_type').value = listing.bathroom_type || '';
 
-        // --- Обробка полів Select + Other ---
         const setupSelectWithOther = (baseName) => {
             const select = form.querySelector(`#${baseName}`);
             const otherInput = form.querySelector(`input[name="${baseName}_other"]`);
@@ -1513,8 +1401,6 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         setupSelectWithOther('building_type');
         setupSelectWithOther('district');
 
-
-        // Радіо-кнопки
         const setRadioChecked = (name, value) => {
             const radio = form.querySelector(`input[name="${name}"][value="${value}"]`);
             if (radio) radio.checked = true;
@@ -1542,12 +1428,11 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         setupSelectWithOther('housing_type_search');
         form.querySelector('#target_rooms').value = listing.target_rooms || '';
         form.querySelector('#target_roommates_max').value = listing.target_roommates_max || '';
-        setupSelectWithOther('target_university'); // Університет в пошуку
+        setupSelectWithOther('target_university');
         form.querySelector('#target_uni_distance').value = listing.target_uni_distance || '';
 
         if(listing.ready_to_share) setRadioChecked('ready_to_share', listing.ready_to_share);
         if(listing.search_pet_policy) setRadioChecked('search_pet_policy', listing.search_pet_policy);
-
 
         // Поля 'find_home' / 'find_mate' (Про себе/Вимоги)
         if(listing.is_student) setRadioChecked('is_student', listing.is_student);
@@ -1577,28 +1462,25 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
         const roommateDescription = form.querySelector('#roommate_description');
         if (roommateDescription) roommateDescription.value = listing.roommate_description || '';
 
-        // Заповнення Чекбоксів (Характеристики)
         const characteristicKeys = new Set(listing.characteristics.map(c => c.system_key));
         form.querySelectorAll('input[name="characteristics"], input[name="search_characteristics"]').forEach(checkbox => {
             if (characteristicKeys.has(checkbox.value)) {
                 checkbox.checked = true;
             } else {
-                checkbox.checked = false; // Явно знімаємо позначку
+                checkbox.checked = false;
             }
         });
 
-        // Обробка чекбоксів "Інше" для характеристик при завантаженні
         form.querySelectorAll('input[name="characteristics_other_trigger"]').forEach(checkbox => {
             const textInputId = checkbox.getAttribute('onchange')?.match(/'([^']+)'/)?.[1];
             if (textInputId) {
                 const textInput = form.querySelector(`#${textInputId}`);
                 if (textInput) {
                     const dataKey = textInput.name;
-                    // Перевіряємо, чи є відповідне _other поле в даних оголошення
                     if (listing[dataKey]) {
-                        checkbox.checked = true; // Відмічаємо чекбокс "Інше"
-                        textInput.value = listing[dataKey]; // Заповнюємо текстове поле
-                        textInput.style.display = 'block'; // Показуємо його
+                        checkbox.checked = true;
+                        textInput.value = listing[dataKey];
+                        textInput.style.display = 'block';
                         textInput.classList.remove('hidden-other-input');
                     } else {
                         checkbox.checked = false;
@@ -1610,21 +1492,16 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
             }
         });
 
-
-        // Завантажуємо початкові фото
         if (loadInitialPhotosCallback && typeof loadInitialPhotosCallback === 'function') {
             loadInitialPhotosCallback(listing.photos);
         }
 
-        // Оновлюємо стан форми (видимість блоків)
         updateFormState(form);
-        // Ініціалізуємо карту з отриманими координатами (або дефолтними, якщо їх немає)
-        initializeMap(form, isNaN(initialLat) ? undefined : initialLat, isNaN(initialLng) ? undefined : initialLng); // --- Передаємо 'form' та координати
+        initializeMap(form, isNaN(initialLat) ? undefined : initialLat, isNaN(initialLng) ? undefined : initialLng);
 
     } catch (error) {
         console.error('Помилка завантаження даних для редагування:', error);
         alert(`Помилка: ${error.message}`);
-        // Можливо, перенаправити на іншу сторінку
         window.location.href = 'my_listings.html';
     }
 };
@@ -1632,12 +1509,10 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
 // =================================================================================
 // 4.3. ЛОГІКА ФОРМИ ФІЛЬТРІВ (з index.html)
 // =================================================================================
-/**
- * Налаштовує логіку для блоку пошуку та форми фільтрів на головній сторінці.
- */
+
 export const setupHomepageFilters = () => {
     const filtersForm = document.getElementById('filtersForm');
-    const actionButtons = document.querySelectorAll('.main-actions-menu .action-btn'); // Кнопки цілей
+    const actionButtons = document.querySelectorAll('.main-actions-menu .action-btn');
     const searchInput = document.querySelector('.search-input');
     const searchIcon = document.querySelector('.search-icon');
     if (!filtersForm || !actionButtons.length || !searchInput || !searchIcon) {
@@ -1656,21 +1531,17 @@ export const setupHomepageFilters = () => {
     const askCurrentHousing = filtersForm.querySelector('#ask_current_housing');
     const askMyChars = filtersForm.querySelector('#ask_my_chars');
 
-    // Радіокнопки у формі фільтрів
     const goalRadiosInForm = filtersForm.querySelectorAll('input[name="user_goal"]');
-    // Інші радіокнопки (тригери)
     const showCurrentHousingRadios = filtersForm.querySelectorAll('input[name="show_current_housing"]');
     const showMyCharsRadios = filtersForm.querySelectorAll('input[name="show_my_chars"]');
     const readyToShareRadios = filtersForm.querySelectorAll('input[name="ready_to_share_filter"]');
     const searchPetPolicyRadios = filtersForm.querySelectorAll('input[name="search_pet_policy"]');
     const filterPetDetailsDiv = filtersForm.querySelector('#filter_pet_details');
 
-    // Допоміжна функція для видимості
     const setVisible = (element, isVisible) => {
         if (element) element.style.display = isVisible ? 'block' : 'none';
     };
 
-    // --- Оновлення видимості секцій фільтрів ---
     const updateFilterVisibility = () => {
         const selectedGoal = filtersForm.querySelector('input[name="user_goal"]:checked')?.value;
         const wantsToShare = filtersForm.querySelector('input[name="ready_to_share_filter"]:checked')?.value;
@@ -1680,7 +1551,6 @@ export const setupHomepageFilters = () => {
 
         console.log("Updating visibility. Goal:", selectedGoal, "WantsToShare:", wantsToShare, "ShowCurrent:", showCurrentHousing, "ShowMy:", showMyChars);
 
-        // Скидаємо видимість для всіх динамічних секцій та питань (крім базової)
         [
             filterDesiredHousing, filterCurrentHousing, filterDesiredRoommate, filterMyChars, filterDesiredTenant,
             askCurrentHousing, askMyChars
@@ -1690,46 +1560,42 @@ export const setupHomepageFilters = () => {
         setVisible(filterBasic, true);
 
         // 2. Логіка для кожної мети
-        if (selectedGoal === 'find_housing') { // Знайти житло
-            setVisible(filterDesiredHousing, true); // 2. Бажані характеристики житла
+        if (selectedGoal === 'find_housing') {
+            setVisible(filterDesiredHousing, true);
 
-            // Показуємо/ховаємо деталі тварин
-            setVisible(filterPetDetailsDiv, !!isPetPolicyYes); // !! перетворює на boolean
-            if (!isPetPolicyYes && filterPetDetailsDiv) { // Знімаємо позначки, якщо "Дозволено" не вибрано
+            setVisible(filterPetDetailsDiv, !!isPetPolicyYes);
+            if (!isPetPolicyYes && filterPetDetailsDiv) {
                 filterPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
             }
 
             if (wantsToShare === 'yes' || wantsToShare === 'any') {
-                setVisible(filterDesiredRoommate, true); // 4. Бажані характеристики сусіда
-            }
-            // Питання про власні характеристики показуємо ЗАВЖДИ для цього типу, ПІСЛЯ секцій 2 та 4
-            setVisible(askMyChars, true);
-            if (showMyChars) {
-                setVisible(filterMyChars, true); // 5. Ваші характеристики
+                setVisible(filterDesiredRoommate, true);
             }
 
-        } else if (selectedGoal === 'find_roommate') { // Знайти сусіда (у своє житло)
-            setVisible(filterDesiredRoommate, true); // 4. Бажані характеристики сусіда
-            // Питання про власні характеристики після бажаних сусіда
             setVisible(askMyChars, true);
             if (showMyChars) {
-                setVisible(filterMyChars, true); // 5. Ваші характеристики
-            }
-            // Питання про характеристики житла ПІСЛЯ власних характеристик (або питання про них)
-            setVisible(askCurrentHousing, true);
-            if (showCurrentHousing) {
-                setVisible(filterCurrentHousing, true); // 3. Характеристики наявного житла
+                setVisible(filterMyChars, true);
             }
 
-        } else if (selectedGoal === 'rent_out_housing') { // Здати житло (шукати орендаря)
-            setVisible(filterDesiredTenant, true); // 6. Бажані характеристики орендаря
-            // Питання про характеристики житла ПІСЛЯ бажаних орендаря
+        } else if (selectedGoal === 'find_roommate') {
+            setVisible(filterDesiredRoommate, true);
+            setVisible(askMyChars, true);
+            if (showMyChars) {
+                setVisible(filterMyChars, true);
+            }
+
             setVisible(askCurrentHousing, true);
             if (showCurrentHousing) {
-                setVisible(filterCurrentHousing, true); // 3. Характеристики наявного житла
+                setVisible(filterCurrentHousing, true);
             }
-        } else if (selectedGoal === 'all' || !selectedGoal) { // Всі оголошення
-            // Показуємо базові + всі основні секції 2, 3, 4, 5, 6 БЕЗ питань-тригерів
+
+        } else if (selectedGoal === 'rent_out_housing') {
+            setVisible(filterDesiredTenant, true);
+            setVisible(askCurrentHousing, true);
+            if (showCurrentHousing) {
+                setVisible(filterCurrentHousing, true);
+            }
+        } else if (selectedGoal === 'all' || !selectedGoal) {
             setVisible(filterDesiredHousing, true);
             setVisible(filterPetDetailsDiv, !!isPetPolicyYes);
             if (!isPetPolicyYes && filterPetDetailsDiv) {
@@ -1752,15 +1618,12 @@ export const setupHomepageFilters = () => {
 
         const selectedGoal = formData.get('user_goal');
         const wantsToShare = formData.get('ready_to_share_filter');
-
-        // *** НОВЕ: Отримуємо значення політики щодо тварин ***
         const selectedPetPolicy = formData.get('search_pet_policy');
 
-        // Визначаємо listing_type для запиту
         if (selectedGoal === 'find_housing') {
             if (wantsToShare === 'no') {
                 params.append('listing_type', 'rent_out');
-            } else { // 'yes' or 'any' or not set
+            } else {
                 params.append('listing_type', 'rent_out');
                 params.append('listing_type', 'find_mate');
             }
@@ -1770,9 +1633,7 @@ export const setupHomepageFilters = () => {
         } else if (selectedGoal === 'rent_out_housing') {
             params.append('listing_type', 'find_home');
         }
-        // Якщо selectedGoal === 'all', listing_type не додається
 
-        // Збираємо дані з ВИДИМИХ секцій
         const visibleSections = Array.from(filtersForm.querySelectorAll('.filter-section'))
             .filter(el => el.style.display === 'block');
 
@@ -1786,10 +1647,9 @@ export const setupHomepageFilters = () => {
 
         visibleSections.forEach(section => {
             const sectionId = section.id;
-            // Збираємо значення з select, input[type=number], input[type=text]
             section.querySelectorAll('select, input[type="number"], input[type="text"][name$="_text"]')
                 .forEach(input => {
-                    const value = input.value?.trim(); // Додаємо ?.trim() для безпеки
+                    const value = input.value?.trim();
                     if (input.name === 'city' && value === 'other') {
                         const otherCityValue = formData.get('city_other_text')?.trim();
                         if (otherCityValue) params.append('city', otherCityValue);
@@ -1802,14 +1662,14 @@ export const setupHomepageFilters = () => {
                         params.append(input.name, value);
                     }
                 });
-            // Збираємо значення з радіокнопок (крім тригерів, мети та політики тварин)
+
             section.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
                 if (radio.name && !['user_goal', 'show_current_housing', 'show_my_chars', 'ready_to_share_filter', 'search_pet_policy'].includes(radio.name)) {
                     const value = radio.value;
                     if (value && value !== '') params.append(radio.name, value);
                 }
             });
-            // Збираємо значення з чекбоксів характеристик
+
             let charGroupName = null;
             if (sectionId === 'filter_desired_housing') charGroupName = 'desired_housing';
             else if (sectionId === 'filter_current_housing') charGroupName = 'current_housing';
@@ -1824,17 +1684,14 @@ export const setupHomepageFilters = () => {
             }
         });
 
-        // Додаємо вибрану мету до параметрів
         if (selectedGoal && selectedGoal !== 'all') {
             params.append('user_goal', selectedGoal);
         }
 
-        // Додаємо політику щодо тварин до параметрів, якщо вона не 'any'
         if (selectedPetPolicy && selectedPetPolicy !== 'any') {
             params.append('search_pet_policy', selectedPetPolicy);
         }
 
-        // Додаємо згруповані характеристики до параметрів
         for (const group in characteristics) {
             if (characteristics[group].length > 0) {
                 params.append(`${group}_characteristics`, [...new Set(characteristics[group])].join(','));
@@ -1846,9 +1703,6 @@ export const setupHomepageFilters = () => {
         fetchAndDisplayListings(filterQuery);
     };
 
-    // --- Слухачі подій ---
-
-    // Кнопки дій (#actionsMenu)
     actionButtons.forEach(button => {
         button.addEventListener('click', () => {
             const goal = button.getAttribute('data-goal');
@@ -1862,12 +1716,10 @@ export const setupHomepageFilters = () => {
             if (goalRadioInForm) goalRadioInForm.checked = true;
             else filtersForm.querySelectorAll('input[name="user_goal"]').forEach(r => r.checked = false);
 
-            // Явно встановлюємо тригери після reset
             filtersForm.querySelector('#show_current_housing_no').checked = true;
             filtersForm.querySelector('#show_my_chars_no').checked = true;
             filtersForm.querySelector('#filter_share_any').checked = true;
             filtersForm.querySelector('#filter_pet_policy_any').checked = true;
-
 
             updateFilterVisibility();
 
@@ -1879,7 +1731,6 @@ export const setupHomepageFilters = () => {
         });
     });
 
-    // Слухачі для всіх радіокнопок у формі (цілі, тригери, політика тварин)
     filtersForm.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', () => {
             if (radio.name === 'user_goal' && radio.checked) {
@@ -1887,11 +1738,10 @@ export const setupHomepageFilters = () => {
                 actionButtons.forEach(btn => btn.classList.remove('active-action'));
                 document.querySelector(`.action-btn[data-goal="${goalValue}"]`)?.classList.add('active-action');
             }
-            updateFilterVisibility(); // Завжди оновлюємо видимість при зміні будь-якого радіо
+            updateFilterVisibility();
         });
     });
 
-    // Слухач для відправки форми
     filtersForm.addEventListener('submit', (e) => {
         e.preventDefault();
         triggerSearchAndFilter();
@@ -1902,7 +1752,6 @@ export const setupHomepageFilters = () => {
         }
     });
 
-    // Слухач для кнопки "Скинути"
     filtersForm.querySelector('.reset-filters-btn')?.addEventListener('click', (e) => {
         e.preventDefault();
         filtersForm.reset();
@@ -1914,24 +1763,21 @@ export const setupHomepageFilters = () => {
         const allRadio = filtersForm.querySelector('input[name="user_goal"][value="all"]');
         if (allRadio) allRadio.checked = true;
 
-        // Явно встановлюємо тригери
         filtersForm.querySelector('#show_current_housing_no').checked = true;
         filtersForm.querySelector('#show_my_chars_no').checked = true;
         filtersForm.querySelector('#filter_share_any').checked = true;
         filtersForm.querySelector('#filter_pet_policy_any').checked = true;
 
 
-        updateFilterVisibility(); // Покаже всі секції
+        updateFilterVisibility();
         fetchAndDisplayListings('');
         console.log('Filters reset, showing all listings.');
     });
 
-    // Слухачі для пошуку
     searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); triggerSearchAndFilter(); } });
     searchIcon.addEventListener('click', triggerSearchAndFilter);
     searchIcon.style.cursor = 'pointer';
 
-    // Слухач для зміни міста ("Інше")
     const citySelect = filtersForm.querySelector('#filter_city');
     const cityOtherInput = filtersForm.querySelector('#filter_city_other_text');
     if (citySelect && cityOtherInput) {
@@ -1943,7 +1789,6 @@ export const setupHomepageFilters = () => {
         cityOtherInput.style.display = citySelect.value === 'other' ? 'block' : 'none';
     }
 
-    // Слухач для зміни району ("Інше")
     const districtSelect = filtersForm.querySelector('#filter_district');
     const districtOtherInput = filtersForm.querySelector('#filter_district_other_text');
     if (districtSelect && districtOtherInput) {
@@ -1955,7 +1800,6 @@ export const setupHomepageFilters = () => {
         districtOtherInput.style.display = districtSelect.value === 'other' ? 'block' : 'none';
     }
 
-    // --- Ініціалізація видимості при завантаженні ---
     const initialGoalButton = document.querySelector('.action-btn.active-action');
     const initialGoal = initialGoalButton?.getAttribute('data-goal') || 'all';
     const initialRadioInForm = filtersForm.querySelector(`input[name="user_goal"][value="${initialGoal}"]`);
@@ -1965,12 +1809,10 @@ export const setupHomepageFilters = () => {
         if (allRadio) allRadio.checked = true;
     }
 
-    // Встановлюємо початкові значення тригерів
     filtersForm.querySelector('#show_current_housing_no').checked = true;
     filtersForm.querySelector('#show_my_chars_no').checked = true;
     filtersForm.querySelector('#filter_share_any').checked = true;
     filtersForm.querySelector('#filter_pet_policy_any').checked = true;
-
-    updateFilterVisibility(); // Викликаємо для встановлення початкової видимості
+    updateFilterVisibility();
 };
 

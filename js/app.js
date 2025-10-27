@@ -1,9 +1,3 @@
-// =================================================================================
-// 0. ІМПОРТИ ТА ГЛОБАЛЬНІ ДАНІ
-// =================================================================================
-console.log(">>> app.js script loaded and executing...");
-
-// ВИКОРИСТОВУЄМО ДАНІ З МОДУЛЯ
 import { removeToken, getAuthHeaders, handleLogin, handleRegistration, MY_USER_ID, handleLoginSettings } from './modules/auth.js';
 import { loadConversations, handleMessageSend, handleChatUrlParams, setupSocketIO } from './modules/chat.js';
 import {
@@ -14,22 +8,20 @@ import {
 import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSettingsSubmission, loadPublicProfileData} from './modules/profile.js';
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
 
-// --- ФОТО: Додаємо URL за замовчуванням ---
 export const DEFAULT_LISTING_IMAGE = {
-    'rent_out': 'https://via.placeholder.com/400x300.png?text=Rent+Out',
-    'find_mate': 'https://via.placeholder.com/400x300.png?text=Find+Mate',
-    'find_home': 'https://via.placeholder.com/400x300.png?text=Find+Home',
-    'default': 'https://picsum.photos/400/300' // Загальний
+    'rent_out': './photo/default_listing_photo.png',
+    'find_mate': './photo/default_listing_photo.png',
+    'find_home': './photo/default_listing_photo.png',
+    'default': './photo/default_listing_photo.png'
 };
 
-// *** ДОДАНО: Глобальна функція для перемикання полів "Інше" ***
 window.toggleOtherInput = (checkboxElement, inputId) => {
     const inputElement = document.getElementById(inputId);
     if (inputElement) {
         inputElement.style.display = checkboxElement.checked ? 'block' : 'none';
         inputElement.classList.toggle('hidden-other-input', !checkboxElement.checked);
         if (!checkboxElement.checked) {
-            inputElement.value = ''; // Очищаємо поле, якщо чекбокс знято
+            inputElement.value = '';
         }
     }
 };
@@ -41,14 +33,10 @@ window.toggleOtherCityInput = (selectElement) => {
         inputElement.style.display = isOther ? 'block' : 'none';
         inputElement.classList.toggle('hidden-other-input', !isOther);
         if (!isOther) {
-            inputElement.value = ''; // Очищаємо поле, якщо вибрано не "Інше"
+            inputElement.value = '';
         }
     }
 };
-
-// =================================================================================
-// 1. ГЛОБАЛЬНІ ЗМІННІ ТА ФУНКЦІЇ ІНТЕРФЕЙСУ (Навігація, Сповіщення)
-// =================================================================================
 
 let currentUserFavoriteIds = new Set(); // Зберігає ID обраних оголошень
 
@@ -79,7 +67,7 @@ export const fetchAndDisplayListings = async (filterQuery = '') => {
     if (!container) return;
     container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження оголошень...</p>';
     try {
-        const defaultQuery = 'listing_type!=find_home'; // Default filter if none provided
+        const defaultQuery = 'listing_type!=find_home';
         const finalQuery = filterQuery || defaultQuery;
         const response = await fetch(`http://localhost:3000/api/listings?${finalQuery}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -201,7 +189,7 @@ const fetchAndDisplayListingDetail = async () => {
         const buildCharSection = (categoriesToShow) => {
             let html = '';
             for (const category of categoriesToShow) {
-                const sectionTitle = categoryNames[category] || category.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()); // Fallback title
+                const sectionTitle = categoryNames[category] || category.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
                 let characteristicsHTML = characteristicsByCategory[category] ? characteristicsByCategory[category].join('') : '';
 
                 const otherTextKey = category + '_other_text';
@@ -339,13 +327,13 @@ const fetchAndDisplayListingDetail = async () => {
         `;
 
         let authorPhoneHTML = '';
-        if (listing.show_phone_publicly && listing.phone_number) { //
+        if (listing.show_phone_publicly && listing.phone_number) {
             authorPhoneHTML = `
                 <div class="profile-phone-public" style="display: flex; margin-top: 10px;">
                     <i class="fas fa-phone"></i>
                     <a href="tel:${listing.phone_number}">${listing.phone_number}</a>
                 </div>
-            `; //
+            `;
         }
 
         const contactButtonHTML = (MY_USER_ID === listing.user_id)
@@ -359,7 +347,6 @@ const fetchAndDisplayListingDetail = async () => {
                </a>`);
 
 
-        // === Final HTML Assembly ===
         const detailHTML = `
             <div class="listing-detail-layout">
                 <div class="listing-detail-gallery">
@@ -413,45 +400,65 @@ const fetchAndDisplayListingDetail = async () => {
         `;
         container.innerHTML = detailHTML;
 
-        // --- Ініціалізація карти на сторінці деталей (якщо є координати) ---
-        const listingMapElement = document.getElementById('listingMap'); // Додайте цей div в detailHTML
-        if (listingMapElement && listing.latitude && listing.longitude) {
-            try {
-                const lat = parseFloat(listing.latitude);
-                const lng = parseFloat(listing.longitude);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    const detailMap = L.map(listingMapElement).setView([lat, lng], 15); // Масштаб 15
+        const listingMapElement = document.getElementById('listingMap');
+        console.log("Attempting to initialize map on detail page. Map element found:", !!listingMapElement);
+
+        if (listingMapElement) {
+            console.log("Coordinates received from backend:", { latitude: listing.latitude, longitude: listing.longitude });
+
+            const lat = listing.latitude ? parseFloat(listing.latitude) : null;
+            const lng = listing.longitude ? parseFloat(listing.longitude) : null;
+            console.log("Parsed coordinates:", { lat, lng });
+
+            if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+                listingMapElement.style.display = 'block';
+                listingMapElement.innerHTML = '';
+
+                try {
+                    console.log("Initializing Leaflet map at:", [lat, lng]);
+                    const detailMap = L.map(listingMapElement).setView([lat, lng], 15);
+
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     }).addTo(detailMap);
+
                     L.marker([lat, lng]).addTo(detailMap)
-                        .bindPopup(listing.title || 'Розташування') // Підпис для маркера
+                        .bindPopup(listing.title || 'Розташування')
                         .openPopup();
-                } else {
-                    listingMapElement.innerHTML = '<p>Не вдалося відобразити карту (невірні координати).</p>';
+
+                    setTimeout(() => {
+                        if (detailMap) {
+                            detailMap.invalidateSize();
+                            console.log("Detail map size invalidated.");
+                        }
+                    }, 10);
+
+                } catch (mapError) {
+                    console.error("Помилка ініціалізації карти Leaflet:", mapError);
+                    listingMapElement.innerHTML = '<p style="color: red; text-align: center; padding: 20px;">Помилка при відображенні карти.</p>';
+                    listingMapElement.style.height = 'auto';
                 }
-            } catch (mapError) {
-                console.error("Помилка ініціалізації карти:", mapError);
-                listingMapElement.innerHTML = '<p>Помилка при відображенні карти.</p>';
+            } else {
+                console.log("Coordinates are invalid or missing. Hiding map element.");
+                listingMapElement.style.display = 'none';
+                listingMapElement.innerHTML = '';
             }
-        } else if (listingMapElement) {
-            listingMapElement.innerHTML = '<p>Розташування на карті не вказано.</p>'; // Якщо координат немає
+        } else {
+            console.error("Map container element (#listingMap) not found in the generated HTML.");
         }
 
-        // --- Setup Thumbnail Click Listeners ---
         const thumbnails = container.querySelectorAll('.gallery-thumbnail:not(.inactive)');
         const mainImageElement = container.querySelector('#mainDetailImage');
         if (mainImageElement && thumbnails.length > 0) {
             thumbnails.forEach(thumb => {
                 thumb.addEventListener('click', () => {
-                    mainImageElement.src = thumb.src; // Change main image src
-                    thumbnails.forEach(t => t.classList.remove('active')); // Remove active class from all
-                    thumb.classList.add('active'); // Add active class to clicked thumbnail
+                    mainImageElement.src = thumb.src;
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
                 });
             });
         }
 
-        // --- Setup Favorite Button ---
         setupFavoriteButton(listingId, listing.user_id);
 
     } catch (error) {
@@ -464,34 +471,30 @@ const setupFavoriteButton = (listingId, authorId) => {
     const favButton = document.getElementById('favoriteBtn');
     if (!favButton) return;
 
-    // 1. Перевіряємо, чи залогінений користувач і чи це НЕ його оголошення
     if (!MY_USER_ID || MY_USER_ID === authorId) {
-        favButton.style.display = 'none'; // Ховаємо кнопку, якщо не залогінений або це власник
+        favButton.style.display = 'none';
         return;
     }
 
-    // 2. Показуємо кнопку
-    favButton.style.display = 'flex'; // 'flex' бо ми центруємо іконку
+    favButton.style.display = 'flex';
 
-    // 3. Встановлюємо початковий стан (зафарбоване чи ні)
     if (currentUserFavoriteIds.has(parseInt(listingId))) {
         favButton.classList.add('favorited');
-        favButton.querySelector('i').className = 'fas fa-heart'; // 'fas' - суцільне
+        favButton.querySelector('i').className = 'fas fa-heart';
         favButton.title = 'Видалити з обраного';
     } else {
         favButton.classList.remove('favorited');
-        favButton.querySelector('i').className = 'far fa-heart'; // 'far' - контур
+        favButton.querySelector('i').className = 'far fa-heart';
         favButton.title = 'Додати у вибране';
     }
 
-    // 4. Додаємо обробник кліка
     favButton.addEventListener('click', async () => {
         const isFavorited = favButton.classList.contains('favorited');
         const url = `http://localhost:3000/api/favorites/${listingId}`;
         const method = isFavorited ? 'DELETE' : 'POST';
 
         try {
-            favButton.disabled = true; // Блокуємо кнопку на час запиту
+            favButton.disabled = true;
 
             const response = await fetch(url, {
                 method: method,
@@ -499,7 +502,6 @@ const setupFavoriteButton = (listingId, authorId) => {
             });
 
             if (response.ok) {
-                // Успіх! Оновлюємо UI
                 if (isFavorited) {
                     favButton.classList.remove('favorited');
                     favButton.querySelector('i').className = 'far fa-heart';
@@ -523,10 +525,11 @@ const setupFavoriteButton = (listingId, authorId) => {
             console.error('Помилка при оновленні обраного:', error);
             alert('Помилка мережі. Спробуйте пізніше.');
         } finally {
-            favButton.disabled = false; // Розблоковуємо кнопку
+            favButton.disabled = false;
         }
     });
 };
+
 // --- Логіка favorites.html ---
 const fetchAndDisplayFavorites = async () => {
     const container = document.getElementById('favoritesContainer');
@@ -539,9 +542,7 @@ const fetchAndDisplayFavorites = async () => {
         return;
     }
 
-    // Показуємо спіннер
     container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження обраних...</p>';
-
 
     try {
         const response = await fetch('http://localhost:3000/api/my-favorites', {
@@ -553,14 +554,13 @@ const fetchAndDisplayFavorites = async () => {
         }
 
         const listings = await response.json();
-        container.innerHTML = ''; // Очищуємо спіннер
+        container.innerHTML = '';
 
         if (listings.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Ви ще не додали жодного оголошення до вибраного.</p>';
             return;
         }
 
-        // Рендеримо картки (використовуємо той самий шаблон, що й на index.html)
         listings.forEach(listing => {
             const imageUrl = listing.main_photo_url
                 || DEFAULT_LISTING_IMAGE[listing.listing_type]
@@ -609,9 +609,7 @@ const fetchAndDisplayMyListings = async () => {
         return;
     }
 
-    // Показуємо індикатор завантаження
     container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження ваших оголошень...</p>';
-
 
     try {
         const response = await fetch('http://localhost:3000/api/my-listings', {
@@ -626,7 +624,7 @@ const fetchAndDisplayMyListings = async () => {
         }
 
         const listings = await response.json();
-        container.innerHTML = ''; // Очищуємо індикатор завантаження
+        container.innerHTML = '';
 
         if (listings.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">У вас ще немає створених оголошень.</p>';
@@ -636,8 +634,6 @@ const fetchAndDisplayMyListings = async () => {
         listings.forEach(listing => {
             const imageUrl = listing.main_photo_url || DEFAULT_LISTING_IMAGE[listing.listing_type] || DEFAULT_LISTING_IMAGE['default'];
 
-
-            // Визначення типу оголошення для тегу
             let typeTag = '';
             if(listing.listing_type === 'rent_out') {
                 typeTag = '<span class="type-tag rent">Здають</span>';
@@ -649,7 +645,7 @@ const fetchAndDisplayMyListings = async () => {
 
             const listingCard = document.createElement('div');
             listingCard.className = `my-listing-card ${!listing.is_active ? 'inactive' : ''}`;
-            listingCard.dataset.listingId = listing.listing_id; // Зберігаємо ID
+            listingCard.dataset.listingId = listing.listing_id;
 
             listingCard.innerHTML = `
                 <a href="listing_detail.html?id=${listing.listing_id}" class="my-listing-link">
@@ -672,19 +668,16 @@ const fetchAndDisplayMyListings = async () => {
                 </div>
             `;
 
-            // Додаємо обробники подій для кнопок
             listingCard.querySelector('.toggle-status').addEventListener('click', () => {
-                handleToggleListingStatus(listing.listing_id, !listing.is_active); // Передаємо НОВИЙ бажаний статус
+                handleToggleListingStatus(listing.listing_id, !listing.is_active);
             });
             listingCard.querySelector('.delete').addEventListener('click', () => {
                 handleDeleteListing(listing.listing_id);
             });
 
-            // === ОНОВЛЕНО СЛУХАЧ РЕДАГУВАННЯ ===
             listingCard.querySelector('.edit').addEventListener('click', () => {
-                window.location.href = `edit_listing.html?id=${listing.listing_id}`; // НОВИЙ КОД
+                window.location.href = `edit_listing.html?id=${listing.listing_id}`;
             });
-            // === КІНЕЦЬ ОНОВЛЕННЯ ===
 
             container.appendChild(listingCard);
         });
@@ -693,7 +686,6 @@ const fetchAndDisplayMyListings = async () => {
         console.error('Помилка завантаження моїх оголошень:', error);
         container.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
         if (error.message === 'Необхідна автентифікація.') {
-            // Затримка перед перенаправленням, щоб користувач встиг побачити повідомлення
             setTimeout(() => { window.location.href = 'login.html'; }, 1500);
         }
     }
@@ -719,7 +711,6 @@ const handleToggleListingStatus = async (listingId, newStatus) => {
         const result = await response.json();
         alert(result.message);
 
-        // Оновлюємо вигляд картки без перезавантаження сторінки
         const card = document.querySelector(`.my-listing-card[data-listing-id="${listingId}"]`);
         if (card) {
             const statusText = card.querySelector('.my-listing-status');
@@ -762,17 +753,15 @@ const handleDeleteListing = async (listingId) => {
         const result = await response.json();
         alert(result.message);
 
-        // Видаляємо картку зі сторінки
         const card = document.querySelector(`.my-listing-card[data-listing-id="${listingId}"]`);
         if (card) {
             card.remove();
         }
-        // Перевіряємо, чи залишились ще оголошення
+
         const container = document.getElementById('myListingsContainer');
         if (container && container.children.length === 0) {
             container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">У вас більше немає створених оголошень.</p>';
         }
-
 
     } catch (error) {
         console.error('Помилка видалення:', error);
@@ -780,201 +769,148 @@ const handleDeleteListing = async (listingId) => {
     }
 };
 
-// =================================================================================
 // ЛОГІКА СТОРІНКИ report_bug.html
-// =================================================================================
-
 const setupReportBugPage = () => {
     const reportForm = document.getElementById('reportForm');
     if (!reportForm) return;
 
-    const problemTags = reportForm.querySelectorAll('.problem-tag'); // Кнопки вибору типу
-    const hiddenCheckboxesContainer = document.getElementById('hiddenProblemTypes'); // Контейнер для прихованих чекбоксів
-    const descriptionInput = document.getElementById('problemDescription'); // Поле для опису
-    const fileInput = document.getElementById('fileInput'); // Інпут для файлів
-    const fileListContainer = document.getElementById('fileList'); // Контейнер для списку файлів
-    const submitBtn = reportForm.querySelector('.submit-btn'); // Кнопка "Надіслати"
-    const cancelBtn = reportForm.querySelector('.cancel-btn'); // Кнопка "Скасувати"
-
-    // Використовуємо Set для зберігання унікальних вибраних значень типів проблеми
+    const problemTags = reportForm.querySelectorAll('.problem-tag');
+    const hiddenCheckboxesContainer = document.getElementById('hiddenProblemTypes');
+    const descriptionInput = document.getElementById('problemDescription');
+    const fileInput = document.getElementById('fileInput');
+    const fileListContainer = document.getElementById('fileList');
+    const submitBtn = reportForm.querySelector('.submit-btn');
+    const cancelBtn = reportForm.querySelector('.cancel-btn');
     const selectedProblemTypes = new Set();
 
-    /**
-     * Оновлює приховані чекбокси, які будуть надіслані з формою.
-     * Створює <input type="checkbox" name="problemTypes[]" value="..." checked>
-     * для кожного вибраного типу проблеми.
-     */
     const updateHiddenCheckboxes = () => {
-        hiddenCheckboxesContainer.innerHTML = ''; // Очищуємо попередні чекбокси
-        // Для кожного вибраного типу створюємо відповідний чекбокс
+        hiddenCheckboxesContainer.innerHTML = '';
         selectedProblemTypes.forEach(value => {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.name = 'problemTypes[]'; // Важливо: '[]' для передачі масиву
+            checkbox.name = 'problemTypes[]';
             checkbox.value = value;
-            checkbox.checked = true; // Завжди позначений, бо він відповідає вибраному типу
+            checkbox.checked = true;
             hiddenCheckboxesContainer.appendChild(checkbox);
         });
     };
 
-    /**
-     * Оновлює список імен вибраних файлів, що відображається користувачу.
-     */
     const updateFileList = () => {
-        // Якщо контейнер для списку не знайдено, виходимо
         if (!fileListContainer) return;
 
-        fileListContainer.innerHTML = ''; // Очищуємо поточний список
+        fileListContainer.innerHTML = '';
 
-        // Якщо файли вибрано, створюємо список
         if (fileInput.files.length > 0) {
-            // Проходимо по кожному вибраному файлу
             for (let i = 0; i < fileInput.files.length; i++) {
                 const file = fileInput.files[i];
-                // Створюємо елемент списку
                 const listItem = document.createElement('div');
-                listItem.className = 'file-list-item'; // Додаємо CSS клас
-                // Вставляємо іконку та ім'я файлу
+                listItem.className = 'file-list-item';
                 listItem.innerHTML = `
                     <i class="fas fa-file-alt"></i> <span>${file.name}</span>       `;
-                // Додаємо елемент до контейнера
                 fileListContainer.appendChild(listItem);
             }
         }
     };
 
-    // --- Обробка кліку на кнопки типів проблеми ---
     problemTags.forEach(tag => {
         tag.addEventListener('click', () => {
-            // Отримуємо значення типу проблеми з data-атрибута кнопки
             const value = tag.dataset.value;
 
-            // Перемикаємо CSS клас 'active' для візуального підсвічування
             tag.classList.toggle('active');
 
-            // Оновлюємо Set вибраних типів
             if (tag.classList.contains('active')) {
-                selectedProblemTypes.add(value); // Додаємо тип, якщо кнопка стала активною
+                selectedProblemTypes.add(value);
             } else {
-                selectedProblemTypes.delete(value); // Видаляємо тип, якщо кнопка стала неактивною
+                selectedProblemTypes.delete(value);
             }
 
-            // Оновлюємо приховані чекбокси, щоб дані коректно надіслались
             updateHiddenCheckboxes();
-
-            // Виводимо в консоль поточний список вибраних типів (для налагодження)
             console.log('Вибрані типи проблем:', Array.from(selectedProblemTypes));
         });
     });
 
-    // --- Додаємо слухача події 'change' для інпуту файлів ---
     if (fileInput) {
-        // Коли користувач вибирає файли, викликаємо функцію оновлення списку
         fileInput.addEventListener('change', updateFileList);
     }
 
-    // --- Обробка відправки форми ---
     reportForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Запобігаємо стандартній відправці форми
-        const description = descriptionInput.value.trim(); // Отримуємо текст опису
+        e.preventDefault();
+        const description = descriptionInput.value.trim();
 
-        // --- Валідація форми ---
-        if (selectedProblemTypes.size === 0) { // Перевіряємо, чи вибрано хоча б один тип
+        if (selectedProblemTypes.size === 0) {
             alert('Будь ласка, оберіть хоча б один тип проблеми.');
-            return; // Зупиняємо відправку
+            return;
         }
-        if (!description) { // Перевіряємо, чи введено опис
+        if (!description) {
             alert('Будь ласка, опишіть проблему.');
-            descriptionInput.focus(); // Ставимо фокус на поле опису
-            return; // Зупиняємо відправку
+            descriptionInput.focus();
+            return;
         }
-        // --- Кінець валідації ---
 
-        // Блокуємо кнопку та змінюємо текст на час відправки
         submitBtn.disabled = true;
         submitBtn.textContent = 'Надсилання...';
 
-        // Створюємо об'єкт FormData прямо з HTML-форми.
-        // Він автоматично включатиме:
-        // - Текст з <textarea name="problemDescription">
-        // - Вибрані файли з <input type="file" name="files">
-        // - Значення всіх checked чекбоксів з #hiddenProblemTypes (name="problemTypes[]")
         const formData = new FormData(reportForm);
-
         try {
-            // Надсилаємо дані на сервер методом POST
             const response = await fetch('http://localhost:3000/api/report-bug', {
                 method: 'POST',
-                headers: getAuthHeaders(false), // Важливо: isJson=false для FormData
-                body: formData, // Передаємо FormData
+                headers: getAuthHeaders(false),
+                body: formData,
             });
 
-            // Перевіряємо відповідь сервера
             if (!response.ok) {
-                // Якщо помилка, намагаємось отримати текст помилки з відповіді
                 const errorData = await response.json();
-                // Кидаємо помилку, щоб перейти в блок catch
                 throw new Error(errorData.error || `HTTP помилка! Статус: ${response.status}`);
             }
 
-            // Якщо відповідь успішна (ok)
-            const result = await response.json(); // Отримуємо дані з відповіді
-            alert(result.message); // Показуємо повідомлення про успіх
-            reportForm.reset(); // Скидаємо всі поля форми
-            selectedProblemTypes.clear(); // Очищуємо Set вибраних типів
-            problemTags.forEach(tag => tag.classList.remove('active')); // Знімаємо виділення з кнопок
-            fileListContainer.innerHTML = ''; // Очищуємо список файлів
-            updateHiddenCheckboxes(); // Очищуємо приховані чекбокси
+            const result = await response.json();
+            alert(result.message);
+            reportForm.reset();
+            selectedProblemTypes.clear();
+            problemTags.forEach(tag => tag.classList.remove('active'));
+            fileListContainer.innerHTML = '';
+            updateHiddenCheckboxes();
 
         } catch (error) {
-            // Обробка помилок (мережевих або отриманих від сервера)
             console.error('Помилка надсилання звіту:', error);
-            alert(`Помилка: ${error.message}`); // Показуємо повідомлення про помилку
+            alert(`Помилка: ${error.message}`);
         } finally {
-            // У будь-якому випадку (успіх чи помилка) розблоковуємо кнопку
             submitBtn.disabled = false;
             submitBtn.textContent = 'Надіслати';
         }
     });
 
-    // --- Обробка кнопки "Скасувати" ---
     cancelBtn.addEventListener('click', () => {
-        // Питаємо підтвердження у користувача
         if (confirm('Ви впевнені, що хочете скасувати звіт? Введені дані буде втрачено.')) {
             reportForm.reset(); // Скидаємо форму
             selectedProblemTypes.clear(); // Очищуємо Set
-            problemTags.forEach(tag => tag.classList.remove('active')); // Знімаємо виділення кнопок
-            fileListContainer.innerHTML = ''; // Очищуємо список файлів
-            updateHiddenCheckboxes(); // Очищуємо приховані чекбокси
-            // Можна додати перехід назад: history.back();
+            problemTags.forEach(tag => tag.classList.remove('active'));
+            fileListContainer.innerHTML = '';
+            updateHiddenCheckboxes();
         }
     });
 };
 
 // =================================================================================
-// 5. ГОЛОВНИЙ ВИКОНАВЧИЙ БЛОК (РОУТЕР)
+// 5. ГОЛОВНИЙ ВИКОНАВЧИЙ БЛОК
 // =================================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log(">>> DOMContentLoaded event fired."); // <--- ДОДАЙТЕ ЦЕЙ РЯДОК
     (async () => {
         console.log(">>> Async function started.");
-        await fetchFavoriteIds(); // Завантажуємо ID обраних
-        setupSocketIO(); // Ініціалізуємо сокети
+        await fetchFavoriteIds();
+        setupSocketIO();
 
         const path = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
-        const listingId = urlParams.get('id'); // ID для detail та edit
+        const listingId = urlParams.get('id');
         const userIdForProfile = urlParams.get('id');
 
         await initializeNavigation();
-        console.log(">>> Router: Current path =", JSON.stringify(path)); // Використовуємо JSON.stringify
-        console.log(">>> Router: path length =", path.length); // Додаємо довжину
-        console.log(">>> Router: includes('user_profile.html') =", path.includes('user_profile.html')); // Перевірка через includes
 
         // Головна сторінка
         if (path.endsWith('/') || path.endsWith('index.html')) {
-            await fetchAndDisplayListings('listing_type!=find_home'); // Default view
+            await fetchAndDisplayListings('listing_type!=find_home');
             setupHomepageFilters();
         }
         // Реєстрація
@@ -988,13 +924,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Редагування оголошення
         else if (path.endsWith('edit_listing.html')) {
-            if (!listingId) { /* ... обробка помилки ID ... */ window.location.href = 'my_listings.html'; }
-            else if (!MY_USER_ID) { /* ... обробка неавторизованого ... */ window.location.href = 'login.html'; }
+            if (!listingId) { window.location.href = 'my_listings.html'; }
+            else if (!MY_USER_ID) {window.location.href = 'login.html'; }
             else {
-                const editFormHandler = await handleListingUpdateSubmission(); // Отримуємо об'єкт з функцією
-                // Спочатку завантажуємо дані, а потім викликаємо loadInitialPhotos
+                const editFormHandler = await handleListingUpdateSubmission();
                 await loadListingDataForEdit('editListingForm', listingId, editFormHandler.loadInitialPhotos);
-                // loadInitialPhotos буде викликано всередині loadListingDataForEdit, коли дані будуть готові
             }
         }
         // Деталі оголошення
@@ -1008,11 +942,11 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (path.endsWith('my_listings.html')) { await fetchAndDisplayMyListings(); }
         // Чат
         else if (path.endsWith('chat.html')) {
-            if (!MY_USER_ID) { /* ... обробка неавторизованого ... */ window.location.href = 'login.html'; }
+            if (!MY_USER_ID) {window.location.href = 'login.html'; }
             else {
                 await loadConversations();
                 handleMessageSend();
-                await handleChatUrlParams(); // Перевірка URL параметрів
+                await handleChatUrlParams();
             }
         }
         // Налаштування
@@ -1053,16 +987,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Публічний профіль
         else if (path.includes('user_profile.html')) {
             console.log(">>> Router: Matched user_profile.html (using includes)");
-            console.log(">>> Router: Matched user_profile.html"); // Перевірка
-            const userIdForProfile = urlParams.get('id'); // Переконайся, що ця змінна тут визначається
-            console.log(">>> Router: userIdForProfile =", userIdForProfile); // Перевірка
+            console.log(">>> Router: Matched user_profile.html");
+            const userIdForProfile = urlParams.get('id');
+            console.log(">>> Router: userIdForProfile =", userIdForProfile);
             if (!userIdForProfile) {
                 console.error(">>> Router: User ID not found in URL for profile page!");
-                // Повідомлення про помилку для користувача
                 document.body.innerHTML = '<h1>Помилка: ID користувача не вказано в URL.</h1>';
             } else {
-                await loadPublicProfileData(); // Виклик функції завантаження
-                console.log(">>> Router: Called loadPublicProfileData()"); // Перевірка
+                await loadPublicProfileData();
+                console.log(">>> Router: Called loadPublicProfileData()");
             }
         }
         // Обране
@@ -1077,7 +1010,5 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             setupReportBugPage();
         }
-
-    })(); // Само_викликаюча асинхронна функція
-    console.log(">>> AFTER async function IIFE setup.");
+    })();
 });

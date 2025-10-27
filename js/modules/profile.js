@@ -1,16 +1,9 @@
-// =================================================================================
-// PROFILE MODULE
-// =================================================================================
-
 import { getAuthHeaders, MY_USER_ID, removeToken } from './auth.js';
 import { setupNavLinks, DEFAULT_AVATAR_URL } from './navigation.js';
 import {DEFAULT_LISTING_IMAGE} from "../app.js";
 
-/**
- * Завантажує дані профілю для форми.
- */
+
 export const loadProfileData = async () => {
-    // Перевірка MY_USER_ID вже є в роутері, але ми можемо перевірити ще раз
     if (!MY_USER_ID) {
         alert('Будь ласка, увійдіть, щоб переглянути свій профіль.');
         window.location.href = 'login.html';
@@ -38,7 +31,7 @@ export const loadProfileData = async () => {
         setInputValue('profile_last_name', user.last_name);
         setInputValue('profile_email', user.email);
         setInputValue('profile_city', user.city);
-        setInputValue('profile_phone', user.phone_number); // ОНОВЛЕНО
+        setInputValue('profile_phone', user.phone_number);
         setInputValue('profile_bio', user.bio);
 
         if (user.date_of_birth) {
@@ -54,14 +47,12 @@ export const loadProfileData = async () => {
     } catch (error) {
         console.error('Помилка завантаження профілю:', error);
         alert(error.message);
-        removeToken(); // Видаляємо недійсний токен
+        removeToken();
         window.location.href = 'login.html';
     }
 };
 
-/**
- * Завантажує фото аватара на сервер.
- */
+//Завантажує фото аватара на сервер.
 export const handleAvatarUpload = async (file) => {
     if (!file) return;
     const formData = new FormData();
@@ -87,7 +78,7 @@ export const handleAvatarUpload = async (file) => {
 
         const avatarImg = document.getElementById('profileAvatarImg');
         if (avatarImg) avatarImg.src = result.avatarUrl;
-        await setupNavLinks(); // Оновлюємо аватар в хедері
+        await setupNavLinks();
 
     } catch (error) {
         console.error('Помилка завантаження аватара:', error);
@@ -98,19 +89,14 @@ export const handleAvatarUpload = async (file) => {
     }
 };
 
-/**
- * Налаштовує слухачі подій для сторінки профілю (форма, кнопки).
- */
 export const setupProfileEventListeners = () => {
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(profileForm);
-            // Дані ТІЛЬКИ з форми
             const dataFromForm = Object.fromEntries(formData.entries());
 
-            // === Отримуємо поточні дані ===
             let currentProfileData = {};
             try {
                 const profileResponse = await fetch('http://localhost:3000/api/profile', { headers: getAuthHeaders() });
@@ -118,11 +104,8 @@ export const setupProfileEventListeners = () => {
                 currentProfileData = await profileResponse.json();
             } catch (error) {
                 alert(`Помилка: ${error.message}`);
-                return; // Не продовжуємо, якщо не вдалося отримати дані
+                return;
             }
-
-            // Об'єднуємо поточні дані з даними форми
-            // Дані з форми мають пріоритет
             const updatedProfileData = { ...currentProfileData, ...dataFromForm };
 
             try {
@@ -140,11 +123,9 @@ export const setupProfileEventListeners = () => {
                 const result = await response.json();
                 alert(result.message);
 
-                // Оновлюємо ім'я в сайдбарі, якщо воно змінилося
                 const avatarName = document.getElementById('profileAvatarName');
                 if (avatarName && (result.user.first_name !== currentProfileData.first_name || result.user.last_name !== currentProfileData.last_name)) {
                     avatarName.textContent = `${result.user.first_name || ''} ${result.user.last_name || ''}`;
-                    // Також оновлюємо аватар у хедері (на випадок зміни імені там)
                     await setupNavLinks();
                 }
 
@@ -155,7 +136,6 @@ export const setupProfileEventListeners = () => {
         });
     }
 
-    // Кнопка "Вийти" на сторінці профілю
     const logoutButton = document.getElementById('btnLogout');
     if (logoutButton) {
         logoutButton.addEventListener('click', (e) => {
@@ -168,7 +148,6 @@ export const setupProfileEventListeners = () => {
         });
     }
 
-    // Слухач для завантаження аватара
     const avatarInput = document.getElementById('avatar-upload');
     if (avatarInput) {
         avatarInput.addEventListener('change', (event) => {
@@ -179,7 +158,6 @@ export const setupProfileEventListeners = () => {
         });
     }
 
-    // Інші кнопки
     document.getElementById('btnMyListings')?.addEventListener('click', () => {
         window.location.href = 'my_listings.html';
     });
@@ -191,9 +169,7 @@ export const setupProfileEventListeners = () => {
     });
 };
 
-/**
- * Завантажує дані для сторінки налаштувань.
- */
+
 export const loadSettingsData = async () => {
     if (!MY_USER_ID) {
         window.location.href = 'login.html';
@@ -216,9 +192,7 @@ export const loadSettingsData = async () => {
     }
 };
 
-/**
- * Обробляє відправку форми налаштувань.
- */
+//Обробляє відправку форми налаштувань.
 export const handleSettingsSubmission = () => {
     const form = document.getElementById('settingsForm');
     if (!form) return;
@@ -238,7 +212,7 @@ export const handleSettingsSubmission = () => {
             return;
         }
 
-        profileData.show_phone_publicly = !!data.show_phone_publicly; // Оновлюємо тільки поле з форми
+        profileData.show_phone_publicly = !!data.show_phone_publicly;
 
         try {
             const response = await fetch('http://localhost:3000/api/profile', {
@@ -269,36 +243,32 @@ export const loadPublicProfileData = async () => {
     const loadingIndicator = document.getElementById('loadingIndicator');
     const profileContainer = document.getElementById('profileContainer');
 
-    // Перевірка наявності основних елементів
     if (!loadingIndicator || !profileContainer) {
         console.error("Critical Error: loadingIndicator or profileContainer element not found!");
-        // Можливо, показати помилку користувачу інакше
         if(loadingIndicator) loadingIndicator.innerHTML = "<h1>Помилка сторінки</h1><p>Важливі елементи інтерфейсу не знайдено.</p>";
         return;
     }
     console.log("Elements loadingIndicator and profileContainer found.");
 
-    // Показуємо індикатор завантаження на початку
     loadingIndicator.style.display = 'block';
     profileContainer.style.display = 'none';
 
-    let user = null; // Оголошуємо за межами try
-    let listings = []; // Оголошуємо за межами try
+    let user = null;
+    let listings = [];
 
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('id');
 
         if (!userId) throw new Error('ID користувача не вказано.');
-        const currentUserId = MY_USER_ID; // Отримуємо значення в окрему змінну
-        console.log('Checking redirection: currentUserId =', currentUserId, ' | page userId =', userId); // Додаємо логування
-        // Перевіряємо, що currentUserId не null/undefined ПЕРЕД викликом toString()
+        const currentUserId = MY_USER_ID;
+        console.log('Checking redirection: currentUserId =', currentUserId, ' | page userId =', userId);
         if (currentUserId !== null && currentUserId !== undefined && currentUserId.toString() === userId) {
             console.log("Redirecting to own profile page.");
             window.location.href = 'profile.html';
-            return; // Зупиняємо виконання, якщо це власний профіль
+            return;
         }
-        console.log("Not redirecting. Proceeding to fetch data..."); // Логування, що перенаправлення не відбулося
+        console.log("Not redirecting. Proceeding to fetch data...");
 
         console.log(`Fetching data for user ID: ${userId}`);
         const profilePromise = fetch(`http://localhost:3000/api/users/${userId}/public-profile`);
@@ -306,37 +276,30 @@ export const loadPublicProfileData = async () => {
         const [profileResponse, listingsResponse] = await Promise.all([profilePromise, listingsPromise]);
         console.log("API responses received.");
 
-        // Перевірка відповіді профілю
         if (profileResponse.status === 404) throw new Error('Користувача не знайдено.');
         if (!profileResponse.ok) {
             const errorText = await profileResponse.text().catch(() => 'Не вдалося прочитати відповідь сервера');
             throw new Error(`Не вдалося завантажити профіль (Статус: ${profileResponse.status}). ${errorText}`);
         }
-        user = await profileResponse.json(); // Присвоюємо значення змінній user
+        user = await profileResponse.json();
         console.log("User profile data parsed:", user);
 
-        // Обробка відповіді оголошень
         if (!listingsResponse.ok) {
             console.warn(`Не вдалося завантажити оголошення користувача (Статус: ${listingsResponse.status}). Відображення без оголошень.`);
         } else {
             try {
-                listings = await listingsResponse.json(); // Присвоюємо значення змінній listings
+                listings = await listingsResponse.json();
                 console.log(`User listings data parsed: ${listings.length} items`);
             } catch (jsonError) {
                 console.error('Помилка парсингу JSON оголошень:', jsonError);
-                // listings залишається []
             }
         }
 
-        // !!!!! ТЕПЕР МИ ВПЕВНЕНІ, ЩО ДАНІ ОТРИМАНО (АБО БУЛА ОБРОБЛЕНА ПОМИЛКА ОТРИМАННЯ) !!!!!
-        // Ховаємо індикатор і показуємо контейнер ТУТ, ДО заповнення даними
         console.log("Hiding loader, showing container BEFORE populating data...");
         loadingIndicator.style.display = 'none';
-        profileContainer.style.display = 'flex'; // Показуємо основний блок
+        profileContainer.style.display = 'flex';
 
-        // --- Заповнення даними (з додатковими перевірками та логуванням помилок заповнення) ---
         console.log("Populating profile data into HTML...");
-        // Використовуємо try...catch для всього блоку заповнення, щоб зловити будь-які помилки тут
         try {
             document.title = `UniHome | Профіль ${user.first_name || 'Користувач'}`;
 
@@ -357,7 +320,6 @@ export const loadPublicProfileData = async () => {
                 }
             };
 
-            // --- Заповнення елементів (код як у попередньому варіанті, але всередині нового try) ---
             safeSet('profileAvatarImg', 'src', user.avatar_url || DEFAULT_AVATAR_URL);
             safeSet('profileAvatarName', 'textContent', `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Користувач');
 
@@ -383,7 +345,7 @@ export const loadPublicProfileData = async () => {
             const phoneContainer = document.getElementById('publicPhoneContainer');
             const phoneLink = document.getElementById('publicPhoneLink');
             if (phoneContainer && phoneLink) {
-                if (user.phone_number) { // Перевірка на null/undefined/порожній рядок
+                if (user.phone_number) {
                     phoneLink.href = `tel:${user.phone_number}`;
                     phoneLink.textContent = user.phone_number;
                     phoneContainer.style.display = 'flex';
@@ -445,30 +407,24 @@ export const loadPublicProfileData = async () => {
             safeSetHTML('userListingsContainer', listingsHTML);
 
             console.log("Finished populating data. Showing content...");
-            // ТЕПЕР ховаємо індикатор і показуємо контент
             loadingIndicator.style.display = 'none';
             profileContainer.style.display = 'flex';
 
         } catch (populationError) {
-            // Якщо сталася помилка ПІД ЧАС ЗАПОВНЕННЯ ДАНИМИ
             console.error("Error occurred while populating profile data into HTML:", populationError);
-            // Можна показати повідомлення про часткове завантаження або залишити як є,
-            // оскільки основний контейнер вже видимий.
-            // Наприклад, додати повідомлення в кінець контейнера:
             if(profileContainer) {
                 profileContainer.innerHTML += `<p style="color: red; grid-column: 1 / -1; text-align: center;">Виникла помилка під час відображення деяких даних.</p>`;
             }
         }
 
-    } catch (error) { // Обробка помилок ОТРИМАННЯ даних
+    } catch (error) {
         console.error('Критична помилка завантаження публічного профілю:', error);
         if (loadingIndicator) {
             loadingIndicator.innerHTML = `<h1>Помилка завантаження</h1><p style="text-align: center;">${error.message}</p>`;
-            loadingIndicator.style.display = 'block'; // Показуємо помилку
+            loadingIndicator.style.display = 'block';
         }
         if (profileContainer) {
-            profileContainer.style.display = 'none'; // Ховаємо контейнер
+            profileContainer.style.display = 'none';
         }
     }
-    // Блок finally не потрібен, оскільки ми керуємо видимістю в кінці try та в catch
 };
