@@ -122,7 +122,6 @@ const fetchAndDisplayListingDetail = async () => {
     const container = document.getElementById('listingDetailContainer');
     if (!container) return;
 
-    // Show loading placeholder
     container.innerHTML = `
         <div class="loading-placeholder">
             <h1>Завантаження деталей...</h1>
@@ -150,8 +149,7 @@ const fetchAndDisplayListingDetail = async () => {
         const listing = await response.json();
         document.title = `UniHome | ${listing.title}`;
 
-        // --- Photo display logic with defaults ---
-        let mainImage = listing.photos?.find(p => p.is_main); // Use optional chaining
+        let mainImage = listing.photos?.find(p => p.is_main);
         let mainImageUrl = mainImage?.image_url
             || listing.main_photo_url
             || DEFAULT_LISTING_IMAGE[listing.listing_type]
@@ -169,14 +167,11 @@ const fetchAndDisplayListingDetail = async () => {
             photoGalleryHTML = `<img src="${mainImageUrl}" alt="${listing.title}" class="gallery-thumbnail inactive">`;
         }
 
-        // === Characteristic Grouping Logic ===
-
-        // 1. Corrected dictionary for category names (matched with another-branch schema.sql)
         const categoryNames = {
             'tech': 'Побутова техніка',
             'media': 'Мультимедіа',
             'comfort': 'Комфорт',
-            'pets_allowed_detail': 'Домашні улюбленці (Дозволено)', // Corrected key based on schema
+            'pets_allowed_detail': 'Домашні улюбленці (Дозволено)',
             'blackout': 'Автономність при блекауті',
             'rules': 'Правила',
             'communications': 'Комунікації',
@@ -190,11 +185,8 @@ const fetchAndDisplayListingDetail = async () => {
             'mate_lifestyle': 'Бажаний спосіб життя',
             'mate_interests': 'Бажані інтереси',
             'mate_pets': 'Тварини у сусіда'
-            // University categories (e.g., 'university_kyiv') exist in schema but are not explicitly handled here for section titles.
-            // Characteristics with these categories will still be fetched if present in the listing.
         };
 
-        // 2. Group characteristics from backend
         const characteristicsByCategory = {};
         if (listing.characteristics) {
             listing.characteristics.forEach(char => {
@@ -240,7 +232,7 @@ const fetchAndDisplayListingDetail = async () => {
             const myCategories = ['my_personality', 'my_lifestyle', 'my_interests', 'my_pets'];
             const myCharsHTML = buildCharSection(myCategories);
 
-            if (listing.my_age || listing.my_gender || listing.my_smoking || listing.my_drinking || listing.my_guests || myCharsHTML) { // Added checks for smoking/drinking/guests
+            if (listing.my_age || listing.my_gender || listing.my_smoking || listing.my_drinking || listing.my_guests || myCharsHTML) {
                 aboutAuthorHTML = `
                     <div class="detail-section">
                         <h2>Про автора</h2>
@@ -293,7 +285,7 @@ const fetchAndDisplayListingDetail = async () => {
         if (listing.study_conditions) {
             optionalFieldsHTML += `<div class="char-category-group"><h3>Умови для навчання</h3><p>${listing.study_conditions.replace(/\n/g, '<br>')}</p></div>`;
         }
-        if (listing.owner_rules && listing.listing_type === 'rent_out') { // Only for rent_out
+        if (listing.owner_rules && listing.listing_type === 'rent_out') {
             optionalFieldsHTML += `<div class="char-category-group"><h3>Правила від власника</h3><p>${listing.owner_rules.replace(/\n/g, '<br>')}</p></div>`;
         }
         let nearbyUniversitiesHTML = '';
@@ -330,15 +322,14 @@ const fetchAndDisplayListingDetail = async () => {
         }
 
         let profileLinkUrl;
-        // Перевіряємо, чи користувач залогінений І чи ID автора збігається з ID поточного користувача
-        if (MY_USER_ID && MY_USER_ID === listing.user_id) { //
-            profileLinkUrl = 'profile.html'; // Посилання на власний редагований профіль
-        } else {
-            profileLinkUrl = `user_profile.html?id=${listing.user_id}`; // Посилання на публічний профіль
-        }
-        console.log(`Generated profile link: ${profileLinkUrl}`); // Логування для перевірки
 
-        // === Author Avatar HTML ===
+        if (MY_USER_ID && MY_USER_ID === listing.user_id) {
+            profileLinkUrl = 'profile.html';
+        } else {
+            profileLinkUrl = `user_profile.html?id=${listing.user_id}`;
+        }
+        console.log(`Generated profile link: ${profileLinkUrl}`);
+
         const authorAvatarHTML = `
              <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
                  <div class="author-avatar">
@@ -347,7 +338,6 @@ const fetchAndDisplayListingDetail = async () => {
             </a>
         `;
 
-        // === Додано логіку для телефону ===
         let authorPhoneHTML = '';
         if (listing.show_phone_publicly && listing.phone_number) { //
             authorPhoneHTML = `
@@ -358,16 +348,15 @@ const fetchAndDisplayListingDetail = async () => {
             `; //
         }
 
-        // === Contact Button HTML ===
         const contactButtonHTML = (MY_USER_ID === listing.user_id)
-            ? `<a href="profile.html" class="contact-btn" style="background: #7f8c8d;">
+            ? `<a href="../profile.html" class="contact-btn" style="background: #7f8c8d;">
                  <i class="fas fa-user-edit"></i> Це ваше оголошення
                </a>`
             : (MY_USER_ID ? `<a href="chat.html?user_id=${listing.user_id}" class="contact-btn">
                  <i class="fas fa-comment-dots"></i> Зв'язатись з автором
-               </a>` : `<a href="login.html" class="contact-btn">
+               </a>` : `<a href="../login.html" class="contact-btn">
                  <i class="fas fa-sign-in-alt"></i> Увійдіть, щоб зв'язатись
-               </a>`); // Show login button if not logged in
+               </a>`);
 
 
         // === Final HTML Assembly ===
@@ -390,16 +379,17 @@ const fetchAndDisplayListingDetail = async () => {
                     <span class="detail-price">₴${listing.price || 0} / міс</span>
 
                     <div class="detail-meta">
-                        <p><i class="fas fa-map-marker-alt"></i> ${displayCity}${displayDistrict ? `, ${displayDistrict}` : ''}${listing.address ? `, ${listing.address}` : ''}</p>                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
+                        <p><i class="fas fa-map-marker-alt"></i> ${displayCity}${displayDistrict ? `, ${displayDistrict}` : ''}${listing.address ? `, ${listing.address}` : ''}</p>
+                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
                         ${listing.rooms ? `<p><i class="fas fa-door-open"></i> Кімнат: ${listing.rooms}</p>` : ''}
                         ${listing.total_area ? `<p><i class="fas fa-ruler-combined"></i> Площа: ${listing.total_area} м²</p>` : ''}
                         ${listing.kitchen_area ? `<p><i class="fas fa-utensils"></i> Кухня: ${listing.kitchen_area} м²</p>` : ''}
                         ${listing.floor && listing.total_floors ? `<p><i class="fas fa-building"></i> Поверх: ${listing.floor} / ${listing.total_floors}</p>` : ''}
                     </div>
 
+                    <div id="listingMap" style="height: 300px; margin-top: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;"></div>
+
                     <div class="detail-section">
-                        <div id="listingMap" style="height: 300px; margin-top: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px;"></div>
-                        <div class="detail-section">
                         <h2>Опис</h2>
                         <p>${listing.description ? listing.description.replace(/\n/g, '<br>') : 'Опис відсутній.'}</p>
                     </div>

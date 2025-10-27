@@ -1,7 +1,3 @@
-// ===============================================
-// БЕКЕНД СЕРВЕР НА EXPRESS.JS
-// ===============================================
-
 const http = require('http');
 const { Server } = require('socket.io');
 const express = require('express');
@@ -31,11 +27,11 @@ cloudinary.config({
 console.log('Cloudinary Configured:', !!process.env.CLOUDINARY_CLOUD_NAME);
 
 // --- MULTER CONFIG (для обробки файлів в пам'яті) ---
-const storage = multer.memoryStorage(); // Зберігаємо файл в буфері пам'яті
+const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Обмеження 10MB на файл
-    fileFilter: (req, file, cb) => { // Дозволяємо тільки зображення
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -44,7 +40,7 @@ const upload = multer({
     }
 });
 
-// 2. НАЛАШТУВАННЯ ПІДКЛЮЧЕННЯ ДО БАЗИ ДАНИХ (PostgreSQL)
+// 2. НАЛАШТУВАННЯ ПІДКЛЮЧЕННЯ ДО PostgreSQL
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -61,13 +57,10 @@ const io = new Server(httpServer, {
     }
 });
 
-// ===============================================
-// ЛОГІКА SOCKET.IO (REAL-TIME)
-// ===============================================
+// ЛОГІКА SOCKET.IO
 io.on('connection', (socket) => {
     console.log(`Клієнт підключився: ${socket.id}`);
 
-    // Приєднання до особистої кімнати для сповіщень
     socket.on('join_user_room', (userId) => {
         if (userId) {
             const userRoom = `user_${userId}`;
@@ -76,7 +69,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Приєднання до кімнати розмови
     socket.on('join_conversation', (conversationId) => {
         socket.join(conversationId.toString());
         console.log(`Клієнт ${socket.id} приєднався до кімнати ${conversationId}`);
@@ -87,9 +79,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// ===============================================
 // 3. MIDDLEWARE ДЛЯ АВТЕНТИФІКАЦІЇ
-// ===============================================
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Очікуємо формат "Bearer TOKEN"
@@ -102,9 +92,8 @@ const authenticateToken = (req, res, next) => {
         if (err) {
             return res.status(403).json({ error: 'Токен недійсний або протермінований' });
         }
-        // Додаємо дані користувача (з payload токена) до об'єкта req
         req.user = user;
-        next(); // Передаємо керування наступному middleware або обробнику маршруту
+        next();
     });
 };
 
@@ -124,7 +113,6 @@ const createNotification = async (userId, message, link_url = null) => {
         const result = await pool.query(insertQuery, [userId, message, link_url]);
         const newNotification = result.rows[0];
 
-        // Відправка сповіщення через Socket.io в особисту кімнату користувача
         io.to(`user_${userId}`).emit('new_notification', newNotification);
 
         console.log(`Notification created for user ${userId}: ${message}`);
@@ -136,14 +124,13 @@ const createNotification = async (userId, message, link_url = null) => {
 };
 
 // ===============================================
-// 4. МАРШРУТИ ДЛЯ ОГОЛОШЕНЬ (Публічні)
+// 4. МАРШРУТИ ДЛЯ ОГОЛОШЕНЬ
 // ===============================================
 
-// 4.1 ОТРИМАННЯ ВСІХ АКТИВНИХ ОГОЛОШЕНЬ З ФІЛЬТРАЦІЄЮ ТА ПОШУКОМ
+// ОТРИМАННЯ ВСІХ АКТИВНИХ ОГОЛОШЕНЬ З ФІЛЬТРАЦІЄЮ ТА ПОШУКОМ
 app.get('/api/listings', async (req, res) => {
     try {
         let query = `SELECT l.* FROM listings l`;
-        // JOIN для отримання масиву ключів характеристик оголошення
         query += ` LEFT JOIN (
                         SELECT lc.listing_id, array_agg(c.system_key) as characteristics_keys
                         FROM listing_characteristics lc
@@ -151,7 +138,7 @@ app.get('/api/listings', async (req, res) => {
                         GROUP BY lc.listing_id
                     ) char_agg ON l.listing_id = char_agg.listing_id`;
 
-        const whereClauses = ['l.is_active = TRUE']; // Завжди показуємо тільки активні
+        const whereClauses = ['l.is_active = TRUE'];
         const params = [];
         let paramIndex = 1;
 
@@ -164,7 +151,7 @@ app.get('/api/listings', async (req, res) => {
             params.push(req.query.search);
         }
 
-        // Фільтр за типом оголошення (може бути масив)
+        // Фільтр за типом оголошення
         if (req.query.listing_type) {
             const listingTypes = Array.isArray(req.query.listing_type)
                 ? req.query.listing_type.filter(t => t) : [req.query.listing_type].filter(t => t);
@@ -223,10 +210,8 @@ app.get('/api/listings', async (req, res) => {
                 whereClauses.push(`(l.pet_policy = $${paramIndex++} OR l.pet_policy IS NULL OR l.pet_policy = '')`);
                 params.push('no');
             }
-            // 'any' не додає умову
         }
 
-        // Інші Фільтри (ціна, кімнати, меблювання, стать, вік, паління тощо)
         // Бажане житло
         if (req.query.desired_price_min) { whereClauses.push(`l.target_price_min >= $${paramIndex++}`); params.push(req.query.desired_price_min); }
         if (req.query.desired_price_max) { whereClauses.push(`l.target_price_max <= $${paramIndex++}`); params.push(req.query.desired_price_max); }
@@ -257,7 +242,7 @@ app.get('/api/listings', async (req, res) => {
         if (req.query.desired_tenant_age_max) { whereClauses.push(`(l.roommate_age_min <= $${paramIndex++} OR l.roommate_age_min IS NULL)`); params.push(req.query.desired_tenant_age_max); }
         if (req.query.desired_tenant_smoking) { whereClauses.push(`(l.roommate_smoking = $${paramIndex++} OR l.roommate_smoking = 'any' OR l.roommate_smoking IS NULL)`); params.push(req.query.desired_tenant_smoking); }
 
-        // Фільтри Характеристик (перевіряє наявність ВСІХ вказаних характеристик)
+        // Фільтри Характеристик
         const desiredHousingChars = req.query.desired_housing_characteristics?.split(',').filter(c => c) || [];
         const currentHousingChars = req.query.current_housing_characteristics?.split(',').filter(c => c) || [];
         const myChars = req.query.my_characteristics?.split(',').filter(c => c) || [];
@@ -267,7 +252,6 @@ app.get('/api/listings', async (req, res) => {
         // Перевірка, чи масив характеристик оголошення містить (@>) вказані характеристики
         if (desiredHousingChars.length > 0) {
             const placeholders = desiredHousingChars.map(() => `$${paramIndex++}`).join(',');
-            // Застосовується тільки до оголошень типу 'rent_out' або 'find_mate'
             whereClauses.push(`(l.listing_type = 'rent_out' OR l.listing_type = 'find_mate') AND char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
             params.push(...desiredHousingChars);
         }
@@ -279,20 +263,20 @@ app.get('/api/listings', async (req, res) => {
         if (myChars.length > 0) {
             const placeholders = myChars.map(() => `$${paramIndex++}`).join(',');
             whereClauses.push(`char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
-            params.push(...myChars.filter(c => c.startsWith('my_'))); // Фільтруємо за префіксом
+            params.push(...myChars.filter(c => c.startsWith('my_')));
         }
         if (desiredRoommateChars.length > 0 || desiredTenantChars.length > 0) {
             const combinedDesired = [...new Set([...desiredRoommateChars, ...desiredTenantChars])];
             const placeholders = combinedDesired.map(() => `$${paramIndex++}`).join(',');
             whereClauses.push(`char_agg.characteristics_keys @> ARRAY[${placeholders}]::varchar[]`);
-            params.push(...combinedDesired.filter(c => c.startsWith('mate_'))); // Фільтруємо за префіксом
+            params.push(...combinedDesired.filter(c => c.startsWith('mate_')));
         }
 
         // Збираємо фінальний запит
         if (whereClauses.length > 0) {
             query += ' WHERE ' + whereClauses.join(' AND ');
         }
-        query += ' ORDER BY l.created_at DESC'; // Сортування за датою створення
+        query += ' ORDER BY l.created_at DESC';
 
         console.log("Executing SQL:", query);
         console.log("With Params:", params);
@@ -307,14 +291,13 @@ app.get('/api/listings', async (req, res) => {
 });
 
 
-// 4.2 ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ ЗА ID (З ДЕТАЛЯМИ: фото, характеристики, дані автора)
+// ОТРИМАННЯ ОДНОГО ОГОЛОШЕННЯ ЗА ID
 app.get('/api/listings/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
         const client = await pool.connect();
 
-        // Запит основних даних оголошення та публічних даних автора
         const listingQuery = `
             SELECT l.*,
                    u.first_name,
@@ -327,12 +310,9 @@ app.get('/api/listings/:id', async (req, res) => {
             WHERE l.listing_id = $1;
         `;
         const listingPromise = client.query(listingQuery, [id]);
-
-        // Запит фотографій оголошення
         const photosQuery = `SELECT photo_id, image_url, is_main FROM listing_photos WHERE listing_id = $1 ORDER BY photo_order;`;
         const photosPromise = client.query(photosQuery, [id]);
 
-        // Запит характеристик оголошення
         const charsQuery = `
             SELECT c.name_ukr, c.system_key, c.category
             FROM listing_characteristics lc
@@ -341,7 +321,6 @@ app.get('/api/listings/:id', async (req, res) => {
         `;
         const charsPromise = client.query(charsQuery, [id]);
 
-        // Виконуємо запити паралельно
         const [listingResult, photosResult, charsResult] = await Promise.all([
             listingPromise,
             photosPromise,
@@ -354,7 +333,6 @@ app.get('/api/listings/:id', async (req, res) => {
             return res.status(404).json({ error: 'Оголошення не знайдено' });
         }
 
-        // Збираємо результат
         const listing = listingResult.rows[0];
         listing.photos = photosResult.rows;
         listing.characteristics = charsResult.rows;
@@ -368,24 +346,21 @@ app.get('/api/listings/:id', async (req, res) => {
 });
 
 // ===============================================
-// 5. МАРШРУТИ АВТЕНТИФІКАЦІЇ (Публічні)
+// 5. МАРШРУТИ АВТЕНТИФІКАЦІЇ
 // ===============================================
 
-// 5.1 РЕЄСТРАЦІЯ КОРИСТУВАЧА
+// РЕЄСТРАЦІЯ КОРИСТУВАЧА
 app.post('/api/register', async (req, res) => {
     const { email, password, first_name, last_name } = req.body;
 
-    // Валідація вхідних даних
     if (!email || !password || !first_name || !last_name) {
         return res.status(400).json({ error: 'Всі поля є обов\'язковими' });
     }
 
     try {
-        // Хешування паролю
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Вставка користувача в БД
         const queryText = 'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING user_id';
         const result = await pool.query(queryText, [email, hashedPassword, first_name, last_name]);
 
@@ -394,8 +369,7 @@ app.post('/api/register', async (req, res) => {
             userId: result.rows[0].user_id
         });
     } catch (err) {
-        // Обробка помилки унікальності email
-        if (err.code === '23505') { // Код помилки PostgreSQL для unique_violation
+        if (err.code === '23505') {
             res.status(409).json({ error: 'Користувач з таким email вже існує.' });
         } else {
             console.error('Помилка реєстрації:', err);
@@ -404,7 +378,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// 5.2 ЛОГІН КОРИСТУВАЧА
+// ЛОГІН КОРИСТУВАЧА
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -413,32 +387,28 @@ app.post('/api/login', async (req, res) => {
     }
 
     try {
-        // Пошук користувача за email
         const userQuery = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (userQuery.rows.length === 0) {
             return res.status(401).json({ error: 'Неправильний email або пароль' });
         }
         const user = userQuery.rows[0];
 
-        // Перевірка паролю
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ error: 'Неправильний email або пароль' });
         }
 
-        // Створення JWT токена
         const payload = {
             userId: user.user_id,
             email: user.email,
-            first_name: user.first_name // Можна додати інші дані в payload, якщо потрібно
+            first_name: user.first_name
         };
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' }); // Токен дійсний 1 день
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' });
 
-        // Відправка токена та даних користувача
         res.json({
             message: 'Вхід успішний!',
             token: token,
-            user: payload // Повертаємо дані користувача для зручності фронтенду
+            user: payload
         });
 
     } catch (err) {
@@ -451,7 +421,7 @@ app.post('/api/login', async (req, res) => {
 // 6. ЗАХИЩЕНІ МАРШРУТИ (Потребують токен)
 // ===============================================
 
-// 6.1 ДОДАВАННЯ ОГОЛОШЕННЯ
+// ДОДАВАННЯ ОГОЛОШЕННЯ
 app.post('/api/listings', authenticateToken, async (req, res) => {
     const user_id = req.user.userId; // ID користувача з токена
     const { characteristics, ...listingData } = req.body; // Відокремлюємо характеристики
@@ -467,7 +437,6 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
         }
     });
 
-    // Список дозволених ключів для вставки в таблицю listings
     const allowedKeys = [
         'listing_type', 'title', 'description', 'city', 'main_photo_url', 'price',
         'building_type', 'rooms', 'floor', 'total_floors', 'total_area', 'kitchen_area',
@@ -482,7 +451,7 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
         'building_type_other', 'wall_type_other', 'planning_other', 'heating_type_other',
         'renovation_type_other', 'pet_policy', 'owner_rules', 'search_pet_policy',
         'city_other', 'housing_type_search_other', 'target_university_other',
-        'tech_other_text', 'media_other_text', 'comfort_other_text', // Поля "інше" для характеристик
+        'tech_other_text', 'media_other_text', 'comfort_other_text',
         'my_personality_other_text', 'my_lifestyle_other_text', 'my_interests_other_text',
         'mate_personality_other_text', 'mate_lifestyle_other_text', 'mate_interests_other_text',
         'comm_other_text', 'infra_other_text', 'incl_other_text', 'blackout_other_text',
@@ -494,9 +463,7 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
     const valuePlaceholders = ['$1'];
     let counter = 2;
 
-    // Формуємо списки колонок, значень та плейсхолдерів для SQL запиту
     for (const key of allowedKeys) {
-        // Додаємо тільки ті поля, що прийшли з фронтенду і не є порожніми
         if (listingData[key] !== undefined && listingData[key] !== null && listingData[key] !== '') {
             columns.push(key);
             values.push(listingData[key]);
@@ -523,16 +490,14 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
 
         // Вставка характеристик, якщо вони є
         if (characteristics && characteristics.length > 0) {
-            const uniqueChars = [...new Set(characteristics)]; // Унікальні ключі
-            const validChars = uniqueChars.filter(key => key && key.trim() !== ''); // Валідні ключі
+            const uniqueChars = [...new Set(characteristics)];
+            const validChars = uniqueChars.filter(key => key && key.trim() !== '');
             if (validChars.length > 0) {
-                // Отримання ID характеристик за їх системними ключами
                 const charKeys = validChars.map(key => `'${key}'`).join(',');
                 const charIdQuery = `SELECT char_id FROM characteristics WHERE system_key IN (${charKeys})`;
                 const charIdResult = await client.query(charIdQuery);
 
                 if (charIdResult.rows.length > 0) {
-                    // Формування значень для вставки в зв'язуючу таблицю
                     const insertCharsValues = charIdResult.rows.map(row =>
                         `(${listingId}, ${row.char_id})`
                     ).join(',');
@@ -544,20 +509,20 @@ app.post('/api/listings', authenticateToken, async (req, res) => {
             }
         }
 
-        await client.query('COMMIT'); // Завершення транзакції
+        await client.query('COMMIT');
         res.status(201).json({ message: 'Оголошення успішно опубліковано!', listingId });
     } catch (err) {
-        await client.query('ROLLBACK'); // Відкат транзакції при помилці
+        await client.query('ROLLBACK');
         console.error('Помилка додавання оголошення:', err);
         console.error('SQL Query:', listingQuery);
         console.error('Values:', values);
         res.status(500).json({ error: 'Помилка сервера при публікації оголошення.' });
     } finally {
-        client.release(); // Повернення клієнта в пул
+        client.release();
     }
 });
 
-// 6.2 ОТРИМАННЯ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА
+// ОТРИМАННЯ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА
 app.get('/api/my-listings', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
@@ -575,7 +540,7 @@ app.get('/api/my-listings', authenticateToken, async (req, res) => {
     }
 });
 
-// 6.3 ЗМІНА СТАТУСУ АКТИВНОСТІ ОГОЛОШЕННЯ
+// ЗМІНА СТАТУСУ АКТИВНОСТІ ОГОЛОШЕННЯ
 app.patch('/api/listings/:id/status', authenticateToken, async (req, res) => {
     const listingId = req.params.id;
     const userId = req.user.userId;
@@ -589,13 +554,12 @@ app.patch('/api/listings/:id/status', authenticateToken, async (req, res) => {
         const query = `
             UPDATE listings
             SET is_active = $1
-            WHERE listing_id = $2 AND user_id = $3 -- Перевірка власника
+            WHERE listing_id = $2 AND user_id = $3 
             RETURNING listing_id, is_active;
         `;
         const result = await pool.query(query, [is_active, listingId, userId]);
 
         if (result.rows.length === 0) {
-            // Оголошення не знайдено або користувач не є власником
             return res.status(404).json({ error: 'Оголошення не знайдено або у вас немає прав на його зміну' });
         }
 
@@ -609,7 +573,7 @@ app.patch('/api/listings/:id/status', authenticateToken, async (req, res) => {
     }
 });
 
-// 6.4 ВИДАЛЕННЯ ОГОЛОШЕННЯ
+// ВИДАЛЕННЯ ОГОЛОШЕННЯ
 app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
     const listingId = req.params.id;
     const userId = req.user.userId;
@@ -617,13 +581,12 @@ app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
     try {
         const query = `
             DELETE FROM listings
-            WHERE listing_id = $1 AND user_id = $2 -- Перевірка власника
+            WHERE listing_id = $1 AND user_id = $2 
             RETURNING listing_id;
         `;
         const result = await pool.query(query, [listingId, userId]);
 
         if (result.rows.length === 0) {
-            // Оголошення не знайдено або користувач не є власником
             return res.status(404).json({ error: 'Оголошення не знайдено або у вас немає прав на його видалення' });
         }
 
@@ -634,13 +597,12 @@ app.delete('/api/listings/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// 6.5 ОНОВЛЕННЯ ОГОЛОШЕННЯ
+// ОНОВЛЕННЯ ОГОЛОШЕННЯ
 app.put('/api/listings/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params; // ID оголошення з URL
-    const user_id = req.user.userId; // ID користувача з токена
-    const { characteristics, ...listingData } = req.body; // Дані оголошення та характеристики
+    const { id } = req.params;
+    const user_id = req.user.userId;
+    const { characteristics, ...listingData } = req.body;
 
-    // Перевірка, чи користувач є власником оголошення
     try {
         const checkOwner = await pool.query('SELECT user_id FROM listings WHERE listing_id = $1', [id]);
         if (checkOwner.rows.length === 0) {
@@ -654,12 +616,10 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
         return res.status(500).json({ error: 'Помилка сервера' });
     }
 
-    // Використання транзакції для оновлення
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // Обнулення полів *_other, якщо основне поле не 'other'
         const otherFields = [
             'city', 'building_type', 'wall_type', 'planning', 'heating_type',
             'renovation_type', 'housing_type_search', 'target_university', 'district'
@@ -670,7 +630,6 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
             }
         });
 
-        // Список дозволених ключів для оновлення в таблиці listings
         const allowedKeys = [
             'listing_type', 'title', 'description', 'city', 'main_photo_url', 'price',
             'building_type', 'rooms', 'floor', 'total_floors', 'total_area', 'kitchen_area',
@@ -692,24 +651,20 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
             'university_other_text', 'district', 'district_other'
         ];
 
-        const setClauses = []; // Масив для частин SET запиту (напр., "title = $1")
+        const setClauses = []; // Масив для частин SET запиту
         const values = []; // Масив значень для параметризації
         let counter = 1;
 
-        // Формування частин SET запиту та масиву значень
         for (const key of allowedKeys) {
-            // Оновлюємо поле, якщо воно є у вхідних даних (навіть якщо null)
             if (listingData.hasOwnProperty(key)) {
                 setClauses.push(`${key} = $${counter}`);
-                // Встановлюємо null, якщо прийшов порожній рядок, інакше саме значення
                 values.push(listingData[key] === '' ? null : listingData[key]);
                 counter++;
             }
         }
 
-        // Оновлення основного запису оголошення, якщо є що оновлювати
         if (setClauses.length > 0) {
-            values.push(id); // Додаємо ID оголошення в кінець для умови WHERE
+            values.push(id);
             const updateQuery = `
                 UPDATE listings SET ${setClauses.join(', ')}
                 WHERE listing_id = $${counter};
@@ -725,32 +680,29 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
             const uniqueChars = [...new Set(characteristics)];
             const validChars = uniqueChars.filter(key => key && key.trim() !== '');
             if (validChars.length > 0) {
-                // Екранування одинарних лапок у ключах характеристик
                 const charKeys = validChars.map(key => `'${key.replace(/'/g, "''")}'`).join(',');
                 const charIdQuery = `SELECT char_id FROM characteristics WHERE system_key IN (${charKeys})`;
                 const charIdResult = await client.query(charIdQuery);
 
                 if (charIdResult.rows.length > 0) {
-                    // Формування значень для вставки (ID оголошення, ID характеристики)
                     const insertCharsValues = charIdResult.rows.map(row =>
                         `(${id}, ${row.char_id})`
                     ).join(',');
-                    // Вставка з ігноруванням конфліктів (якщо раптом дублікат)
                     const insertCharQuery = `INSERT INTO listing_characteristics (listing_id, char_id) VALUES ${insertCharsValues} ON CONFLICT DO NOTHING;`;
                     await client.query(insertCharQuery);
                 }
             }
         }
 
-        await client.query('COMMIT'); // Завершення транзакції
+        await client.query('COMMIT');
         res.status(200).json({ message: 'Оголошення успішно оновлено!', listingId: id });
 
     } catch (err) {
-        await client.query('ROLLBACK'); // Відкат транзакції при помилці
+        await client.query('ROLLBACK');
         console.error('Помилка оновлення оголошення:', err);
         res.status(500).json({ error: 'Помилка сервера при оновленні оголошення.' });
     } finally {
-        client.release(); // Повернення клієнта в пул
+        client.release();
     }
 });
 
@@ -758,20 +710,18 @@ app.put('/api/listings/:id', authenticateToken, async (req, res) => {
 // 7. МАРШРУТИ ДЛЯ ЧАТУ
 // ===============================================
 
-// 7.1 ОТРИМАТИ ВСІ РОЗМОВИ ПОТОЧНОГО КОРИСТУВАЧА
+// ОТРИМАТИ ВСІ РОЗМОВИ ПОТОЧНОГО КОРИСТУВАЧА
 app.get('/api/my-conversations', authenticateToken, async (req, res) => {
     const CURRENT_USER_ID = req.user.userId;
     try {
         const query = `
             SELECT
                 c.conversation_id,
-                -- Визначаємо ID іншого користувача в розмові
                 CASE WHEN c.user_one_id = $1 THEN c.user_two_id ELSE c.user_one_id END AS other_user_id,
-                -- Отримуємо ім'я та прізвище іншого користувача
                 u.first_name, u.last_name
             FROM conversations c
                      JOIN users u ON u.user_id = CASE WHEN c.user_one_id = $1 THEN c.user_two_id ELSE c.user_one_id END
-            WHERE c.user_one_id = $1 OR c.user_two_id = $1; -- Де поточний користувач є одним з учасників
+            WHERE c.user_one_id = $1 OR c.user_two_id = $1; 
         `;
         const result = await pool.query(query, [CURRENT_USER_ID]);
         res.json(result.rows);
@@ -781,12 +731,11 @@ app.get('/api/my-conversations', authenticateToken, async (req, res) => {
     }
 });
 
-// 7.2 ОТРИМАТИ ПОВІДОМЛЕННЯ ДЛЯ КОНКРЕТНОЇ РОЗМОВИ
+// ОТРИМАТИ ПОВІДОМЛЕННЯ ДЛЯ КОНКРЕТНОЇ РОЗМОВИ
 app.get('/api/conversations/:id/messages', authenticateToken, async (req, res) => {
     const { id } = req.params; // ID розмови
     const CURRENT_USER_ID = req.user.userId;
     try {
-        // Перевірка, чи поточний користувач є учасником цієї розмови
         const checkQuery = await pool.query(
             'SELECT 1 FROM conversations WHERE conversation_id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
             [id, CURRENT_USER_ID]
@@ -795,12 +744,11 @@ app.get('/api/conversations/:id/messages', authenticateToken, async (req, res) =
             return res.status(403).json({ error: 'Ви не є учасником цієї розмови' });
         }
 
-        // Отримання повідомлень для цієї розмови
         const query = `
             SELECT message_id, sender_id, message_body, created_at
             FROM messages
             WHERE conversation_id = $1
-            ORDER BY created_at ASC; -- Сортування від старих до нових
+            ORDER BY created_at ASC;
         `;
         const result = await pool.query(query, [id]);
         res.json(result.rows);
@@ -810,12 +758,11 @@ app.get('/api/conversations/:id/messages', authenticateToken, async (req, res) =
     }
 });
 
-// 7.3 НАДІСЛАТИ ПОВІДОМЛЕННЯ
+// НАДІСЛАТИ ПОВІДОМЛЕННЯ
 app.post('/api/messages', authenticateToken, async (req, res) => {
     const { receiver_id, message_body } = req.body;
     const sender_id = req.user.userId;
 
-    // Валідація
     if (!receiver_id || !message_body) {
         return res.status(400).json({ error: 'Missing receiver_id or message_body' });
     }
@@ -823,7 +770,6 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
         return res.status(400).json({ error: 'Не можна надіслати повідомлення самому собі' });
     }
 
-    // Визначаємо user_one та user_two для таблиці conversations (завжди менший ID перший)
     const user_one = Math.min(sender_id, receiver_id);
     const user_two = Math.max(sender_id, receiver_id);
 
@@ -831,61 +777,55 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // Знаходимо або створюємо розмову
         let conversationResult = await client.query(`
             SELECT conversation_id FROM conversations WHERE user_one_id = $1 AND user_two_id = $2
         `, [user_one, user_two]);
         let conversationId;
         if (conversationResult.rows.length > 0) {
-            // Розмова існує
             conversationId = conversationResult.rows[0].conversation_id;
         } else {
-            // Створюємо нову розмову
             conversationResult = await client.query(`
                 INSERT INTO conversations (user_one_id, user_two_id) VALUES ($1, $2) RETURNING conversation_id
             `, [user_one, user_two]);
             conversationId = conversationResult.rows[0].conversation_id;
         }
 
-        // Вставляємо повідомлення
         const messageResult = await client.query(`
             INSERT INTO messages (conversation_id, sender_id, message_body) VALUES ($1, $2, $3) RETURNING *
         `, [conversationId, sender_id, message_body]);
 
-        await client.query('COMMIT'); // Завершуємо транзакцію
+        await client.query('COMMIT');
 
         const newMessage = messageResult.rows[0];
 
-        // Відправляємо повідомлення через Socket.IO всім учасникам кімнати розмови
         io.to(conversationId.toString()).emit('receive_message', newMessage);
 
-        // Створюємо сповіщення для отримувача повідомлення
         try {
-            const senderName = req.user.first_name || 'Хтось'; // Ім'я відправника з токена
+            const senderName = req.user.first_name || 'Хтось';
             await createNotification(
                 receiver_id,
                 `Нове повідомлення від ${senderName}`,
-                `chat.html?user_id=${sender_id}` // Посилання на чат з відправником
+                `chat.html?user_id=${sender_id}`
             );
         } catch (notifyErr) {
             console.error("Не вдалося створити сповіщення про повідомлення:", notifyErr);
         }
 
-        res.status(201).json(newMessage); // Повертаємо створене повідомлення
+        res.status(201).json(newMessage);
     } catch (err) {
-        await client.query('ROLLBACK'); // Відкат транзакції при помилці
+        await client.query('ROLLBACK');
         console.error('Помилка відправки повідомлення:', err);
         res.status(500).json({ error: 'Помилка сервера' });
     } finally {
-        client.release(); // Повернення клієнта в пул
+        client.release();
     }
 });
 
 // ===============================================
-// 7.5 МАРШРУТИ ДЛЯ СПОВІЩЕНЬ
+// МАРШРУТИ ДЛЯ СПОВІЩЕНЬ
 // ===============================================
 
-// 7.5.1 ОТРИМАТИ ВСІ СПОВІЩЕННЯ ПОТОЧНОГО КОРИСТУВАЧА
+// ОТРИМАТИ ВСІ СПОВІЩЕННЯ ПОТОЧНОГО КОРИСТУВАЧА
 app.get('/api/my-notifications', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
@@ -893,7 +833,7 @@ app.get('/api/my-notifications', authenticateToken, async (req, res) => {
             SELECT * FROM notifications
             WHERE user_id = $1
             ORDER BY created_at DESC
-            LIMIT 50; -- Обмеження кількості для продуктивності
+            LIMIT 50; 
         `;
         const result = await pool.query(query, [userId]);
         res.json(result.rows);
@@ -903,7 +843,7 @@ app.get('/api/my-notifications', authenticateToken, async (req, res) => {
     }
 });
 
-// 7.5.2 ПОЗНАЧИТИ ВСІ НЕПРОЧИТАНІ СПОВІЩЕННЯ КОРИСТУВАЧА ЯК ПРОЧИТАНІ
+// ПОЗНАЧИТИ ВСІ НЕПРОЧИТАНІ СПОВІЩЕННЯ КОРИСТУВАЧА ЯК ПРОЧИТАНІ
 app.patch('/api/my-notifications/read', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
@@ -911,7 +851,7 @@ app.patch('/api/my-notifications/read', authenticateToken, async (req, res) => {
             UPDATE notifications
             SET is_read = TRUE
             WHERE user_id = $1 AND is_read = FALSE
-            RETURNING notification_id; -- Повертаємо ID оновлених для інформації
+            RETURNING notification_id; 
         `;
         const result = await pool.query(query, [userId]);
         res.json({ message: `Оновлено ${result.rows.length} сповіщень` });
@@ -925,7 +865,7 @@ app.patch('/api/my-notifications/read', authenticateToken, async (req, res) => {
 // 8. МАРШРУТИ ДЛЯ ПРОФІЛЮ
 // ===============================================
 
-// 8.1 ОТРИМАННЯ ДАНИХ ПРОФІЛЮ ПОТОЧНОГО КОРИСТУВАЧА
+// ОТРИМАННЯ ДАНИХ ПРОФІЛЮ ПОТОЧНОГО КОРИСТУВАЧА
 app.get('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
@@ -935,7 +875,6 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
         `;
         const result = await pool.query(query, [userId]);
         if (result.rows.length === 0) {
-            // Це малоймовірно, якщо токен валідний, але про всяк випадок
             return res.status(404).json({ error: 'Користувача не знайдено' });
         }
         res.json(result.rows[0]);
@@ -945,14 +884,12 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// 8.2 ОНОВЛЕННЯ ДАНИХ ПРОФІЛЮ ПОТОЧНОГО КОРИСТУВАЧА
+// ОНОВЛЕННЯ ДАНИХ ПРОФІЛЮ ПОТОЧНОГО КОРИСТУВАЧА
 app.put('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { first_name, last_name, email, city, date_of_birth, bio, phone_number, avatar_url, show_phone_publicly } = req.body;
 
-    // Перетворення date_of_birth на null, якщо воно порожнє
     const dobValue = date_of_birth || null;
-    // Перетворення show_phone_publicly на boolean
     const showPhoneBool = !!show_phone_publicly;
 
     try {
@@ -962,7 +899,7 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
                              date_of_birth = $5, bio = $6, phone_number = $7,
                              avatar_url = $8, show_phone_publicly = $9
             WHERE user_id = $10
-            RETURNING user_id, email, first_name, last_name, avatar_url, show_phone_publicly; -- Повертаємо оновлені дані
+            RETURNING user_id, email, first_name, last_name, avatar_url, show_phone_publicly;
         `;
         const result = await pool.query(query, [
             first_name, last_name, email, city, dobValue,
@@ -970,7 +907,6 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
         ]);
         res.json({ message: 'Профіль успішно оновлено', user: result.rows[0] });
     } catch (err) {
-        // Обробка помилки унікальності email
         if (err.code === '23505') {
             res.status(409).json({ error: 'Користувач з таким email вже існує.' });
         } else {
@@ -980,7 +916,7 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// 8.3 ЗМІНА EMAIL ПОТОЧНОГО КОРИСТУВАЧА
+// ЗМІНА EMAIL ПОТОЧНОГО КОРИСТУВАЧА
 app.post('/api/profile/change-email', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { email, current_password } = req.body; // Новий email та поточний пароль
@@ -990,27 +926,23 @@ app.post('/api/profile/change-email', authenticateToken, async (req, res) => {
     }
 
     try {
-        // Отримуємо хеш поточного пароля користувача
         const userQuery = await pool.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
         if (userQuery.rows.length === 0) {
             return res.status(404).json({ error: 'Користувача не знайдено' });
         }
         const user = userQuery.rows[0];
 
-        // Перевіряємо поточний пароль
         const isMatch = await bcrypt.compare(current_password, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ error: 'Неправильний поточний пароль' });
         }
 
-        // Оновлюємо email
         const updateQuery = 'UPDATE users SET email = $1 WHERE user_id = $2 RETURNING user_id, email';
         const result = await pool.query(updateQuery, [email, userId]);
 
         res.json({ message: 'Email успішно оновлено', user: result.rows[0] });
 
     } catch (err) {
-        // Обробка помилки унікальності email
         if (err.code === '23505') {
             res.status(409).json({ error: 'Користувач з таким email вже існує.' });
         } else {
@@ -1020,35 +952,30 @@ app.post('/api/profile/change-email', authenticateToken, async (req, res) => {
     }
 });
 
-// 8.4 ЗМІНА ПАРОЛЯ ПОТОЧНОГО КОРИСТУВАЧА
+// ЗМІНА ПАРОЛЯ ПОТОЧНОГО КОРИСТУВАЧА
 app.post('/api/profile/change-password', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
-    const { old_password, new_password } = req.body; // Старий та новий паролі
+    const { old_password, new_password } = req.body;
 
     if (!old_password || !new_password) {
         return res.status(400).json({ error: 'Потрібно вказати старий та новий пароль' });
     }
-    // TODO: Додати валідацію складності нового пароля
 
     try {
-        // Отримуємо хеш поточного пароля
         const userQuery = await pool.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
         if (userQuery.rows.length === 0) {
             return res.status(404).json({ error: 'Користувача не знайдено' });
         }
         const user = userQuery.rows[0];
 
-        // Перевіряємо старий пароль
         const isMatch = await bcrypt.compare(old_password, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ error: 'Неправильний старий пароль' });
         }
 
-        // Хешуємо новий пароль
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(new_password, salt);
 
-        // Оновлюємо хеш пароля в БД
         const updateQuery = 'UPDATE users SET password_hash = $1 WHERE user_id = $2';
         await pool.query(updateQuery, [hashedPassword, userId]);
 
@@ -1060,7 +987,7 @@ app.post('/api/profile/change-password', authenticateToken, async (req, res) => 
     }
 });
 
-// 8.5 ВИДАЛЕННЯ АКАУНТУ ПОТОЧНОГО КОРИСТУВАЧА
+// ВИДАЛЕННЯ АКАУНТУ ПОТОЧНОГО КОРИСТУВАЧА
 app.delete('/api/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { password } = req.body; // Пароль для підтвердження
@@ -1070,22 +997,18 @@ app.delete('/api/profile', authenticateToken, async (req, res) => {
     }
 
     try {
-        // Отримуємо хеш пароля
         const userQuery = await pool.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
         if (userQuery.rows.length === 0) {
             return res.status(404).json({ error: 'Користувача не знайдено' });
         }
         const user = userQuery.rows[0];
 
-        // Перевіряємо пароль
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(401).json({ error: 'Неправильний пароль' });
         }
 
-        // Видаляємо користувача (каскадне видалення спрацює для пов'язаних даних)
         await pool.query('DELETE FROM users WHERE user_id = $1', [userId]);
-
         res.json({ message: 'Акаунт успішно видалено' });
 
     } catch (err) {
@@ -1094,14 +1017,12 @@ app.delete('/api/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// 8.6 ОТРИМАННЯ ПУБЛІЧНИХ ДАНИХ ПРОФІЛЮ ІНШОГО КОРИСТУВАЧА ЗА ID
+// ОТРИМАННЯ ПУБЛІЧНИХ ДАНИХ ПРОФІЛЮ ІНШОГО КОРИСТУВАЧА ЗА ID
 app.get('/api/users/:id/public-profile', async (req, res) => {
     const userId = req.params.id;
     try {
-        // Обираємо тільки публічні дані та номер телефону, якщо дозволено
         const query = `
             SELECT user_id, first_name, last_name, city, date_of_birth, bio, avatar_url,
-                   -- Повертаємо номер телефону тільки якщо show_phone_publicly = TRUE
                    (CASE WHEN show_phone_publicly = TRUE THEN phone_number ELSE NULL END) as phone_number
             FROM users WHERE user_id = $1
         `;
@@ -1110,22 +1031,21 @@ app.get('/api/users/:id/public-profile', async (req, res) => {
             return res.status(404).json({ error: 'Користувача не знайдено' });
         }
 
-        res.json(result.rows[0]); // Повертаємо знайдені дані
+        res.json(result.rows[0]);
     } catch (err) {
         console.error('Помилка отримання публічного профілю:', err);
         res.status(500).json({ error: 'Помилка сервера' });
     }
 });
 
-// 8.7 ОТРИМАННЯ АКТИВНИХ ОГОЛОШЕНЬ КОНКРЕТНОГО КОРИСТУВАЧА ЗА ID (Публічний доступ)
+// ОТРИМАННЯ АКТИВНИХ ОГОЛОШЕНЬ КОНКРЕТНОГО КОРИСТУВАЧА ЗА ID (Публічний доступ)
 app.get('/api/users/:id/listings', async (req, res) => {
     const userId = req.params.id;
     try {
-        // Обираємо основні дані активних оголошень користувача
         const query = `
             SELECT listing_id, title, city, price, main_photo_url, listing_type, created_at
             FROM listings
-            WHERE user_id = $1 AND is_active = TRUE -- Тільки активні
+            WHERE user_id = $1 AND is_active = TRUE 
             ORDER BY created_at DESC;
         `;
         const result = await pool.query(query, [userId]);
@@ -1140,13 +1060,12 @@ app.get('/api/users/:id/listings', async (req, res) => {
 // 9. МАРШРУТИ ДЛЯ "ОБРАНОГО"
 // ===============================================
 
-// 9.1 ОТРИМАННЯ МАСИВУ ID ВСІХ ОБРАНИХ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА
+// ОТРИМАННЯ МАСИВУ ID ВСІХ ОБРАНИХ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА
 app.get('/api/my-favorites/ids', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
         const query = 'SELECT listing_id FROM favorites WHERE user_id = $1';
         const result = await pool.query(query, [userId]);
-        // Повертаємо простий масив чисел (ID)
         res.json(result.rows.map(row => row.listing_id));
     } catch (err) {
         console.error('Помилка отримання ID обраних:', err);
@@ -1154,17 +1073,16 @@ app.get('/api/my-favorites/ids', authenticateToken, async (req, res) => {
     }
 });
 
-// 9.2 ОТРИМАННЯ ПОВНОГО СПИСКУ ОБРАНИХ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА
+// ОТРИМАННЯ ПОВНОГО СПИСКУ ОБРАНИХ ОГОЛОШЕНЬ ПОТОЧНОГО КОРИСТУВАЧА
 app.get('/api/my-favorites', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     try {
-        // Отримуємо повні дані активних оголошень, які є в обраному
         const query = `
             SELECT l.*
             FROM listings l
                      JOIN favorites f ON l.listing_id = f.listing_id
             WHERE f.user_id = $1 AND l.is_active = TRUE
-            ORDER BY f.created_at DESC; -- Сортуємо за датою додавання в обране
+            ORDER BY f.created_at DESC; 
         `;
         const result = await pool.query(query, [userId]);
         res.json(result.rows);
@@ -1174,42 +1092,36 @@ app.get('/api/my-favorites', authenticateToken, async (req, res) => {
     }
 });
 
-// 9.3 ДОДАТИ ОГОЛОШЕННЯ В ОБРАНЕ
+// ДОДАТИ ОГОЛОШЕННЯ В ОБРАНЕ
 app.post('/api/favorites/:listingId', authenticateToken, async (req, res) => {
     const userId = req.user.userId; // Хто додає
     const { listingId } = req.params; // Яке оголошення
 
     try {
-        // Вставляємо запис в таблицю favorites
         const query = 'INSERT INTO favorites (user_id, listing_id) VALUES ($1, $2) RETURNING favorite_id';
         const result = await pool.query(query, [userId, listingId]);
 
-        // Створення сповіщення для власника оголошення (якщо це не сам власник)
         try {
-            // Отримуємо ID власника та заголовок оголошення
             const listingQuery = await pool.query('SELECT user_id, title FROM listings WHERE listing_id = $1', [listingId]);
             if (listingQuery.rows.length > 0) {
                 const ownerId = listingQuery.rows[0].user_id;
                 const listingTitle = listingQuery.rows[0].title;
                 const favoritedByName = req.user.first_name || 'Хтось'; // Ім'я того, хто додав
 
-                // Не надсилаємо сповіщення самому собі
                 if (ownerId !== userId) {
                     await createNotification(
                         ownerId, // Кому
-                        `${favoritedByName} додав ваше оголошення "${listingTitle}" у вибране.`, // Текст
-                        `listing_detail.html?id=${listingId}` // Посилання на оголошення
+                        `${favoritedByName} додав ваше оголошення "${listingTitle}" у вибране.`,
+                        `listing_detail.html?id=${listingId}`
                     );
                 }
             }
         } catch (notifyErr) {
-            // Логуємо помилку, але не перериваємо основний запит
             console.error("Не вдалося створити сповіщення про 'вибране':", notifyErr);
         }
 
         res.status(201).json({ message: 'Додано до обраного', favoriteId: result.rows[0].favorite_id });
     } catch (err) {
-        // Обробка помилок: унікальність (вже в обраному) або зовнішній ключ (оголошення не існує)
         if (err.code === '23505') { // unique_violation
             return res.status(409).json({ error: 'Оголошення вже у вибраному' });
         }
@@ -1221,17 +1133,15 @@ app.post('/api/favorites/:listingId', authenticateToken, async (req, res) => {
     }
 });
 
-// 9.4 ВИДАЛИТИ ОГОЛОШЕННЯ З ОБРАНОГО
+// ВИДАЛИТИ ОГОЛОШЕННЯ З ОБРАНОГО
 app.delete('/api/favorites/:listingId', authenticateToken, async (req, res) => {
     const userId = req.user.userId; // Хто видаляє
     const { listingId } = req.params; // Яке оголошення
 
     try {
-        // Видаляємо запис з таблиці favorites
         const query = 'DELETE FROM favorites WHERE user_id = $1 AND listing_id = $2 RETURNING favorite_id';
         const result = await pool.query(query, [userId, listingId]);
 
-        // Перевірка, чи було щось видалено
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Оголошення не знайдено у вашому списку обраного' });
         }
@@ -1250,21 +1160,18 @@ app.delete('/api/favorites/:listingId', authenticateToken, async (req, res) => {
 const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-            { resource_type: 'image', folder: 'student_housing' }, // Папка на Cloudinary
+            { resource_type: 'image', folder: 'student_housing' },
             (error, result) => {
-                if (error) reject(error); // Помилка Cloudinary
-                else resolve(result); // Успішний результат { public_id, secure_url, ... }
+                if (error) reject(error);
+                else resolve(result);
             }
         );
-        // Створюємо читаємий потік з буфера і передаємо його в Cloudinary
         streamifier.createReadStream(fileBuffer).pipe(uploadStream);
     });
 };
 
-// --- 10.1 ЗАВАНТАЖЕННЯ АВАТАРА КОРИСТУВАЧА ---
-// Використовує multer middleware 'upload.single('avatar')' для обробки одного файлу з полем 'avatar'
+// ЗАВАНТАЖЕННЯ АВАТАРА КОРИСТУВАЧА
 app.post('/api/upload/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
-    // Перевірка, чи файл було передано
     if (!req.file) {
         return res.status(400).json({ error: 'Файл аватара не знайдено' });
     }
@@ -1272,12 +1179,10 @@ app.post('/api/upload/avatar', authenticateToken, upload.single('avatar'), async
 
     try {
         console.log(`Uploading avatar for user ${userId}...`);
-        // Завантаження буфера файлу в Cloudinary
         const result = await uploadToCloudinary(req.file.buffer);
-        const avatarUrl = result.secure_url; // Отримуємо безпечне HTTPS URL
+        const avatarUrl = result.secure_url;
         console.log(`Avatar uploaded to: ${avatarUrl}`);
 
-        // Оновлення URL аватара в базі даних для користувача
         const updateQuery = 'UPDATE users SET avatar_url = $1 WHERE user_id = $2 RETURNING avatar_url';
         const dbResult = await pool.query(updateQuery, [avatarUrl, userId]);
 
@@ -1288,18 +1193,15 @@ app.post('/api/upload/avatar', authenticateToken, upload.single('avatar'), async
     }
 });
 
-// --- 10.2 ЗАВАНТАЖЕННЯ ФОТО ДЛЯ ОГОЛОШЕННЯ ---
-// Використовує multer 'upload.array('photos', 8)' для обробки до 8 файлів з полем 'photos'
+// ЗАВАНТАЖЕННЯ ФОТО ДЛЯ ОГОЛОШЕННЯ
 app.post('/api/upload/listing-photos/:listingId', authenticateToken, upload.array('photos', 8), async (req, res) => {
     const listingId = req.params.listingId;
     const userId = req.user.userId;
 
-    // Перевірка, чи файли було передано
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'Файли фото не знайдено' });
     }
 
-    // Перевірка, чи користувач є власником оголошення
     try {
         const checkOwner = await pool.query('SELECT user_id FROM listings WHERE listing_id = $1', [listingId]);
         if (checkOwner.rows.length === 0 || checkOwner.rows[0].user_id !== userId) {
@@ -1310,28 +1212,24 @@ app.post('/api/upload/listing-photos/:listingId', authenticateToken, upload.arra
         return res.status(500).json({ error: 'Помилка сервера' });
     }
 
-    const uploadedUrls = []; // Масив для зберігання URL завантажених фото
-    const client = await pool.connect(); // Беремо клієнта для транзакції
+    const uploadedUrls = [];
+    const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
-        // Отримуємо максимальний поточний порядок фото для цього оголошення
         const orderResult = await client.query('SELECT COALESCE(MAX(photo_order), -1) as max_order FROM listing_photos WHERE listing_id = $1', [listingId]);
-        let nextOrder = orderResult.rows[0].max_order + 1; // Порядок для першого нового фото
+        let nextOrder = orderResult.rows[0].max_order + 1;
 
-        // Обробка кожного завантаженого файлу
         for (const file of req.files) {
             console.log(`Uploading photo for listing ${listingId}...`);
-            // Завантаження в Cloudinary
             const result = await uploadToCloudinary(file.buffer);
             const imageUrl = result.secure_url;
             console.log(`Photo uploaded to: ${imageUrl}`);
 
-            // Визначаємо, чи це фото має бути головним (перше завантажене для оголошення)
+            // чи фото головне
             const isMain = (nextOrder === 0);
 
-            // Вставка запису про фото в БД
             const insertQuery = `
                 INSERT INTO listing_photos (listing_id, image_url, is_main, photo_order)
                 VALUES ($1, $2, $3, $4) RETURNING image_url;
@@ -1339,35 +1237,30 @@ app.post('/api/upload/listing-photos/:listingId', authenticateToken, upload.arra
             const dbResult = await client.query(insertQuery, [listingId, imageUrl, isMain, nextOrder]);
             uploadedUrls.push(dbResult.rows[0].image_url);
 
-            // Якщо це головне фото, оновлюємо поле main_photo_url в таблиці listings
             if (isMain) {
                 await client.query('UPDATE listings SET main_photo_url = $1 WHERE listing_id = $2', [imageUrl, listingId]);
             }
-
-            nextOrder++; // Збільшуємо порядок для наступного фото
+            nextOrder++;
         }
 
-        await client.query('COMMIT'); // Завершуємо транзакцію
+        await client.query('COMMIT');
         res.status(201).json({ message: `${req.files.length} фото успішно завантажено!`, photoUrls: uploadedUrls });
     } catch (error) {
-        await client.query('ROLLBACK'); // Відкат транзакції при помилці
+        await client.query('ROLLBACK');
         console.error('Помилка завантаження фото оголошення:', error);
         res.status(500).json({ error: 'Помилка сервера при завантаженні фото' });
     } finally {
-        client.release(); // Повертаємо клієнта в пул
+        client.release();
     }
 });
 
-// --- Обробник помилок Multer (специфічних для завантаження файлів) ---
+// --- Обробник помилок Multer---
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
-        // Помилка Multer (напр., перевищено ліміт розміру)
         return res.status(400).json({ error: `Помилка завантаження файлу: ${err.message}` });
     } else if (err) {
-        // Інша помилка (напр., невірний тип файлу з fileFilter)
         return res.status(400).json({ error: err.message });
     }
-    // Якщо це не помилка Multer, передаємо далі
     next();
 });
 
@@ -1379,18 +1272,16 @@ app.use((err, req, res, next) => {
 const reportUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }
-}).array('files'); // 'files' - ім'я поля у формі
+}).array('files');
 
 app.post('/api/report-bug', authenticateToken, reportUpload, async (req, res) => {
     const userId = req.user.userId;
-    const problemTypes = req.body.problemTypes || []; // Очікуємо масив або один елемент
+    const problemTypes = req.body.problemTypes || [];
     const problemDescription = req.body.problemDescription;
-    const files = req.files; // Масив файлів
+    const files = req.files;
 
-    // Перетворюємо problemTypes на масив, якщо це не так
     const problemTypesArray = Array.isArray(problemTypes) ? problemTypes : [problemTypes];
 
-    // Валідація
     if (!problemDescription || problemTypesArray.length === 0) {
         return res.status(400).json({ error: 'Необхідно вказати опис та вибрати хоча б один тип проблеми.' });
     }
@@ -1401,10 +1292,9 @@ app.post('/api/report-bug', authenticateToken, reportUpload, async (req, res) =>
         console.log(`Типи проблеми: ${problemTypesArray.join(', ')}`);
         console.log(`Опис: ${problemDescription}`);
 
-        const uploadedFileUrls = []; // Масив для URL завантажених файлів
+        const uploadedFileUrls = [];
         if (files && files.length > 0) {
             console.log(`Завантажено файлів: ${files.length}`);
-            // Завантаження файлів звіту на Cloudinary
             for (const file of files) {
                 try {
                     const result = await uploadToCloudinary(file.buffer);
@@ -1418,12 +1308,10 @@ app.post('/api/report-bug', authenticateToken, reportUpload, async (req, res) =>
             console.log('URL завантажених файлів звіту:', uploadedFileUrls);
         }
 
-        // Збереження звіту в базу даних
         const insertQuery = `
             INSERT INTO bug_reports (user_id, report_types, description, file_urls, created_at)
             VALUES ($1, $2, $3, $4, NOW());
         `;
-        // Передаємо problemTypesArray як масив PostgreSQL
         await pool.query(insertQuery, [userId, problemTypesArray, problemDescription, uploadedFileUrls]);
         console.log('Звіт збережено в базу даних.');
 
