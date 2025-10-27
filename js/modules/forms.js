@@ -139,12 +139,12 @@ const initializeMap = (formElement, initialLat = 49.8397, initialLng = 24.0297) 
             }
         });
 
-        setTimeout(() => {
-            if (map) {
+        if (map) {
+            map.whenReady(() => {
                 map.invalidateSize();
-                console.log("Map size invalidated after initialization.");
-            }
-        }, 100); //затримка
+                console.log("Map size invalidated after initialization using whenReady().");
+            });
+        }
 
     } catch (error) {
         console.error("Помилка ініціалізації карти Leaflet:", error);
@@ -616,10 +616,8 @@ export const setupAddListingFormLogic = () => {
 
 
     updateFormState(form);
-    setTimeout(() => {
-        initializeMap(form);
-        console.log("Map initialized via setupAddListingFormLogic after delay.");
-    }, 50);
+    initializeMap(form);
+    console.log("Map initialized via setupAddListingFormLogic.");
 };
 
 //Налаштовує логіку форми РЕДАГУВАННЯ оголошення.
@@ -1602,6 +1600,21 @@ export const setupHomepageFilters = () => {
                         if (otherDistrictValue) params.append('district', otherDistrictValue);
                     }
                     else if (!['city_other_text', 'district_other'].includes(input.name) && value) {
+                        params.append(input.name, value);
+                    }
+                    else if (input.name === 'current_price_min' && value) {
+                        params.append('target_price_min', value);
+                    }
+                    else if (input.name === 'current_price_max' && value) {
+                        params.append('target_price_max', value);
+                    }
+                    else if (input.name === 'desired_price_min' && value) {
+                        params.append('price_min', value);
+                    }
+                    else if (input.name === 'desired_price_max' && value) {
+                        params.append('price_max', value);
+                    }
+                    else if (!['city_other_text', 'district_other', 'current_price_min', 'current_price_max', 'desired_price_min', 'desired_price_max'].includes(input.name) && value) {
                         params.append(input.name, value);
                     }
                 });

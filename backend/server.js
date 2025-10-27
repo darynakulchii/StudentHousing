@@ -212,11 +212,29 @@ app.get('/api/listings', async (req, res) => {
             }
         }
 
-        // Бажане житло
-        if (req.query.desired_price_min) { whereClauses.push(`l.target_price_min >= $${paramIndex++}`); params.push(req.query.desired_price_min); }
-        if (req.query.desired_price_max) { whereClauses.push(`l.target_price_max <= $${paramIndex++}`); params.push(req.query.desired_price_max); }
+        // Фільтри за ЦІНОЮ ОРЕНДИ (шукає оголошення, що ЗДАЮТЬСЯ)
+        if (req.query.price_min) {
+            whereClauses.push(`l.price >= $${paramIndex++}`);
+            params.push(req.query.price_min);
+        }
+        if (req.query.price_max) {
+            whereClauses.push(`l.price <= $${paramIndex++}`);
+            params.push(req.query.price_max);
+        }
+
+        // Фільтри за БАЖАНИМ БЮДЖЕТОМ (шукає оголошення, що ШУКАЮТЬ ЖИТЛО)
+        if (req.query.target_price_min) {
+            whereClauses.push(`l.target_price_min >= $${paramIndex++}`);
+            params.push(req.query.target_price_min);
+        }
+        if (req.query.target_price_max) {
+            whereClauses.push(`l.target_price_max <= $${paramIndex++}`);
+            params.push(req.query.target_price_max);
+        }
+
         if (req.query.housing_type_search) { whereClauses.push(`l.housing_type_search = $${paramIndex++}`); params.push(req.query.housing_type_search); }
         if (req.query.target_rooms) { whereClauses.push(`l.target_rooms = $${paramIndex++}`); params.push(req.query.target_rooms); }
+
         // Наявне житло
         if (req.query.current_price_min) { whereClauses.push(`l.price >= $${paramIndex++}`); params.push(req.query.current_price_min); }
         if (req.query.current_price_max) { whereClauses.push(`l.price <= $${paramIndex++}`); params.push(req.query.current_price_max); }
