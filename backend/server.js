@@ -190,6 +190,12 @@ app.get('/api/listings', async (req, res) => {
             }
         }
 
+        if (req.query.ready_to_share_not === 'no') {
+            // Оголошення, що шукають житло (find_home), в яких ready_to_share = 'no', будуть виключені.
+            whereClauses.push(`l.ready_to_share != $${paramIndex++}`);
+            params.push('no');
+        }
+
         // Фільтри по локації (Місто, Район)
         if (req.query.city) {
             whereClauses.push(`(l.city = $${paramIndex++} OR l.city_other = $${paramIndex++})`);
