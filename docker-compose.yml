@@ -1,5 +1,4 @@
 services:
-  # Наш бекенд-сервіс
   backend:
     build: ./backend
     ports:
@@ -9,29 +8,25 @@ services:
       DB_USER: postgres
       DB_PASSWORD: mysecretpassword
       DB_DATABASE: postgres
-      # --- Змінні Cloudinary ПЕРЕМІЩЕНО СЮДИ ---
       CLOUDINARY_CLOUD_NAME: 'dpkbwlkfx'
       CLOUDINARY_API_KEY: '434715286878721'
       CLOUDINARY_API_SECRET: 'fMjYqN6wgd08AOUJlcPyFBXnHV4'
     depends_on:
-      db: # Залежність backend від db залишається
+      db:
         condition: service_healthy
 
-  # Наш сервіс бази даних
   db:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: postgres
-      # Змінні Cloudinary звідси ВИДАЛЕНО
-    # Блок depends_on: db: ВИДАЛЕНО ЗВІДСИ
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./db_init:/docker-entrypoint-initdb.d
-    healthcheck: # Healthcheck залишається, він корисний
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s

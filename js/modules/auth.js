@@ -1,28 +1,17 @@
-// =================================================================================
-// AUTHENTICATION MODULE
-// =================================================================================
-
-// Отримує токен автентифікації з localStorage.
 export const getToken = () => localStorage.getItem('authToken');
-
-// Зберігає токен автентифікації в localStorage.
 export const setToken = (token) => localStorage.setItem('authToken', token);
-
-// Видаляє токен автентифікації з localStorage.
 export const removeToken = () => localStorage.removeItem('authToken');
 
-// Розбирає JWT токен для отримання payload (даних користувача).
 const parseJwt = (token) => {
     if (!token) return null;
     try {
-        // Стандартний процес декодування Base64Url
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
         return JSON.parse(jsonPayload);
     } catch (e) {
         console.error("JWT parsing error:", e);
-        return null; // Повертаємо null при помилці розбору
+        return null;
     }
 };
 
@@ -37,18 +26,16 @@ export const getMyUserId = () => {
 
     const payload = parseJwt(token);
     if (!payload) {
-        removeToken(); // Видаляємо невалідний токен
+        removeToken();
         return null;
     }
 
-    // Перевірка терміну дії токена (exp в секундах -> порівнюємо з мс)
     if (payload.exp && (payload.exp * 1000 < Date.now())) {
         console.log("JWT token expired. Removing.");
-        removeToken(); // Видаляємо прострочений токен
+        removeToken();
         return null;
     }
-
-    return payload.userId; // Повертаємо ID користувача з payload
+    return payload.userId;
 };
 
 /**
@@ -61,7 +48,7 @@ export const getAuthHeaders = (isJson = true) => {
     const token = getToken();
     const headers = {};
     if (token) {
-        headers['Authorization'] = `Bearer ${token}`; // Стандартний формат для JWT
+        headers['Authorization'] = `Bearer ${token}`;
     }
     if (isJson) {
         headers['Content-Type'] = 'application/json';
@@ -69,23 +56,20 @@ export const getAuthHeaders = (isJson = true) => {
     return headers;
 };
 
-// Обробляє відправку форми реєстрації.
 export const handleRegistration = async () => {
     const form = document.getElementById('registerForm');
-    if (!form) return; // Виходимо, якщо форма не знайдена
+    if (!form) return;
 
     form.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Запобігаємо стандартній відправці
+        e.preventDefault();
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
 
-        // Перевірка співпадіння паролів
         if (data.password !== data.confirm_password) {
             alert('Помилка: Паролі не співпадають.');
             return;
         }
 
-        // Формуємо дані тільки для API реєстрації
         const registrationData = {
             first_name: data.first_name,
             last_name: data.last_name,
@@ -94,37 +78,32 @@ export const handleRegistration = async () => {
         };
 
         try {
-            // Відправляємо запит на сервер
             const response = await fetch('http://localhost:3000/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registrationData),
             });
 
-            if (response.status === 201) { // Успішна реєстрація (Created)
+            if (response.status === 201) {
                 const result = await response.json();
                 alert(`Успіх! ${result.message}. Тепер ви можете увійти.`);
-                form.reset(); // Очищуємо форму
-                window.location.href = 'login.html'; // Перенаправляємо на сторінку входу
+                form.reset();
+                window.location.href = 'login.html';
             } else {
-                // Обробка помилок сервера (напр., email вже існує)
                 const errorData = await response.json();
                 alert(`Помилка реєстрації: ${errorData.error || 'Невідома помилка'}`);
             }
         } catch (error) {
-            // Обробка мережевих помилок
             console.error('Помилка мережі/сервера при реєстрації:', error);
             alert('Не вдалося з’єднатися з сервером. Перевірте консоль.');
         }
     });
 };
 
-// Обробляє відправку форми входу.
 export const handleLogin = async () => {
     const form = document.getElementById('loginForm');
     if (!form) return;
 
-    // Якщо користувач вже авторизований, перенаправляємо його в профіль
     if (getMyUserId()) {
         window.location.href = 'profile.html';
         return;
@@ -136,25 +115,22 @@ export const handleLogin = async () => {
         const data = Object.fromEntries(formData.entries());
 
         try {
-            // Відправляємо запит на сервер
             const response = await fetch('http://localhost:3000/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
 
-            if (response.ok) { // Успішний вхід
+            if (response.ok) {
                 const result = await response.json();
-                setToken(result.token); // Зберігаємо отриманий токен
+                setToken(result.token);
                 alert(`Вітаємо, ${result.user.first_name}!`);
-                window.location.href = 'index.html'; // Перенаправляємо на головну сторінку
+                window.location.href = 'index.html';
             } else {
-                // Обробка помилок сервера (напр., неправильний пароль)
                 const errorData = await response.json();
                 alert(`Помилка входу: ${errorData.error || 'Невідома помилка'}`);
             }
         } catch (error) {
-            // Обробка мережевих помилок
             console.error('Помилка мережі/сервера при логіні:', error);
             alert('Не вдалося з’єднатися з сервером.');
         }
@@ -166,14 +142,12 @@ export const handleLoginSettings = () => {
     const changeEmailForm = document.getElementById('changeEmailForm');
     const changePasswordForm = document.getElementById('changePasswordForm');
 
-    // Перевірка авторизації
     if (!MY_USER_ID) {
         alert('Будь ласка, увійдіть, щоб змінити налаштування.');
         window.location.href = 'login.html';
         return;
     }
 
-    // Обробник форми зміни Email
     if (changeEmailForm) {
         changeEmailForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -181,20 +155,19 @@ export const handleLoginSettings = () => {
             const data = Object.fromEntries(formData.entries());
 
             const submitButton = changeEmailForm.querySelector('button[type="submit"]');
-            submitButton.disabled = true; // Блокуємо кнопку на час запиту
+            submitButton.disabled = true;
             submitButton.textContent = 'Зміна...';
 
             try {
-                // Відправляємо запит на зміну email
                 const response = await fetch('http://localhost:3000/api/profile/change-email', {
                     method: 'POST',
-                    headers: getAuthHeaders(), // Додаємо токен
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
                     alert('Email успішно оновлено!');
-                    changeEmailForm.reset(); // Очищуємо форму
+                    changeEmailForm.reset();
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Невідома помилка');
@@ -202,44 +175,40 @@ export const handleLoginSettings = () => {
             } catch (error) {
                 alert(`Помилка: ${error.message}`);
             } finally {
-                submitButton.disabled = false; // Розблоковуємо кнопку
+                submitButton.disabled = false;
                 submitButton.textContent = 'Змінити Email';
             }
         });
     }
 
-    // Обробник форми зміни Паролю
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(changePasswordForm);
             const data = Object.fromEntries(formData.entries());
 
-            // Перевірка співпадіння нових паролів
             if (data.new_password !== data.confirm_new_password) {
                 alert('Помилка: Нові паролі не співпадають.');
                 return;
             }
-            // TODO: Додати валідацію складності нового пароля
 
             const submitButton = changePasswordForm.querySelector('button[type="submit"]');
-            submitButton.disabled = true; // Блокуємо кнопку
+            submitButton.disabled = true;
             submitButton.textContent = 'Зміна...';
 
             try {
-                // Відправляємо запит на зміну пароля
                 const response = await fetch('http://localhost:3000/api/profile/change-password', {
                     method: 'POST',
-                    headers: getAuthHeaders(), // Додаємо токен
+                    headers: getAuthHeaders(),
                     body: JSON.stringify({
                         old_password: data.old_password,
-                        new_password: data.new_password // Надсилаємо тільки потрібні поля
+                        new_password: data.new_password
                     })
                 });
 
                 if (response.ok) {
                     alert('Пароль успішно оновлено!');
-                    changePasswordForm.reset(); // Очищуємо форму
+                    changePasswordForm.reset();
                 } else {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Невідома помилка');
@@ -247,12 +216,11 @@ export const handleLoginSettings = () => {
             } catch (error) {
                 alert(`Помилка: ${error.message}`);
             } finally {
-                submitButton.disabled = false; // Розблоковуємо кнопку
+                submitButton.disabled = false;
                 submitButton.textContent = 'Змінити Пароль';
             }
         });
     }
 };
 
-// Глобальна константа з ID поточного користувача (або null)
 export const MY_USER_ID = getMyUserId();
