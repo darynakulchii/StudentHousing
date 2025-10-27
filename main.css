@@ -637,12 +637,16 @@ select option[disabled] {
     overflow: hidden;
     position: relative;
     box-shadow: var(--box-shadow-heavy);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .listing-card-link {
     text-decoration: none;
     color: inherit;
     display: block;
+    height: 100%;
 }
 
 .listing-image {
@@ -650,6 +654,7 @@ select option[disabled] {
     height: 220px;
     object-fit: cover;
     display: block;
+    flex-shrink: 0;
 }
 
 .info-overlay {
@@ -690,12 +695,20 @@ select option[disabled] {
 
 .listing-content h3 {
     font-size: 1.1rem;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: calc(1.1rem * 1.3 * 2);
+    line-height: 1.3;
 }
 
 .listing-content .details {
     color: var(--text-light);
     font-size: 0.9rem;
+    margin-top: auto;
 }
 .listing-content .details i {
     margin-right: 5px;
@@ -714,7 +727,6 @@ select option[disabled] {
     max-width: 1000px;
     margin: 0 auto;
     width: 100%;
-    align-items: flex-start;
 }
 
 .profile-sidebar {
