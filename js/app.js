@@ -7,6 +7,7 @@ import {
 } from './modules/forms.js';
 import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSettingsSubmission, loadPublicProfileData} from './modules/profile.js';
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
+import { universitiesData } from './modules/universities.js';
 
 export const DEFAULT_LISTING_IMAGE = {
     'rent_out': './photo/default_listing_photo.png',
@@ -242,13 +243,24 @@ const fetchAndDisplayListingDetail = async () => {
             const mateCategories = ['mate_personality', 'mate_lifestyle', 'mate_interests', 'mate_pets'];
             const mateCharsHTML = buildCharSection(mateCategories);
 
-            if (listing.roommate_gender || listing.roommate_age_min || listing.roommate_smoking || listing.roommate_drinking || listing.roommate_guests || mateCharsHTML) { // Added checks
+            const hasRoommatePrefs = (
+                (listing.roommate_gender && listing.roommate_gender !== 'any') ||
+                listing.roommate_age_min ||
+                listing.roommate_age_max ||
+                (listing.roommate_smoking && listing.roommate_smoking !== 'any') ||
+                (listing.roommate_drinking && listing.roommate_drinking !== 'any') ||
+                (listing.roommate_guests && listing.roommate_guests !== 'any') ||
+                (listing.roommate_description && listing.roommate_description.trim() !== '') ||
+                mateCharsHTML.trim() !== ''
+            );
+
+            if (hasRoommatePrefs) {
                 roommatePrefsHTML = `
                     <div class="detail-section">
                         <h2>Вимоги до сусіда</h2>
-                        <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">
+                         <div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">
                             ${listing.roommate_gender && listing.roommate_gender !== 'any' ? `<span class="char-tag">Стать: ${listing.roommate_gender === 'female' ? 'Жіноча' : (listing.roommate_gender === 'male' ? 'Чоловіча' : 'Інша')}</span>` : ''}
-                            ${listing.roommate_age_min && listing.roommate_age_max ? `<span class="char-tag">Вік: ${listing.roommate_age_min} - ${listing.roommate_age_max}</span>` : ''}
+                            ${listing.roommate_age_min || listing.roommate_age_max ? `<span class="char-tag">Вік: ${listing.roommate_age_min || 'Від'} - ${listing.roommate_age_max || 'До'}</span>` : ''}
                             ${listing.roommate_smoking && listing.roommate_smoking !== 'any' ? `<span class="char-tag">Паління (сусід): ${listing.roommate_smoking === 'no' ? 'Не палить' : (listing.roommate_smoking === 'yes' ? 'Палить' : 'Палить (лише на вулиці)')}</span>` : ''}
                             ${listing.roommate_drinking && listing.roommate_drinking !== 'any' ? `<span class="char-tag">Алкоголь (сусід): ${listing.roommate_drinking === 'no' ? 'Не вживає' : (listing.roommate_drinking === 'rarely' ? 'Рідко' : 'Вживає')}</span>` : ''}
                             ${listing.roommate_guests && listing.roommate_guests !== 'any' ? `<span class="char-tag">Гості (сусід): ${listing.roommate_guests === 'no' ? 'Без гостей' : (listing.roommate_guests === 'rarely' ? 'Рідко' : (listing.roommate_guests === 'sometimes' ? 'Іноді' : 'Часто'))}</span>` : ''}
@@ -257,6 +269,8 @@ const fetchAndDisplayListingDetail = async () => {
                         ${listing.roommate_description ? `<div class="char-category-group"><h3>Додаткові побажання</h3><p>${listing.roommate_description.replace(/\n/g, '<br>')}</p></div>` : ''}
                     </div>
                 `;
+            } else {
+                roommatePrefsHTML = '';
             }
         }
 
@@ -318,6 +332,24 @@ const fetchAndDisplayListingDetail = async () => {
         }
         console.log(`Generated profile link: ${profileLinkUrl}`);
 
+        let priceDisplayHTML = '';
+
+        if (listing.listing_type === 'find_home') {
+            const minPrice = listing.target_price_min;
+            const maxPrice = listing.target_price_max;
+            if (minPrice && maxPrice) {
+                priceDisplayHTML = `Бюджет: ₴${minPrice} - ${maxPrice} / міс`;
+            } else if (minPrice) {
+                priceDisplayHTML = `Бюджет: Від ₴${minPrice} / міс`;
+            } else if (maxPrice) {
+                priceDisplayHTML = `Бюджет: До ₴${maxPrice} / міс`;
+            } else {
+                priceDisplayHTML = 'Бюджет не вказано';
+            }
+        } else {
+            priceDisplayHTML = `₴${listing.price || 'Не вказано'} / міс`;
+        }
+
         const authorAvatarHTML = `
              <a href="user_profile.html?id=${listing.user_id}" class="author-name-link">
                  <div class="author-avatar">
@@ -346,6 +378,27 @@ const fetchAndDisplayListingDetail = async () => {
                  <i class="fas fa-sign-in-alt"></i> Увійдіть, щоб зв'язатись
                </a>`);
 
+        // --- Логіка для відображення університету ---
+        let universityDisplayHTML = '';
+        if (listing.listing_type === 'find_home' && listing.target_university) {
+            let uniName = '';
+            if (listing.target_university === 'other' && listing.target_university_other) {
+                uniName = listing.target_university_other; // Використовуємо текст, введений користувачем
+            } else {
+                // Шукаємо університет у всіх містах в universitiesData
+                for (const city in universitiesData) {
+                    const foundUni = universitiesData[city].find(uni => uni.value === listing.target_university);
+                    if (foundUni) {
+                        uniName = foundUni.text; // Знайшли повну назву
+                        break;
+                    }
+                }
+                if (!uniName) {
+                    uniName = listing.target_university; // Якщо не знайшли, показуємо ключ як є
+                }
+            }
+            universityDisplayHTML = `<p><i class="fas fa-university"></i> Шукає біля: ${uniName}</p>`;
+        }
 
         const detailHTML = `
             <div class="listing-detail-layout">
@@ -363,11 +416,12 @@ const fetchAndDisplayListingDetail = async () => {
                             <i class="far fa-heart"></i>
                         </button>
                     </div>
-                    <span class="detail-price">₴${listing.price || 0} / міс</span>
+                    
+                    <span class="detail-price">${priceDisplayHTML}</span>
 
                     <div class="detail-meta">
                         <p><i class="fas fa-map-marker-alt"></i> ${displayCity}${displayDistrict ? `, ${displayDistrict}` : ''}${listing.address ? `, ${listing.address}` : ''}</p>
-                        ${listing.target_university && listing.listing_type === 'find_home' ? `<p><i class="fas fa-university"></i> Шукає біля: ${listing.target_university}</p>` : ''}
+                        ${universityDisplayHTML}
                         ${listing.rooms ? `<p><i class="fas fa-door-open"></i> Кімнат: ${listing.rooms}</p>` : ''}
                         ${listing.total_area ? `<p><i class="fas fa-ruler-combined"></i> Площа: ${listing.total_area} м²</p>` : ''}
                         ${listing.kitchen_area ? `<p><i class="fas fa-utensils"></i> Кухня: ${listing.kitchen_area} м²</p>` : ''}
