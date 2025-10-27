@@ -1132,7 +1132,6 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 .detail-section h2 { font-size: 1.3rem; margin-bottom: 1rem; }
 .detail-section p { line-height: 1.6; white-space: pre-wrap; }
 
-/* НОВІ СТИЛІ ДЛЯ ГРУП ХАРАКТЕРИСТИК */
 .char-category-group {
     margin-bottom: 1.2rem;
 }
@@ -1154,9 +1153,7 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     font-weight: 500;
     color: var(--secondary-color);
 }
-.listing-detail-author {
-    /* Стилі тепер всередині .author-card */
-}
+
 .author-card {
     background: var(--background-white);
     padding: 20px;
@@ -1171,9 +1168,8 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
     text-align: center;
     color: var(--secondary-color);
 }
-/* === ОНОВЛЕНО: Стилі для аватара автора === */
 .author-avatar {
-    margin-bottom: 15px; /* Збільшуємо відступ */
+    margin-bottom: 15px;
 }
 .author-avatar img {
     width: 80px; /* Зменшуємо розмір аватара */
@@ -1230,6 +1226,24 @@ select option[disabled] { /* Приховуємо "Виберіть..." */
 .author-name-link:hover .author-name {
     color: var(--primary-color);
     text-decoration: underline;
+}
+
+.favorite-btn {
+    background: var(--background-form);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0; /* Кнопка не стискається */
+    display: flex; /* Для центрування іконки */
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px; /* Невеликий відступ зверху, щоб вирівняти з текстом */
+    /* display: none; */ /* Ховаємо спочатку, JS покаже якщо треба */
 }
 
 /* ==================================== */
@@ -2238,20 +2252,6 @@ input:checked + .slider:before {
 .listing-title-header h1 {
     flex-grow: 1; /* Заголовок займає максимум місця */
     margin-bottom: 0; /* Прибираємо відступ у h1 */
-}
-
-.favorite-btn {
-    background: var(--background-form);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    font-size: 1.3rem;
-    color: var(--text-light);
-    cursor: pointer;
-    transition: all 0.2s;
-    flex-shrink: 0; /* Кнопка не стискається */
-    display: none; /* Прихована, поки JS не перевірить логін */
 }
 
 .favorite-btn:hover {
