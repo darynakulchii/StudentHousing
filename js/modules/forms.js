@@ -307,6 +307,9 @@ export const updateFormState = (formElement) => {
     const myGroupCountSelect = formElement.querySelector('#my_group_count');
     const targetRoommatesTotalGroup = formElement.querySelector('#targetRoommatesTotalGroup');
     const petDetailsDiv = formElement.querySelector('#pet_details');
+    const myPetDetailsDiv = formElement.querySelector('#my_pet_details');
+    const matePetDetailsDiv = formElement.querySelector('#mate_pet_details');
+    const searchPetDetailsDiv = formElement.querySelector('#search_pet_details');
     const photoRequiredIndicator = formElement.querySelector('#photoRequiredIndicator');
     const citySelect = formElement.querySelector('#city');
 
@@ -345,9 +348,6 @@ export const updateFormState = (formElement) => {
     const setVisible = (element, isVisible) => {
         if (element) element.style.display = isVisible ? 'block' : 'none';
     };
-
-    const universitiesCheckboxesContainer = formElement.querySelector('#nearbyUniversitiesCheckboxes');
-    const targetUniversitySelect = formElement.querySelector('#target_university');
 
     const populateUniversities = (city) => {
         const unis = universitiesData[city] || [];
@@ -475,6 +475,70 @@ export const updateFormState = (formElement) => {
         const photoIsRequired = isRentOut || isFindMate;
         photoRequiredIndicator.textContent = photoIsRequired ? '*' : '';
     }
+
+    // 1. Логіка для `my_group_count` (для find_home/find_mate)
+    const myGroupSize = formElement.querySelector('input[name="my_group_size"]:checked')?.value;
+    setVisible(myGroupCountSelect, myGroupSize === 'more');
+
+    // 2. Логіка для `pet_policy` в `listingDetails` (rent_out/find_mate)
+    const initialPetPolicy = formElement.querySelector('input[name="pet_policy"]:checked');
+    if (petDetailsDiv) {
+        petDetailsDiv.style.display = initialPetPolicy?.value === 'yes' ? 'flex' : 'none';
+    }
+
+    // 3. Логіка для `my_pets_policy` в `aboutMe` (find_home/find_mate)
+    const initialMyPetsPolicy = formElement.querySelector('input[name="my_pets_policy"]:checked');
+    if (myPetDetailsDiv) {
+        myPetDetailsDiv.style.display = initialMyPetsPolicy?.value === 'yes' ? 'block' : 'none';
+        const noPetCheckbox = formElement.querySelector('input[name="characteristics"][value="my_pet_no"]');
+        if (noPetCheckbox) noPetCheckbox.checked = (initialMyPetsPolicy?.value === 'no');
+    }
+
+    // 4. Логіка для `mate_pets_policy` в `roommatePreferences` (find_mate/find_home)
+    const initialMatePetsPolicy = formElement.querySelector('input[name="mate_pets_policy"]:checked');
+    if (matePetDetailsDiv) {
+        matePetDetailsDiv.style.display = (initialMatePetsPolicy?.value === 'yes' || initialMatePetsPolicy?.value === 'maybe') ? 'block' : 'none';
+        const noMatePetCheckbox = formElement.querySelector('input[name="characteristics"][value="mate_no_pet"]');
+        if (noMatePetCheckbox) noMatePetCheckbox.checked = (initialMatePetsPolicy?.value === 'no');
+    }
+
+    // 5. Логіка для `search_pet_policy` в `housingFilters` (find_home)
+    const initialSearchPetPolicy = formElement.querySelector('input[name="search_pet_policy"]:checked');
+    if (searchPetDetailsDiv) {
+        searchPetDetailsDiv.style.display = initialSearchPetPolicy?.value === 'yes' ? 'block' : 'none';
+    }
+
+    // 6. Логіка для умовних 'other' текстових полів для Select елементів (building_type, wall_type, city, etc.)
+    formElement.querySelectorAll('.other-option-select').forEach(select => {
+        const otherInput = select.nextElementSibling;
+        if (otherInput && otherInput.classList.contains('hidden-other-input')) {
+            otherInput.style.display = select.value === 'other' ? 'block' : 'none';
+            otherInput.classList.toggle('hidden-other-input', select.value !== 'other');
+        }
+    });
+
+    // 7. Логіка для умовних 'other' текстових полів для Checkbox груп (tech_other_text, etc.)
+    formElement.querySelectorAll('input[name="characteristics_other_trigger"]').forEach(checkbox => {
+        const textInputId = checkbox.getAttribute('onchange')?.match(/'([^']+)'/)?.[1];
+        if (textInputId) {
+            const textInput = formElement.querySelector(`#${textInputId}`);
+            if (textInput) {
+                // Встановлюємо стан чекбоксу та видимість на основі того, чи є в текстовому полі значення (яке було завантажено з бази)
+                const valueIsSet = textInput.value && textInput.value.trim() !== '';
+                if (valueIsSet) {
+                    checkbox.checked = true;
+                    textInput.style.display = 'block';
+                    textInput.classList.remove('hidden-other-input');
+                } else {
+                    // Якщо чекбокс був активований вручну, він залишається відкритим
+                    if (!checkbox.checked) {
+                        textInput.style.display = 'none';
+                        textInput.classList.add('hidden-other-input');
+                    }
+                }
+            }
+        }
+    });
 };
 
 //Налаштовує логіку форми СТВОРЕННЯ оголошення
@@ -487,22 +551,27 @@ export const setupAddListingFormLogic = () => {
     const otherOptionSelects = form.querySelectorAll('.other-option-select');
     const petPolicyRadios = form.querySelectorAll('input[name="pet_policy"]');
     const myPetCheckboxes = form.querySelectorAll('#aboutMe input[name="characteristics"][value^="my_pet_"]');
-    const myPetNoCheckbox = form.querySelector('#my_pet_no_check');
+    const myPetNoCheckbox = form.querySelector('input[name="characteristics"][value="my_pet_no"]');
     const matePetCheckboxes = form.querySelectorAll('#roommatePreferences input[name="characteristics"][value^="mate_"]');
-    const matePetNoCheckbox = form.querySelector('#mate_no_pet_check');
+    const matePetNoCheckbox = form.querySelector('input[name="characteristics"][value="mate_no_pet"]');
     const readyToShareRadios = form.querySelectorAll('input[name="ready_to_share"]');
     const isStudentRadios = form.querySelectorAll('input[name="is_student"]');
     const myGroupSizeRadios = form.querySelectorAll('input[name="my_group_size"]');
-    const petDetailsDiv = form.querySelector('#pet_details');
 
     const updateHandler = () => updateFormState(form);
 
+    // Додаємо слухачів, які викликають updateFormState при зміні важливих полів
     listingTypeRadios.forEach(radio => radio.addEventListener('change', updateHandler));
     citySelect?.addEventListener('change', updateHandler);
     readyToShareRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     isStudentRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     myGroupSizeRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
+    petPolicyRadios?.forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для pet_policy
+    form.querySelectorAll('input[name="my_pets_policy"]').forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для my_pets_policy
+    form.querySelectorAll('input[name="mate_pets_policy"]').forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для mate_pets_policy
+    form.querySelectorAll('input[name="search_pet_policy"]').forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для search_pet_policy
 
+    // Встановлюємо слухач для кнопки пошуку на карті
     const findButton = form.querySelector('#findOnMapBtn');
     if (findButton) {
         findButton.addEventListener('click', (event) => {
@@ -515,6 +584,7 @@ export const setupAddListingFormLogic = () => {
         console.warn("#findOnMapBtn not found in form:", form.id);
     }
 
+    // Логіка для "Інше" в Select-ах (потрібні слухачі, але ініціалізація в updateFormState)
     otherOptionSelects.forEach(select => {
         select.addEventListener('change', (e) => {
             const otherInput = e.target.nextElementSibling;
@@ -522,97 +592,11 @@ export const setupAddListingFormLogic = () => {
                 otherInput.style.display = e.target.value === 'other' ? 'block' : 'none';
                 if (e.target.value !== 'other') otherInput.value = '';
             }
-        });
-        const otherInputInitial = select.nextElementSibling;
-        if (otherInputInitial?.classList.contains('hidden-other-input')) {
-            otherInputInitial.style.display = select.value === 'other' ? 'block' : 'none';
-        }
-    });
-
-    petPolicyRadios?.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (petDetailsDiv) {
-                petDetailsDiv.style.display = e.target.value === 'yes' ? 'flex' : 'none';
-                if (e.target.value === 'no') {
-                    petDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                }
-            }
+            updateFormState(form); // Викликаємо, щоб оновити залежні поля (якщо є)
         });
     });
 
-    const myPetsPolicyRadios = form.querySelectorAll('input[name="my_pets_policy"]');
-    const myPetDetailsDiv = form.querySelector('#my_pet_details');
-
-    myPetsPolicyRadios?.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const noPetCheckbox = form.querySelector('input[name="characteristics"][value="my_pet_no"]');
-            if (myPetDetailsDiv) {
-                myPetDetailsDiv.style.display = e.target.value === 'yes' ? 'block' : 'none';
-                if (e.target.value === 'no') {
-                    myPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                    if (noPetCheckbox) noPetCheckbox.checked = true;
-                } else {
-                    if (noPetCheckbox) noPetCheckbox.checked = false;
-                }
-            }
-        });
-    });
-
-    const initialMyPetsPolicy = form.querySelector('input[name="my_pets_policy"]:checked');
-    if (myPetDetailsDiv && initialMyPetsPolicy) {
-        myPetDetailsDiv.style.display = initialMyPetsPolicy.value === 'yes' ? 'block' : 'none';
-        const noPetCheckboxInitial = form.querySelector('input[name="characteristics"][value="my_pet_no"]');
-        if (noPetCheckboxInitial) noPetCheckboxInitial.checked = (initialMyPetsPolicy.value === 'no');
-    }
-
-    const matePetsPolicyRadios = form.querySelectorAll('input[name="mate_pets_policy"]');
-    const matePetDetailsDiv = form.querySelector('#mate_pet_details');
-
-    matePetsPolicyRadios?.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const noMatePetCheckbox = form.querySelector('input[name="characteristics"][value="mate_no_pet"]');
-            if (matePetDetailsDiv) {
-                matePetDetailsDiv.style.display = (e.target.value === 'yes' || e.target.value === 'maybe') ? 'block' : 'none';
-                if (e.target.value === 'no') {
-                    matePetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                    if (noMatePetCheckbox) noMatePetCheckbox.checked = true;
-                } else {
-                    if (noMatePetCheckbox) noMatePetCheckbox.checked = false;
-                }
-            }
-        });
-    });
-
-    const initialMatePetsPolicy = form.querySelector('input[name="mate_pets_policy"]:checked');
-    if (matePetDetailsDiv && initialMatePetsPolicy) {
-        matePetDetailsDiv.style.display = (initialMatePetsPolicy.value === 'yes' || initialMatePetsPolicy.value === 'maybe') ? 'block' : 'none';
-        const noMatePetCheckboxInitial = form.querySelector('input[name="characteristics"][value="mate_no_pet"]');
-        if (noMatePetCheckboxInitial) noMatePetCheckboxInitial.checked = (initialMatePetsPolicy.value === 'no');
-    }
-
-    const searchPetPolicyRadios = form.querySelectorAll('input[name="search_pet_policy"]');
-    const searchPetDetailsDiv = form.querySelector('#search_pet_details');
-    searchPetPolicyRadios?.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (searchPetDetailsDiv) {
-                searchPetDetailsDiv.style.display = e.target.value === 'yes' ? 'block' : 'none';
-                if (e.target.value !== 'yes') {
-                    searchPetDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                }
-            }
-        });
-    });
-
-    const initialSearchPetPolicy = form.querySelector('input[name="search_pet_policy"]:checked');
-    if (searchPetDetailsDiv && initialSearchPetPolicy) {
-        searchPetDetailsDiv.style.display = initialSearchPetPolicy.value === 'yes' ? 'block' : 'none';
-    }
-
-    const initialPetPolicy = form.querySelector('input[name="pet_policy"]:checked');
-    if (petDetailsDiv && initialPetPolicy) {
-        petDetailsDiv.style.display = initialPetPolicy.value === 'yes' ? 'flex' : 'none';
-    }
-
+    // Логіка для взаємовиключення чекбоксів тварин (My Pets)
     myPetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!myPetNoCheckbox) return;
@@ -621,9 +605,11 @@ export const setupAddListingFormLogic = () => {
             } else if (cb !== myPetNoCheckbox && cb.checked && myPetNoCheckbox.checked) {
                 myPetNoCheckbox.checked = false;
             }
+            // НЕ ТРЕБА викликати updateFormState, оскільки він керує лише відображенням блоку, а не його вмістом.
         });
     });
 
+    // Логіка для взаємовиключення чекбоксів тварин (Mate Pets)
     matePetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!matePetNoCheckbox) return;
@@ -637,33 +623,20 @@ export const setupAddListingFormLogic = () => {
             } else if (isPetCheckbox && cb.checked && matePetNoCheckbox.checked) {
                 matePetNoCheckbox.checked = false;
             }
+            // НЕ ТРЕБА викликати updateFormState, оскільки він керує лише відображенням блоку, а не його вмістом.
         });
     });
 
+    // Логіка для університету
     const targetUniversitySelect = form.querySelector('#target_university');
-    const targetUniversityOtherTextInput = form.querySelector('#target_university_other_text');
+    targetUniversitySelect?.addEventListener('change', updateHandler);
 
-    targetUniversitySelect?.addEventListener('change', (e) => {
-        if (targetUniversityOtherTextInput) {
-            targetUniversityOtherTextInput.style.display = e.target.value === 'other' ? 'block' : 'none';
-            targetUniversityOtherTextInput.classList.toggle('hidden-other-input', e.target.value !== 'other');
-            if (e.target.value !== 'other') {
-                targetUniversityOtherTextInput.value = '';
-            }
-        }
-    });
-
-    if (targetUniversitySelect && targetUniversityOtherTextInput) {
-        targetUniversityOtherTextInput.style.display = targetUniversitySelect.value === 'other' ? 'block' : 'none';
-        targetUniversityOtherTextInput.classList.toggle('hidden-other-input', targetUniversitySelect.value !== 'other');
-    }
 
     updateFormState(form);
     setTimeout(() => {
         initializeMap(form);
         console.log("Map initialized via setupAddListingFormLogic after delay.");
     }, 50);
-    //
 };
 
 //Налаштовує логіку форми РЕДАГУВАННЯ оголошення.
@@ -675,21 +648,26 @@ export const setupEditListingFormLogic = () => {
     const otherOptionSelects = form.querySelectorAll('.other-option-select');
     const petPolicyRadios = form.querySelectorAll('input[name="pet_policy"]');
     const myPetCheckboxes = form.querySelectorAll('#aboutMe input[name="characteristics"][value^="my_pet_"]');
-    const myPetNoCheckbox = form.querySelector('#my_pet_no_check');
+    const myPetNoCheckbox = form.querySelector('input[name="characteristics"][value="my_pet_no"]');
     const matePetCheckboxes = form.querySelectorAll('#roommatePreferences input[name="characteristics"][value^="mate_"]');
-    const matePetNoCheckbox = form.querySelector('#mate_no_pet_check');
+    const matePetNoCheckbox = form.querySelector('input[name="characteristics"][value="mate_no_pet"]');
     const readyToShareRadios = form.querySelectorAll('input[name="ready_to_share"]');
     const isStudentRadios = form.querySelectorAll('input[name="is_student"]');
     const myGroupSizeRadios = form.querySelectorAll('input[name="my_group_size"]');
-    const petDetailsDiv = form.querySelector('#pet_details');
 
     const updateHandler = () => updateFormState(form);
 
+    // Додаємо слухачів, які викликають updateFormState при зміні важливих полів
     citySelect?.addEventListener('change', updateHandler);
     readyToShareRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     isStudentRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
     myGroupSizeRadios?.forEach(radio => radio.addEventListener('change', updateHandler));
+    petPolicyRadios?.forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для pet_policy
+    form.querySelectorAll('input[name="my_pets_policy"]').forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для my_pets_policy
+    form.querySelectorAll('input[name="mate_pets_policy"]').forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для mate_pets_policy
+    form.querySelectorAll('input[name="search_pet_policy"]').forEach(radio => radio.addEventListener('change', updateHandler)); // Додано для search_pet_policy
 
+    // Встановлюємо слухач для кнопки пошуку на карті
     const findButton = form.querySelector('#findOnMapBtn');
     if (findButton) {
         findButton.addEventListener('click', (event) => {
@@ -702,6 +680,7 @@ export const setupEditListingFormLogic = () => {
         console.warn("#findOnMapBtn not found in form:", form.id);
     }
 
+    // Логіка для "Інше" в Select-ах
     otherOptionSelects.forEach(select => {
         select.addEventListener('change', (e) => {
             const otherInput = e.target.nextElementSibling;
@@ -709,29 +688,11 @@ export const setupEditListingFormLogic = () => {
                 otherInput.style.display = e.target.value === 'other' ? 'block' : 'none';
                 if (e.target.value !== 'other') otherInput.value = '';
             }
-        });
-        const otherInputInitial = select.nextElementSibling;
-        if (otherInputInitial?.classList.contains('hidden-other-input')) {
-            otherInputInitial.style.display = select.value === 'other' ? 'block' : 'none';
-        }
-    });
-
-    petPolicyRadios?.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (petDetailsDiv) {
-                petDetailsDiv.style.display = e.target.value === 'yes' ? 'flex' : 'none';
-                if (e.target.value === 'no') {
-                    petDetailsDiv.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-                }
-            }
+            updateFormState(form);
         });
     });
 
-    const initialPetPolicy = form.querySelector('input[name="pet_policy"]:checked');
-    if (petDetailsDiv && initialPetPolicy) {
-        petDetailsDiv.style.display = initialPetPolicy.value === 'yes' ? 'flex' : 'none';
-    }
-
+    // Логіка для взаємовиключення чекбоксів тварин (My Pets)
     myPetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!myPetNoCheckbox) return;
@@ -743,6 +704,7 @@ export const setupEditListingFormLogic = () => {
         });
     });
 
+    // Логіка для взаємовиключення чекбоксів тварин (Mate Pets)
     matePetCheckboxes?.forEach(cb => {
         cb.addEventListener('change', () => {
             if (!matePetNoCheckbox) return;
@@ -758,6 +720,10 @@ export const setupEditListingFormLogic = () => {
             }
         });
     });
+
+    // Логіка для університету
+    const targetUniversitySelect = form.querySelector('#target_university');
+    targetUniversitySelect?.addEventListener('change', updateHandler);
 };
 
 /**
@@ -1497,6 +1463,7 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
             loadInitialPhotosCallback(listing.photos);
         }
 
+        // Ключовий виклик для відображення всіх умовних блоків
         updateFormState(form);
         initializeMap(form, isNaN(initialLat) ? undefined : initialLat, isNaN(initialLng) ? undefined : initialLng);
 
@@ -1816,4 +1783,3 @@ export const setupHomepageFilters = () => {
     filtersForm.querySelector('#filter_pet_policy_any').checked = true;
     updateFilterVisibility();
 };
-
