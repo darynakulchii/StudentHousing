@@ -1,6 +1,6 @@
 import { getAuthHeaders, MY_USER_ID, removeToken } from './auth.js';
 import { setupNavLinks, DEFAULT_AVATAR_URL } from './navigation.js';
-import {DEFAULT_LISTING_IMAGE} from "../app.js";
+import {DEFAULT_LISTING_IMAGE, API_BASE_URL} from "../app.js";
 
 
 export const loadProfileData = async () => {
@@ -11,7 +11,7 @@ export const loadProfileData = async () => {
     }
 
     try {
-        const response = await fetch('http://localhost:3000/api/profile', {
+        const response = await fetch('${API_BASE_URL}/api/profile', {
             headers: getAuthHeaders()
         });
 
@@ -62,7 +62,7 @@ export const handleAvatarUpload = async (file) => {
         const editIcon = document.querySelector('.edit-icon');
         if (editIcon) editIcon.textContent = '⏳';
 
-        const response = await fetch('http://localhost:3000/api/upload/avatar', {
+        const response = await fetch('${API_BASE_URL}/api/upload/avatar', {
             method: 'POST',
             headers: getAuthHeaders(false),
             body: formData,
@@ -99,7 +99,7 @@ export const setupProfileEventListeners = () => {
 
             let currentProfileData = {};
             try {
-                const profileResponse = await fetch('http://localhost:3000/api/profile', { headers: getAuthHeaders() });
+                const profileResponse = await fetch('\${API_BASE_URL}/api/profile', { headers: getAuthHeaders() });
                 if (!profileResponse.ok) throw new Error('Помилка отримання поточних даних профілю.');
                 currentProfileData = await profileResponse.json();
             } catch (error) {
@@ -109,7 +109,7 @@ export const setupProfileEventListeners = () => {
             const updatedProfileData = { ...currentProfileData, ...dataFromForm };
 
             try {
-                const response = await fetch('http://localhost:3000/api/profile', {
+                const response = await fetch('\${API_BASE_URL}/api/profile', {
                     method: 'PUT',
                     headers: getAuthHeaders(),
                     body: JSON.stringify(updatedProfileData)
@@ -176,7 +176,7 @@ export const loadSettingsData = async () => {
         return;
     }
     try {
-        const response = await fetch('http://localhost:3000/api/profile', {
+        const response = await fetch('\${API_BASE_URL}/api/profile', {
             headers: getAuthHeaders()
         });
         if (!response.ok) throw new Error('Не вдалося завантажити налаштування');
@@ -204,7 +204,7 @@ export const handleSettingsSubmission = () => {
 
         let profileData = {};
         try {
-            const profileResponse = await fetch('http://localhost:3000/api/profile', { headers: getAuthHeaders() });
+            const profileResponse = await fetch('\${API_BASE_URL}/api/profile', { headers: getAuthHeaders() });
             if (!profileResponse.ok) throw new Error('Помилка отримання поточних даних профілю.');
             profileData = await profileResponse.json();
         } catch (error) {
@@ -215,7 +215,7 @@ export const handleSettingsSubmission = () => {
         profileData.show_phone_publicly = !!data.show_phone_publicly;
 
         try {
-            const response = await fetch('http://localhost:3000/api/profile', {
+            const response = await fetch('\${API_BASE_URL}/api/profile', {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(profileData)
@@ -276,8 +276,8 @@ export const loadPublicProfileData = async () => {
         console.log("Not redirecting. Proceeding to fetch data...");
 
         console.log(`Fetching data for user ID: ${userId}`);
-        const profilePromise = fetch(`http://localhost:3000/api/users/${userId}/public-profile`);
-        const listingsPromise = fetch(`http://localhost:3000/api/users/${userId}/listings`);
+        const profilePromise = fetch(`\${API_BASE_URL}/api/users/${userId}/public-profile`);
+        const listingsPromise = fetch(`\${API_BASE_URL}/api/users/${userId}/listings`);
         const [profileResponse, listingsResponse] = await Promise.all([profilePromise, listingsPromise]);
         console.log("API responses received.");
 

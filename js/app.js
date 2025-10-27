@@ -9,6 +9,8 @@ import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSet
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
 import { universitiesData } from './modules/universities.js';
 
+export const API_BASE_URL = 'https://uni-home-backend-TEMP.onrender.com';
+
 export const DEFAULT_LISTING_IMAGE = {
     'rent_out': './photo/default_listing_photo.png',
     'find_mate': './photo/default_listing_photo.png',
@@ -45,7 +47,7 @@ let currentUserFavoriteIds = new Set();
 const fetchFavoriteIds = async () => {
     if (!MY_USER_ID) return;
     try {
-        const response = await fetch('http://localhost:3000/api/my-favorites/ids', { headers: getAuthHeaders() });
+        const response = await fetch('\${API_BASE_URL}/api/my-favorites/ids', { headers: getAuthHeaders() });
         if (response.ok) {
             const ids = await response.json();
             currentUserFavoriteIds = new Set(ids);
@@ -71,7 +73,7 @@ export const fetchAndDisplayListings = async (filterQuery = '') => {
     try {
         const defaultQuery = 'listing_type!=find_home';
         const finalQuery = filterQuery || defaultQuery;
-        const response = await fetch(`http://localhost:3000/api/listings?${finalQuery}`);
+        const response = await fetch(`\${API_BASE_URL}/api/listings?${finalQuery}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const listings = await response.json();
         container.innerHTML = '';
@@ -179,7 +181,7 @@ const fetchAndDisplayListingDetail = async () => {
             return;
         }
 
-        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
+        const response = await fetch(`\${API_BASE_URL}/api/listings/${listingId}`);
         if (response.status === 404) {
             container.innerHTML = '<h1 style="text-align: center;">Помилка 404: Оголошення не знайдено.</h1>';
             return;
@@ -716,7 +718,7 @@ const setupFavoriteButton = (listingId, authorId) => {
 
     favButton.addEventListener('click', async () => {
         const isFavorited = favButton.classList.contains('favorited');
-        const url = `http://localhost:3000/api/favorites/${listingId}`;
+        const url = `\${API_BASE_URL}/api/favorites/${listingId}`;
         const method = isFavorited ? 'DELETE' : 'POST';
 
         try {
@@ -771,7 +773,7 @@ const fetchAndDisplayFavorites = async () => {
     container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження обраних...</p>';
 
     try {
-        const response = await fetch('http://localhost:3000/api/my-favorites', {
+        const response = await fetch('\${API_BASE_URL}/api/my-favorites', {
             headers: getAuthHeaders()
         });
 
@@ -838,7 +840,7 @@ const fetchAndDisplayMyListings = async () => {
     container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Завантаження ваших оголошень...</p>';
 
     try {
-        const response = await fetch('http://localhost:3000/api/my-listings', {
+        const response = await fetch('\${API_BASE_URL}/api/my-listings', {
             headers: getAuthHeaders()
         });
 
@@ -923,7 +925,7 @@ const handleToggleListingStatus = async (listingId, newStatus) => {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/api/listings/${listingId}/status`, {
+        const response = await fetch(`\${API_BASE_URL}/api/listings/${listingId}/status`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
             body: JSON.stringify({ is_active: newStatus }),
@@ -966,7 +968,7 @@ const handleDeleteListing = async (listingId) => {
     }
 
     try {
-        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`, {
+        const response = await fetch(`\${API_BASE_URL}/api/listings/${listingId}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
@@ -1078,7 +1080,7 @@ const setupReportBugPage = () => {
 
         const formData = new FormData(reportForm);
         try {
-            const response = await fetch('http://localhost:3000/api/report-bug', {
+            const response = await fetch('\${API_BASE_URL}/api/report-bug', {
                 method: 'POST',
                 headers: getAuthHeaders(false),
                 body: formData,
@@ -1189,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deleteButton.disabled = true;
                 deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Видалення...';
                 try {
-                    const response = await fetch('http://localhost:3000/api/profile', {
+                    const response = await fetch('\${API_BASE_URL}/api/profile', {
                         method: 'DELETE',
                         headers: getAuthHeaders(),
                         body: JSON.stringify({ password: userPassword })

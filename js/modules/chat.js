@@ -1,5 +1,6 @@
 import { getAuthHeaders, MY_USER_ID } from './auth.js';
 import { prependNotification, markNotificationsAsRead, notificationSidebar, incrementNotificationCount } from './navigation.js';
+import {API_BASE_URL} from '../app.js'
 
 let socket;
 let currentOpenConversationId = null; // ID поточної відкритої розмови
@@ -13,7 +14,7 @@ export const loadConversations = async () => {
     container.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Завантаження розмов...</p>';
 
     try {
-        const response = await fetch('http://localhost:3000/api/my-conversations', {
+        const response = await fetch('${API_BASE_URL}/api/my-conversations', {
             headers: getAuthHeaders()
         });
         if (response.status === 401 || response.status === 403) throw new Error('Необхідна автентифікація для доступу до чату.');
@@ -78,7 +79,7 @@ export const loadMessages = async (conversationId, receiverId, receiverName) => 
     messagesArea.innerHTML = '<p style="text-align: center; color: var(--text-light); margin: auto;"><i class="fas fa-spinner fa-spin"></i> Завантаження повідомлень...</p>';
 
     try {
-        const response = await fetch(`http://localhost:3000/api/conversations/${conversationId}/messages`, {
+        const response = await fetch(`\${API_BASE_URL}/api/conversations/${conversationId}/messages`, {
             headers: getAuthHeaders()
         });
         if (response.status === 401 || response.status === 403) throw new Error('Помилка доступу до чату');
@@ -131,7 +132,7 @@ export const handleMessageSend = () => {
         sendButton.disabled = true;
 
         try {
-            const response = await fetch('http://localhost:3000/api/messages', {
+            const response = await fetch('\${API_BASE_URL}/api/messages', {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
@@ -188,7 +189,7 @@ export const setupSocketIO = () => {
     }
 
     console.log("Підключення до Socket.IO...");
-    socket = io("http://localhost:3000");
+    socket = io(API_BASE_URL);
 
     socket.on('connect', () => {
         console.log(`Socket.io підключено: ${socket.id}`);
@@ -296,7 +297,7 @@ export const handleChatUrlParams = async () => {
     chatHeader.textContent = 'Завантаження імені...';
 
     try {
-        const response = await fetch(`http://localhost:3000/api/users/${userIdToOpen}/public-profile`);
+        const response = await fetch(`\${API_BASE_URL}/api/users/${userIdToOpen}/public-profile`);
         if (!response.ok) throw new Error('Не вдалося отримати дані користувача');
         const user = await response.json();
         chatHeader.textContent = `${user.first_name} ${user.last_name}`;

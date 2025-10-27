@@ -2,6 +2,7 @@ import { getAuthHeaders, MY_USER_ID } from './auth.js';
 import { universitiesData } from './universities.js';
 import { fetchAndDisplayListings } from '../app.js';
 import { toggleFilters } from './navigation.js';
+import {API_BASE_URL} from '../app.js'
 
 let addListingSelectedFiles = [];
 let editListingCurrentPhotos = [];
@@ -980,7 +981,7 @@ export const handleListingSubmission = async () => {
         submitButton.textContent = 'Публікація...';
         let listingId;
         try {
-            const listingResponse = await fetch('http://localhost:3000/api/listings', {
+            const listingResponse = await fetch('\${API_BASE_URL}/api/listings', {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(data),
@@ -1001,7 +1002,7 @@ export const handleListingSubmission = async () => {
                 const photoFormData = new FormData();
                 selectedFiles.forEach(file => photoFormData.append('photos', file));
 
-                const photoResponse = await fetch(`http://localhost:3000/api/upload/listing-photos/${listingId}`, {
+                const photoResponse = await fetch(`\${API_BASE_URL}/api/upload/listing-photos/${listingId}`, {
                     method: 'POST',
                     headers: getAuthHeaders(false),
                     body: photoFormData,
@@ -1195,7 +1196,7 @@ export const handleListingUpdateSubmission = async () => {
         submitButton.textContent = 'Збереження...';
 
         try {
-            const listingResponse = await fetch(`http://localhost:3000/api/listings/${listingId}`, {
+            const listingResponse = await fetch(`\${API_BASE_URL}/api/listings/${listingId}`, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(data),
@@ -1219,7 +1220,7 @@ export const handleListingUpdateSubmission = async () => {
                 const photoFormData = new FormData();
                 newFilesToUpload.forEach(file => photoFormData.append('photos', file));
 
-                const photoResponse = await fetch(`http://localhost:3000/api/upload/listing-photos/${listingId}`, {
+                const photoResponse = await fetch(`\${API_BASE_URL}/api/upload/listing-photos/${listingId}`, {
                     method: 'POST',
                     headers: getAuthHeaders(false),
                     body: photoFormData,
@@ -1266,7 +1267,7 @@ export const loadListingDataForEdit = async (formId, listingId, loadInitialPhoto
     if (!form || !listingId) return;
 
     try {
-        const response = await fetch(`http://localhost:3000/api/listings/${listingId}`);
+        const response = await fetch(`\${API_BASE_URL}/api/listings/${listingId}`);
         if (!response.ok) {
             if (response.status === 404) throw new Error('Оголошення не знайдено.');
             if (response.status === 403) throw new Error('Ви не маєте доступу до редагування цього оголошення.');
