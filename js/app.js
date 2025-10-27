@@ -3,7 +3,7 @@ import { loadConversations, handleMessageSend, handleChatUrlParams, setupSocketI
 import {
     setupAddListingFormLogic, handleListingSubmission,
     handleListingUpdateSubmission, loadListingDataForEdit,
-    setupHomepageFilters
+    setupHomepageFilters, updateFormState
 } from './modules/forms.js';
 import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSettingsSubmission, loadPublicProfileData} from './modules/profile.js';
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
@@ -37,9 +37,10 @@ window.toggleOtherCityInput = (selectElement) => {
             inputElement.value = '';
         }
     }
+    if(form && window.updateFormState) window.updateFormState(form);
 };
 
-let currentUserFavoriteIds = new Set(); // Зберігає ID обраних оголошень
+let currentUserFavoriteIds = new Set();
 
 const fetchFavoriteIds = async () => {
     if (!MY_USER_ID) return;
@@ -224,7 +225,6 @@ const fetchAndDisplayListingDetail = async () => {
             'mate_lifestyle': 'Бажаний спосіб життя',
             'mate_interests': 'Бажані інтереси',
             'mate_pets': 'Тварини у сусіда',
-            // Додано для ВНЗ
             'university_kiev': 'Університети Києва',
             'university_lviv': 'Університети Львова',
             'university_kharkiv': 'Університети Харкова',
@@ -250,7 +250,7 @@ const fetchAndDisplayListingDetail = async () => {
         if (listing.characteristics) {
             listing.characteristics.forEach(char => {
                 const category = char.category;
-                if (category.startsWith('university_')) { // Збираємо ключі ВНЗ окремо
+                if (category.startsWith('university_')) {
                     universityCharsKeys.push(char.system_key);
                 }
                 if (!characteristicsByCategory[category]) {
@@ -260,7 +260,6 @@ const fetchAndDisplayListingDetail = async () => {
             });
         }
 
-        // Функція для отримання повної назви університету
         const getUniversityFullName = (value) => {
             if (value === 'other' && listing.target_university_other) {
                 return listing.target_university_other;
@@ -303,7 +302,7 @@ const fetchAndDisplayListingDetail = async () => {
         let aboutAuthorHTML = '';
         let roommatePrefsHTML = '';
         let housingCharsHTML = '';
-        let housingExtraDetailsHTML = ''; // Додаткові поля (не характеристики)
+        let housingExtraDetailsHTML = '';
 
         if (listing.listing_type === 'rent_out' || listing.listing_type === 'find_mate') {
             // Fields for available housing (Характеристики житла)
@@ -342,7 +341,6 @@ const fetchAndDisplayListingDetail = async () => {
 
             housingExtraDetailsHTML += `</div>`;
         } else if (listing.listing_type === 'find_home') {
-            // Fields for desired housing (Параметри пошуку)
             housingExtraDetailsHTML += `<div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">`;
 
             const desiredHousingType = getDisplayValue('housing_type_search', listing.housing_type_search, listing.housing_type_search_other);
@@ -355,17 +353,14 @@ const fetchAndDisplayListingDetail = async () => {
             if (petPolicySearch) housingExtraDetailsHTML += `<span class="char-tag">Бажані тварини: ${petPolicySearch}</span>`;
 
             const readyToShare = getDisplayValue('ready_to_share', listing.ready_to_share);
-            // Прибираємо, якщо "Проти ділення житла"
             if (readyToShare && listing.ready_to_share !== 'no') {
                 housingExtraDetailsHTML += `<span class="char-tag">Готовність ділити житло: ${readyToShare}</span>`;
             } else if (readyToShare && listing.ready_to_share === 'no') {
-                // Тут ми нічого не додаємо, оскільки ви просили прибрати, якщо "проти"
             }
 
             if (listing.target_uni_distance && listing.target_university) {
                 const distance = getDisplayValue('target_uni_distance', listing.target_uni_distance);
                 const uniName = getUniversityFullName(listing.target_university);
-                // Вказуємо ВНЗ поряд з віддаленістю
                 housingExtraDetailsHTML += `<span class="char-tag">Віддаленість від ${uniName}: ${distance}</span>`;
             } else if (listing.target_uni_distance) {
                 const distance = getDisplayValue('target_uni_distance', listing.target_uni_distance);
@@ -434,17 +429,16 @@ const fetchAndDisplayListingDetail = async () => {
         }
 
         // Розділяємо характеристики житла на блоки
-        const techCharsHTML = buildCharSection(['tech']); //
-        const mediaCharsHTML = buildCharSection(['media']); //
-        const comfortCharsHTML = buildCharSection(['comfort']); //
-        const petsDetailCharsHTML = (listing.pet_policy === 'yes' && listing.listing_type !== 'find_home') ? buildCharSection(['pets_allowed_detail']) : ''; //
-        const blackoutCharsHTML = buildCharSection(['blackout']); //
-        const rulesCharsHTML = buildCharSection(['rules']); //
-        const commCharsHTML = buildCharSection(['communications']); //
-        const infraCharsHTML = buildCharSection(['infra']); //
-        const inclusiveCharsHTML = buildCharSection(['inclusive']); //
+        const techCharsHTML = buildCharSection(['tech']);
+        const mediaCharsHTML = buildCharSection(['media']);
+        const comfortCharsHTML = buildCharSection(['comfort']);
+        const petsDetailCharsHTML = (listing.pet_policy === 'yes' && listing.listing_type !== 'find_home') ? buildCharSection(['pets_allowed_detail']) : '';
+        const blackoutCharsHTML = buildCharSection(['blackout']);
+        const rulesCharsHTML = buildCharSection(['rules']);
+        const commCharsHTML = buildCharSection(['communications']);
+        const infraCharsHTML = buildCharSection(['infra']);
+        const inclusiveCharsHTML = buildCharSection(['inclusive']);
 
-        // Збираємо блок характеристик для rent_out/find_mate
         const apartmentCharGroupsHTML = `
             ${techCharsHTML}
             ${mediaCharsHTML}
@@ -457,7 +451,6 @@ const fetchAndDisplayListingDetail = async () => {
             ${inclusiveCharsHTML}
         `;
 
-        // Характеристики університету
         let universityChars = universityCharsKeys.map(key => {
             const uniName = getUniversityFullName(key);
             return `<span class="char-tag">${uniName}</span>`;
