@@ -259,9 +259,14 @@ export const loadPublicProfileData = async () => {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const userId = urlParams.get('id');
+        const currentUserId = MY_USER_ID;
+
+        console.log('[DEBUG] Перевірка перенаправлення:');
+        console.log('[DEBUG] currentUserId (з MY_USER_ID):', currentUserId, typeof currentUserId);
+        console.log('[DEBUG] userId (з URL):', userId, typeof userId);
+        console.log('[DEBUG] Результат порівняння (currentUserId.toString() === userId):', currentUserId !== null && currentUserId !== undefined && currentUserId.toString() === userId);
 
         if (!userId) throw new Error('ID користувача не вказано.');
-        const currentUserId = MY_USER_ID;
         console.log('Checking redirection: currentUserId =', currentUserId, ' | page userId =', userId);
         if (currentUserId !== null && currentUserId !== undefined && currentUserId.toString() === userId) {
             console.log("Redirecting to own profile page.");

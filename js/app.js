@@ -953,10 +953,10 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (path.endsWith('settings.html')) {
             await loadSettingsData();
             handleSettingsSubmission();
-            // Обробник видалення акаунту
+
             document.getElementById('btnDeleteAccount')?.addEventListener('click', async (e) => {
                 e.preventDefault();
-                if (!confirm('Ви *справді* хочете видалити свій акаунт? Цю дію неможливо скасувати.')) return;
+                if (!confirm('Ви справді хочете видалити свій акаунт? Цю дію неможливо скасувати.')) return;
                 const userPassword = prompt('Будь ласка, введіть ваш поточний пароль для підтвердження:');
                 if (!userPassword) { alert('Видалення скасовано.'); return; }
                 const deleteButton = e.target;
@@ -984,12 +984,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Налаштування логіну/паролю
         else if (path.endsWith('login_settings.html')) { handleLoginSettings(); }
+
         // Публічний профіль
-        else if (path.includes('user_profile.html')) {
-            console.log(">>> Router: Matched user_profile.html (using includes)");
-            console.log(">>> Router: Matched user_profile.html");
+        else if (path.endsWith('user_profile.html')) {
             const userIdForProfile = urlParams.get('id');
-            console.log(">>> Router: userIdForProfile =", userIdForProfile);
             if (!userIdForProfile) {
                 console.error(">>> Router: User ID not found in URL for profile page!");
                 document.body.innerHTML = '<h1>Помилка: ID користувача не вказано в URL.</h1>';
@@ -998,6 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(">>> Router: Called loadPublicProfileData()");
             }
         }
+
         // Обране
         else if (path.endsWith('favorites.html')) { await fetchAndDisplayFavorites(); }
 

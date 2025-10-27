@@ -462,6 +462,7 @@ export const updateFormState = (formElement) => {
         setVisible(aboutMe, true);
         const isSharing = formElement.querySelector('input[name="ready_to_share"]:checked')?.value;
         setVisible(roommatePrefs, isSharing !== 'no');
+        setVisible(isStudentGroup, true);
         const isStudent = formElement.querySelector('input[name="is_student"]:checked')?.value;
         setVisible(studentParams, isStudent === 'yes');
         const myGroupSize = formElement.querySelector('input[name="my_group_size"]:checked')?.value;
