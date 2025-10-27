@@ -1115,8 +1115,8 @@ const setupReportBugPage = () => {
 
     cancelBtn.addEventListener('click', () => {
         if (confirm('Ви впевнені, що хочете скасувати звіт? Введені дані буде втрачено.')) {
-            reportForm.reset(); // Скидаємо форму
-            selectedProblemTypes.clear(); // Очищуємо Set
+            reportForm.reset();
+            selectedProblemTypes.clear();
             problemTags.forEach(tag => tag.classList.remove('active'));
             fileListContainer.innerHTML = '';
             updateHiddenCheckboxes();
