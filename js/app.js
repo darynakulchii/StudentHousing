@@ -106,6 +106,56 @@ export const fetchAndDisplayListings = async (filterQuery = '') => {
     }
 };
 
+const displayDataMapping = {
+    'building_type': {
+        'tsar_building': 'Царський будинок', 'austria_building': 'Австрійський будинок', 'polish_building': 'Польський будинок',
+        'stalinka': 'Сталінка', 'hrushchovka': 'Хрущовка', 'cheshka': 'Чешка', 'panel': 'Панелька',
+        'sovmin': 'Совмін', 'gostinka': 'Гостинка', 'gurtogitok': 'Гуртожиток', 'private_house': 'Приватний будинок',
+        'housing_80_90': 'Житловий фонд 80-90-і', 'housing_91_2000': 'Житловий фонд 91-2000-і',
+        'housing_2001_2010': 'Житловий фонд 2001-2010-і', 'housing_since_2011': 'Житловий фонд від 2011 р.',
+        'new_building': 'Новобудова', 'other': 'Інший тип'
+    },
+    'wall_type': {
+        'brick': 'Цегляний', 'panel': 'Панельний', 'monolithic': 'Монолітний', 'slag_block': 'Шлакоблочний',
+        'wooden': 'Дерев\'яний', 'gas_block': 'Газоблок', 'sip_panel': 'СІП панель', 'other': 'Інший'
+    },
+    'planning': {
+        'separate': 'Роздільна', 'adjacent_walkthrough': 'Суміжна, прохідна', 'studio': 'Студія', 'penthouse': 'Пентхаус',
+        'multi_level': 'Багаторівнева', 'small_family_hostel': 'Малосімейка, гостинка', 'smart_apartment': 'Смарт-квартира',
+        'free_planning': 'Вільне планування', 'two_sided': 'Двостороння', 'other': 'Інше'
+    },
+    'bathroom_type': {
+        'separate': 'Роздільний', 'combined': 'Суміжний', 'two_or_more': '2 і більше', 'none': 'Санвузол відсутній'
+    },
+    'heating_type': {
+        'central': 'Централізоване', 'own_boiler': 'Власна котельня', 'individual_gas': 'Індивідуальне газове',
+        'individual_electric': 'Індивідуальне електро', 'solid_fuel': 'Твердопаливне', 'heat_pump': 'Тепловий насос',
+        'combined': 'Комбіноване', 'other': 'Інше'
+    },
+    'renovation_type': {
+        'design': 'Авторський проєкт', 'good': 'Євроремонт', 'cosmetic': 'Косметичний', 'no_renovation': 'Без ремонту',
+        'other': 'Інше'
+    },
+    'furnishing': { 'yes': 'З меблями', 'no': 'Без меблів' },
+    'pet_policy': { 'yes': 'Тварини дозволені', 'no': 'Без тварин' },
+    'target_uni_distance': { 'any': 'Неважливо', 'walk': 'До 15 хв пішки', '20min_transport': 'До 20 хв транспортом', '30min_transport': 'До 30 хв транспортом' },
+    'housing_type_search': { 'apartment': 'Квартира (повністю)', 'isolated_room': 'Кімната (ізольована)', 'walkthrough_room': 'Кімната (прохідна)', 'house': 'Часний будинок', 'any': 'Неважливо', 'other': 'Інше' }
+};
+
+const getDisplayValue = (field, value, otherValue) => {
+    if (!value || value === 'other' && !otherValue) return null;
+    if (value === 'other' && otherValue) return otherValue;
+
+    if (field === 'ready_to_share') {
+        if (value === 'yes') return 'Готовий ділити житло';
+        if (value === 'no') return 'Проти ділення житла';
+        if (value === 'any') return 'Неважливо (готовий до варіантів)';
+        return null;
+    }
+
+    return displayDataMapping[field]?.[value] || value;
+};
+
 // --- Логіка listing_detail.html ---
 const fetchAndDisplayListingDetail = async () => {
     const container = document.getElementById('listingDetailContainer');
@@ -173,13 +223,36 @@ const fetchAndDisplayListingDetail = async () => {
             'mate_personality': 'Бажана особистість',
             'mate_lifestyle': 'Бажаний спосіб життя',
             'mate_interests': 'Бажані інтереси',
-            'mate_pets': 'Тварини у сусіда'
+            'mate_pets': 'Тварини у сусіда',
+            // Додано для ВНЗ
+            'university_kiev': 'Університети Києва',
+            'university_lviv': 'Університети Львова',
+            'university_kharkiv': 'Університети Харкова',
+            'university_odesa': 'Університети Одеси',
+            'university_dnipro': 'Університети Дніпра',
+            'university_vinnytsya': 'Університети Вінниці',
+            'university_zaporizhzhya': 'Університети Запоріжжя',
+            'university_ivano_frankivsk': 'Університети Івано-Франківська',
+            'university_chernivtsi': 'Університети Чернівців',
+            'university_poltava': 'Університети Полтави',
+            'university_sumy': 'Університети Сум',
+            'university_uzhgorod': 'Університети Ужгорода',
+            'university_ternopil': 'Університети Тернополя',
+            'university_rivne': 'Університети Рівного',
+            'university_lutsk': 'Університети Луцька',
+            'university_khmelnytskyi': 'Університети Хмельницького',
+            'university_chernihiv': 'Університети Чернігова',
+            'university_mykolaiv': 'Університети Миколаєва',
         };
 
         const characteristicsByCategory = {};
+        const universityCharsKeys = [];
         if (listing.characteristics) {
             listing.characteristics.forEach(char => {
                 const category = char.category;
+                if (category.startsWith('university_')) { // Збираємо ключі ВНЗ окремо
+                    universityCharsKeys.push(char.system_key);
+                }
                 if (!characteristicsByCategory[category]) {
                     characteristicsByCategory[category] = [];
                 }
@@ -187,7 +260,21 @@ const fetchAndDisplayListingDetail = async () => {
             });
         }
 
-        const buildCharSection = (categoriesToShow) => {
+        // Функція для отримання повної назви університету
+        const getUniversityFullName = (value) => {
+            if (value === 'other' && listing.target_university_other) {
+                return listing.target_university_other;
+            }
+            for (const city in universitiesData) {
+                const foundUni = universitiesData[city].find(uni => uni.value === value);
+                if (foundUni) {
+                    return foundUni.text;
+                }
+            }
+            return value;
+        };
+
+        const buildCharSection = (categoriesToShow, forceSeparate = false) => {
             let html = '';
             for (const category of categoriesToShow) {
                 const sectionTitle = categoryNames[category] || category.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
@@ -201,7 +288,7 @@ const fetchAndDisplayListingDetail = async () => {
 
                 if (characteristicsHTML) {
                     html += `
-                        <div class="char-category-group">
+                        <div class="char-category-group" ${forceSeparate ? 'style="width: 100%;"' : ''}>
                             <h3>${sectionTitle}</h3>
                             <div class="characteristics-list">
                                 ${characteristicsHTML}
@@ -216,6 +303,78 @@ const fetchAndDisplayListingDetail = async () => {
         let aboutAuthorHTML = '';
         let roommatePrefsHTML = '';
         let housingCharsHTML = '';
+        let housingExtraDetailsHTML = ''; // Додаткові поля (не характеристики)
+
+        if (listing.listing_type === 'rent_out' || listing.listing_type === 'find_mate') {
+            // Fields for available housing (Характеристики житла)
+            housingExtraDetailsHTML += `<div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">`;
+
+            const buildingType = getDisplayValue('building_type', listing.building_type, listing.building_type_other);
+            if (buildingType) housingExtraDetailsHTML += `<span class="char-tag">Тип будинку: ${buildingType}</span>`;
+
+            const wallType = getDisplayValue('wall_type', listing.wall_type, listing.wall_type_other);
+            if (wallType) housingExtraDetailsHTML += `<span class="char-tag">Тип стін: ${wallType}</span>`;
+
+            const planning = getDisplayValue('planning', listing.planning, listing.planning_other);
+            if (planning) housingExtraDetailsHTML += `<span class="char-tag">Планування: ${planning}</span>`;
+
+            const bathroomType = getDisplayValue('bathroom_type', listing.bathroom_type);
+            if (bathroomType) housingExtraDetailsHTML += `<span class="char-tag">Санвузол: ${bathroomType}</span>`;
+
+            const heatingType = getDisplayValue('heating_type', listing.heating_type, listing.heating_type_other);
+            if (heatingType) housingExtraDetailsHTML += `<span class="char-tag">Опалення: ${heatingType}</span>`;
+
+            const renovationType = getDisplayValue('renovation_type', listing.renovation_type, listing.renovation_type_other);
+            if (renovationType) housingExtraDetailsHTML += `<span class="char-tag">Ремонт: ${renovationType}</span>`;
+
+            const furnishing = getDisplayValue('furnishing', listing.furnishing);
+            if (furnishing) housingExtraDetailsHTML += `<span class="char-tag">Меблювання: ${furnishing}</span>`;
+
+            const petPolicy = getDisplayValue('pet_policy', listing.pet_policy);
+            if (petPolicy) housingExtraDetailsHTML += `<span class="char-tag">Тварини: ${petPolicy}</span>`;
+
+            if (listing.listing_type === 'rent_out') {
+                if (listing.max_occupants) housingExtraDetailsHTML += `<span class="char-tag">Макс. мешканців: ${listing.max_occupants}</span>`;
+            } else if (listing.listing_type === 'find_mate') {
+                if (listing.current_occupants) housingExtraDetailsHTML += `<span class="char-tag">Проживає: ${listing.current_occupants}</span>`;
+                if (listing.seeking_roommates) housingExtraDetailsHTML += `<span class="char-tag">Шукають: ${listing.seeking_roommates} сусіда</span>`;
+            }
+
+            housingExtraDetailsHTML += `</div>`;
+        } else if (listing.listing_type === 'find_home') {
+            // Fields for desired housing (Параметри пошуку)
+            housingExtraDetailsHTML += `<div class="characteristics-list" style="flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: 15px;">`;
+
+            const desiredHousingType = getDisplayValue('housing_type_search', listing.housing_type_search, listing.housing_type_search_other);
+            if (desiredHousingType) housingExtraDetailsHTML += `<span class="char-tag">Шуканий тип житла: ${desiredHousingType}</span>`;
+
+            if (listing.target_rooms) housingExtraDetailsHTML += `<span class="char-tag">Мін. кімнат: ${listing.target_rooms}</span>`;
+            if (listing.target_roommates_max) housingExtraDetailsHTML += `<span class="char-tag">Макс. людей у квартирі: ${listing.target_roommates_max}</span>`;
+
+            const petPolicySearch = getDisplayValue('search_pet_policy', listing.search_pet_policy);
+            if (petPolicySearch) housingExtraDetailsHTML += `<span class="char-tag">Бажані тварини: ${petPolicySearch}</span>`;
+
+            const readyToShare = getDisplayValue('ready_to_share', listing.ready_to_share);
+            // Прибираємо, якщо "Проти ділення житла"
+            if (readyToShare && listing.ready_to_share !== 'no') {
+                housingExtraDetailsHTML += `<span class="char-tag">Готовність ділити житло: ${readyToShare}</span>`;
+            } else if (readyToShare && listing.ready_to_share === 'no') {
+                // Тут ми нічого не додаємо, оскільки ви просили прибрати, якщо "проти"
+            }
+
+            if (listing.target_uni_distance && listing.target_university) {
+                const distance = getDisplayValue('target_uni_distance', listing.target_uni_distance);
+                const uniName = getUniversityFullName(listing.target_university);
+                // Вказуємо ВНЗ поряд з віддаленістю
+                housingExtraDetailsHTML += `<span class="char-tag">Віддаленість від ${uniName}: ${distance}</span>`;
+            } else if (listing.target_uni_distance) {
+                const distance = getDisplayValue('target_uni_distance', listing.target_uni_distance);
+                housingExtraDetailsHTML += `<span class="char-tag">Бажана віддаленість від ВНЗ: ${distance}</span>`;
+            }
+
+
+            housingExtraDetailsHTML += `</div>`;
+        }
 
         if (listing.listing_type === 'find_home' || listing.listing_type === 'find_mate') {
             const myCategories = ['my_personality', 'my_lifestyle', 'my_interests', 'my_pets'];
@@ -274,14 +433,35 @@ const fetchAndDisplayListingDetail = async () => {
             }
         }
 
-        const apartmentCategories = [
-            'tech', 'media', 'comfort', ...(listing.pet_policy === 'yes' ? ['pets_allowed_detail'] : []),
-            'blackout', 'rules', 'communications', 'infra', 'inclusive'
-        ];
-        const universityChars = listing.characteristics?.filter(c => c.category.startsWith('university_'))
-            .map(c => `<span class="char-tag">${c.name_ukr}</span>`).join('') || '';
+        // Розділяємо характеристики житла на блоки
+        const techCharsHTML = buildCharSection(['tech']); //
+        const mediaCharsHTML = buildCharSection(['media']); //
+        const comfortCharsHTML = buildCharSection(['comfort']); //
+        const petsDetailCharsHTML = (listing.pet_policy === 'yes' && listing.listing_type !== 'find_home') ? buildCharSection(['pets_allowed_detail']) : ''; //
+        const blackoutCharsHTML = buildCharSection(['blackout']); //
+        const rulesCharsHTML = buildCharSection(['rules']); //
+        const commCharsHTML = buildCharSection(['communications']); //
+        const infraCharsHTML = buildCharSection(['infra']); //
+        const inclusiveCharsHTML = buildCharSection(['inclusive']); //
 
-        const apartmentCharsHTML = buildCharSection(apartmentCategories);
+        // Збираємо блок характеристик для rent_out/find_mate
+        const apartmentCharGroupsHTML = `
+            ${techCharsHTML}
+            ${mediaCharsHTML}
+            ${comfortCharsHTML}
+            ${petsDetailCharsHTML}
+            ${blackoutCharsHTML}
+            ${rulesCharsHTML}
+            ${commCharsHTML}
+            ${infraCharsHTML}
+            ${inclusiveCharsHTML}
+        `;
+
+        // Характеристики університету
+        let universityChars = universityCharsKeys.map(key => {
+            const uniName = getUniversityFullName(key);
+            return `<span class="char-tag">${uniName}</span>`;
+        }).join('') || '';
 
         let optionalFieldsHTML = '';
         if (listing.study_conditions) {
@@ -290,6 +470,7 @@ const fetchAndDisplayListingDetail = async () => {
         if (listing.owner_rules && listing.listing_type === 'rent_out') {
             optionalFieldsHTML += `<div class="char-category-group"><h3>Правила від власника</h3><p>${listing.owner_rules.replace(/\n/g, '<br>')}</p></div>`;
         }
+
         let nearbyUniversitiesHTML = '';
         if (universityChars && (listing.listing_type === 'rent_out' || listing.listing_type === 'find_mate')) {
             nearbyUniversitiesHTML = `
@@ -305,20 +486,33 @@ const fetchAndDisplayListingDetail = async () => {
             ? listing.city_other
             : (listing.city || 'Місто не вказано');
         const displayDistrict = listing.district === 'other' && listing.district_other ? listing.district_other : listing.district;
-        const combinedHousingCharsHTML = apartmentCharsHTML + nearbyUniversitiesHTML + optionalFieldsHTML;
 
         if (listing.listing_type === 'find_home') {
             housingCharsHTML = `
                 <div class="detail-section">
                     <h2>Бажані характеристики житла</h2>
-                    ${combinedHousingCharsHTML || '<p>Автор не вказав бажаних характеристик.</p>'}
+                    ${housingExtraDetailsHTML}
+                    ${apartmentCharGroupsHTML.trim() ? `
+                        <div class="characteristics-list-columns">
+                            ${apartmentCharGroupsHTML}
+                        </div>
+                    ` : '<p>Автор не вказав бажаних характеристик.</p>'}
+                    ${nearbyUniversitiesHTML}
+                    ${optionalFieldsHTML}
                 </div>
             `;
         } else if (listing.listing_type === 'rent_out' || listing.listing_type === 'find_mate') {
             housingCharsHTML = `
                 <div class="detail-section">
                     <h2>Характеристики житла</h2>
-                     ${combinedHousingCharsHTML || '<p>Характеристики не вказані.</p>'}
+                     ${housingExtraDetailsHTML}
+                     ${apartmentCharGroupsHTML.trim() ? `
+                        <div class="characteristics-list-columns">
+                            ${apartmentCharGroupsHTML}
+                        </div>
+                    ` : '<p>Детальні характеристики не вказані.</p>'}
+                    ${nearbyUniversitiesHTML}
+                    ${optionalFieldsHTML}
                  </div>
             `;
         }
@@ -381,22 +575,7 @@ const fetchAndDisplayListingDetail = async () => {
         // --- Логіка для відображення університету ---
         let universityDisplayHTML = '';
         if (listing.listing_type === 'find_home' && listing.target_university) {
-            let uniName = '';
-            if (listing.target_university === 'other' && listing.target_university_other) {
-                uniName = listing.target_university_other; // Використовуємо текст, введений користувачем
-            } else {
-                // Шукаємо університет у всіх містах в universitiesData
-                for (const city in universitiesData) {
-                    const foundUni = universitiesData[city].find(uni => uni.value === listing.target_university);
-                    if (foundUni) {
-                        uniName = foundUni.text; // Знайшли повну назву
-                        break;
-                    }
-                }
-                if (!uniName) {
-                    uniName = listing.target_university; // Якщо не знайшли, показуємо ключ як є
-                }
-            }
+            const uniName = getUniversityFullName(listing.target_university);
             universityDisplayHTML = `<p><i class="fas fa-university"></i> Шукає біля: ${uniName}</p>`;
         }
 
