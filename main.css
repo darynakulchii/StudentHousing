@@ -721,6 +721,11 @@ select option[disabled] {
     padding: 40px;
     background: transparent;
 }
+
+.profile-page h1 {
+    text-align: center;
+}
+
 .profile-container {
     display: flex;
     gap: 30px;
