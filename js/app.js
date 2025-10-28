@@ -9,7 +9,7 @@ import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSet
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
 import { universitiesData } from './modules/universities.js';
 
-export const API_BASE_URL = 'https://uni-home-backend-TEMP.onrender.com';
+export const API_BASE_URL = 'https://unihome-backend.onrender.com';
 
 export const DEFAULT_LISTING_IMAGE = {
     'rent_out': './photo/default_listing_photo.png',
