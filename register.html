@@ -40,6 +40,17 @@
             <input type="password" id="confirm_password" name="confirm_password" placeholder="Повторіть ваш пароль" required>
         </div>
 
+        <div class="form-group" style="margin-bottom: 0;">
+            <div class="checkbox-options" style="flex-direction: row; justify-content: flex-start; gap: 5px;">
+
+                <input type="checkbox" id="data_processing_consent" name="data_processing_consent" value="true" required>
+
+                <label for="data_processing_consent" style="border: none; padding: 8px 15px; border-radius: 20px; background: none; font-weight: 500; color: var(--secondary-color); font-size: 0.9rem;">
+                    Я даю згоду на обробку моїх персональних даних. *
+                </label>
+            </div>
+        </div>
+
         <button type="submit" class="submit-listing-btn">Зареєструватись</button>
     </form>
 </main>

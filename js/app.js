@@ -9,12 +9,17 @@ import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSet
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
 import { universitiesData } from './modules/universities.js';
 
-export const DEFAULT_LISTING_IMAGE = {
+/*export const DEFAULT_LISTING_IMAGE = {
     'rent_out': './photo/default_listing_photo.png',
     'find_mate': './photo/default_listing_photo.png',
     'find_home': './photo/default_listing_photo.png',
-    'default': './photo/default_listing_photo.png'
-};
+    'default': './photo/default_listing_photo.png'}*/
+export const DEFAULT_LISTING_IMAGE = {
+    'rent_out': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome',
+    'find_mate': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome',
+    'find_home': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome',
+    'default': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome'}
+
 
 window.toggleOtherInput = (checkboxElement, inputId) => {
     const inputElement = document.getElementById(inputId);
@@ -85,6 +90,8 @@ export const fetchAndDisplayListings = async (filterQuery = '') => {
             if (listing.listing_type === 'rent_out') typeTag = '<span class="type-tag rent">Здають</span>';
             else if (listing.listing_type === 'find_mate') typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
             else if (listing.listing_type === 'find_home') typeTag = '<span class="type-tag home">Шукають житло</span>';
+
+            let verificationTag = '<span class="tag-unverified">НЕПЕРЕВІРЕНЕ</span>';
 
             container.innerHTML += `
                 <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
@@ -571,7 +578,7 @@ const fetchAndDisplayListingDetail = async () => {
             const uniName = getUniversityFullName(listing.target_university);
             universityDisplayHTML = `<p><i class="fas fa-university"></i> Шукає біля: ${uniName}</p>`;
         }
-
+        let verificationTag = '<span class="tag-unverified">НЕПЕРЕВІРЕНЕ</span>';
         const detailHTML = `
             <div class="listing-detail-layout">
                 <div class="listing-detail-gallery">
@@ -584,6 +591,7 @@ const fetchAndDisplayListingDetail = async () => {
                 <div class="listing-detail-info">
                     <div class="listing-title-header">
                         <h1>${listing.title}</h1>
+                        
                         <button class="favorite-btn" id="favoriteBtn" title="Додати у вибране" data-listing-id="${listingId}">
                             <i class="far fa-heart"></i>
                         </button>
