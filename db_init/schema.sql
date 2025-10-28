@@ -120,7 +120,6 @@ CREATE TABLE "listings" (
 
 );
 
--- Таблиця повідомлень про помилки
 CREATE TABLE "bug_reports" (
                                "report_id" SERIAL PRIMARY KEY,
                                "user_id" INT REFERENCES "users"("user_id") ON DELETE SET NULL,
@@ -131,11 +130,9 @@ CREATE TABLE "bug_reports" (
                                "status" VARCHAR(50) DEFAULT 'new'
 );
 
--- Індекс для звітів
 CREATE INDEX "idx_bug_reports_user_id" ON "bug_reports" ("user_id");
 CREATE INDEX "idx_bug_reports_status" ON "bug_reports" ("status");
 
--- Таблиця фотографій
 CREATE TABLE "listing_photos" (
                                   "photo_id" SERIAL PRIMARY KEY,
                                   "listing_id" INT NOT NULL REFERENCES "listings"("listing_id") ON DELETE CASCADE,
@@ -144,7 +141,6 @@ CREATE TABLE "listing_photos" (
                                   "photo_order" INT DEFAULT 0
 );
 
--- Довідник характеристик
 CREATE TABLE "characteristics" (
                                    "char_id" SERIAL PRIMARY KEY,
                                    "system_key" VARCHAR(50) UNIQUE NOT NULL,
@@ -152,7 +148,6 @@ CREATE TABLE "characteristics" (
                                    "category" VARCHAR(50) NOT NULL
 );
 
--- Зв'язуюча таблиця
 CREATE TABLE "listing_characteristics" (
                                            "listing_char_id" SERIAL PRIMARY KEY,
                                            "listing_id" INT NOT NULL REFERENCES "listings"("listing_id") ON DELETE CASCADE,
@@ -160,7 +155,6 @@ CREATE TABLE "listing_characteristics" (
                                            UNIQUE ("listing_id", "char_id")
 );
 
--- Таблиця обране
 CREATE TABLE "favorites" (
                              "favorite_id" SERIAL PRIMARY KEY,
                              "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE,
@@ -169,7 +163,6 @@ CREATE TABLE "favorites" (
                              UNIQUE ("user_id", "listing_id")
 );
 
--- Таблиця розмов
 CREATE TABLE "conversations" (
                                  "conversation_id" SERIAL PRIMARY KEY,
                                  "user_one_id" INT REFERENCES "users"("user_id") ON DELETE CASCADE NOT NULL,
@@ -179,7 +172,6 @@ CREATE TABLE "conversations" (
                                  CONSTRAINT "unique_user_pair" UNIQUE ("user_one_id", "user_two_id")
 );
 
--- Таблиця повідомлень
 CREATE TABLE "messages" (
                             "message_id" SERIAL PRIMARY KEY,
                             "conversation_id" INT REFERENCES "conversations"("conversation_id") ON DELETE CASCADE NOT NULL,
@@ -189,7 +181,6 @@ CREATE TABLE "messages" (
                             "is_read" BOOLEAN DEFAULT FALSE
 );
 
--- Таблиця сповіщень
 CREATE TABLE "notifications" (
                                  "notification_id" SERIAL PRIMARY KEY,
                                  "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE,
@@ -199,7 +190,6 @@ CREATE TABLE "notifications" (
                                  "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Індекс для сповіщень
 CREATE INDEX "idx_notifications_user_id" ON "notifications" ("user_id");
 
 -- =================================================================
