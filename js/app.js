@@ -91,6 +91,8 @@ export const fetchAndDisplayListings = async (filterQuery = '') => {
             else if (listing.listing_type === 'find_mate') typeTag = '<span class="type-tag mate">Шукають сусіда</span>';
             else if (listing.listing_type === 'find_home') typeTag = '<span class="type-tag home">Шукають житло</span>';
 
+            let verificationTag = '<span class="tag-unverified">НЕПЕРЕВІРЕНЕ</span>';
+
             container.innerHTML += `
                 <a href="listing_detail.html?id=${listing.listing_id}" class="listing-card-link">
                     <div class="listing-card large-card">
@@ -576,7 +578,7 @@ const fetchAndDisplayListingDetail = async () => {
             const uniName = getUniversityFullName(listing.target_university);
             universityDisplayHTML = `<p><i class="fas fa-university"></i> Шукає біля: ${uniName}</p>`;
         }
-
+        let verificationTag = '<span class="tag-unverified">НЕПЕРЕВІРЕНЕ</span>';
         const detailHTML = `
             <div class="listing-detail-layout">
                 <div class="listing-detail-gallery">
@@ -589,6 +591,7 @@ const fetchAndDisplayListingDetail = async () => {
                 <div class="listing-detail-info">
                     <div class="listing-title-header">
                         <h1>${listing.title}</h1>
+                        
                         <button class="favorite-btn" id="favoriteBtn" title="Додати у вибране" data-listing-id="${listingId}">
                             <i class="far fa-heart"></i>
                         </button>

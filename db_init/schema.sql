@@ -1,6 +1,3 @@
--- =================================================================
--- СТВОРЕННЯ УКРАЇНСЬКОЇ КОНФІГУРАЦІЇ ПОШУКУ
--- =================================================================
 DO $$
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'ukrainian') THEN
@@ -11,11 +8,6 @@ DO $$
     END
 $$;
 
--- =================================================================
--- СТВОРЕННЯ НОВОЇ СТРУКТУРИ ТАБЛИЦЬ
--- =================================================================
-
--- Таблиця користувачів
 CREATE TABLE "users" (
                          "user_id" SERIAL PRIMARY KEY,
                          "email" VARCHAR(255) UNIQUE NOT NULL,
@@ -30,7 +22,6 @@ CREATE TABLE "users" (
                          "show_phone_publicly" BOOLEAN DEFAULT FALSE
 );
 
--- Головна таблиця оголошень
 CREATE TABLE "listings" (
                             "listing_id" SERIAL PRIMARY KEY,
                             "user_id" INT NOT NULL REFERENCES "users"("user_id") ON DELETE CASCADE,

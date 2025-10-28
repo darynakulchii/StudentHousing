@@ -1257,8 +1257,9 @@ select option[disabled] {
 
 body {
     /*background-image: url("https://i.pinimg.com/1200x/08/f0/19/08f019f2c19f91cf1484d1a699851662.jpg");*/
-    background-image: url("./photo/img3.png");
+    /*background-image: url("./photo/img3.png");*/
     /*background-image: url("https://i.pinimg.com/736x/08/f7/d8/08f7d814732bcd5e3701595fe375fd54.jpg");*/
+    background-color: var(--background-white);
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -2432,5 +2433,112 @@ input:checked + .slider:before {
     display: inline-flex;
     align-items: center;
     margin-bottom: 5px;
+}
+
+/* Зміна вигляду лейбла для згоди на обробку даних */
+.form-group .checkbox-options input#data_processing_consent + label {
+    display: inline-flex;
+    align-items: center;
+    border: none !important;
+    background: none !important;
+    color: var(--text-dark) !important;
+    padding: 0;
+    margin-left: 10px; /* Відступ від input */
+    font-size: 0.9rem;
+    font-weight: 400;
+}
+
+/* Переконайтеся, що прихований input не викликає помилок, але його функціональність зберігається */
+.form-group .checkbox-options input#data_processing_consent:checked + label {
+    /* Не змінюємо вигляд тексту, коли позначено */
+    color: var(--text-dark) !important;
+    background: none !important;
+    border: none !important;
+}
+
+/* Відображення "галочки" */
+.form-group .checkbox-options input#data_processing_consent + label::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    border: 2px solid var(--secondary-color);
+    border-radius: 4px;
+    background: var(--background-white);
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.form-group .checkbox-options input#data_processing_consent:checked + label::before {
+    content: '\2713'; /* Символ галочки */
+    font-size: 12px;
+    line-height: 14px;
+    text-align: center;
+    color: var(--text-white);
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+
+/* Стиль для позначки "Неперевірене" */
+.tag-unverified {
+    background: #f1c40f; /* Жовтий колір, що привертає увагу */
+    color: var(--text-dark);
+    padding: 3px 7px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 5px; /* Для відокремлення від інших тегів */
+    text-transform: uppercase;
+}
+/* Стиль для позначки "Перевірене" (якщо будете її використовувати) */
+.tag-verified {
+    background: var(--success-color); /* Зелений колір */
+    color: var(--text-white);
+    padding: 3px 7px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 5px;
+    text-transform: uppercase;
+}
+
+/* На сторінці деталей, де теги більші */
+.listing-detail-info .tag-unverified,
+.listing-detail-info .tag-verified {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 10px;
+}
+
+/* Стиль для позначки "Неперевірене" */
+.tag-unverified {
+    background: #f1c40f; /*#f1c40f Жовтий колір, що привертає увагу */
+    color: var(--text-dark);
+    padding: 3px 7px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 5px; /* Для відокремлення від інших тегів */
+    text-transform: uppercase;
+}
+/* Стиль для позначки "Перевірене" (якщо будете її використовувати) */
+.tag-verified {
+    background: var(--success-color); /* Зелений колір */
+    color: var(--text-white);
+    padding: 3px 7px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 5px;
+    text-transform: uppercase;
+}
+
+/* На сторінці деталей, де теги більші */
+.listing-detail-info .tag-unverified,
+.listing-detail-info .tag-verified {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 10px;
 }
 
