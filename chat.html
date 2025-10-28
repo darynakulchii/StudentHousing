@@ -6,6 +6,8 @@
     <title>UniHome | Чат</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="main.css">
+
+
 </head>
 <body>
 
@@ -14,12 +16,29 @@
 <main class="chat-page">
     <h1>Повідомлення</h1>
 
+
     <div class="chat-container">
         <aside class="conversations-list" id="conversationsList">
-            <p style="text-align: center; padding: 10px; color: var(--text-light);">Завантаження...</p>
+
+            <!-- Поле пошуку завжди видно -->
+            <div class="search-chats">
+                <input type="text" id="searchInput" placeholder="Пошук чатів...">
+                <i class="fas fa-search"></i>
+            </div>
+
+            <!-- Список чатів або повідомлення про відсутність чатів -->
+            <div id="chatsContainer">
+                <p style="text-align: center; padding: 10px; color: var(--text-light);">
+                    Ще немає розмов
+                </p>
+            </div>
+
         </aside>
 
+
+
         <section class="chat-window">
+
             <div class="chat-header" id="chatHeader">
                 Оберіть розмову
             </div>
@@ -33,10 +52,37 @@
                 <button type="submit"><i class="fas fa-paper-plane"></i></button>
             </form>
         </section>
-    </div>
 </main>
 
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script type="module" src="js/app.js"></script>
+
+<!-- Скрипт для фільтрації чатів (поки чатів немає, нічого не змінює) -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('searchInput');
+        const chatsContainer = document.getElementById('chatsContainer');
+
+        if (!searchInput || !chatsContainer) return; // Додаткова перевірка
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+
+            // Змінюємо селектор, щоб шукати елементи розмов
+            const chats = chatsContainer.querySelectorAll('.conversation-item');
+
+            chats.forEach(chat => {
+                // Отримуємо текст для порівняння (зазвичай це ім'я співрозмовника)
+                // Ми припускаємо, що ім'я знаходиться всередині елемента .conversation-item
+                const nameText = chat.textContent.toLowerCase();
+
+                // Показуємо, якщо текст запиту входить у назву, інакше приховуємо
+                chat.style.display = nameText.includes(query) ? 'flex' : 'none';
+            });
+        });
+    });
+</script>
+
+
 </body>
 </html>
