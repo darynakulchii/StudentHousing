@@ -79,7 +79,7 @@ export const handleRegistration = async () => {
         };
 
         try {
-            const response = await fetch('\${API_BASE_URL}/api/register', {
+            const response = await fetch('${API_BASE_URL}/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registrationData),
@@ -116,7 +116,7 @@ export const handleLogin = async () => {
         const data = Object.fromEntries(formData.entries());
 
         try {
-            const response = await fetch('\${API_BASE_URL}/api/login', {
+            const response = await fetch('${API_BASE_URL}/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
@@ -160,7 +160,7 @@ export const handleLoginSettings = () => {
             submitButton.textContent = 'Зміна...';
 
             try {
-                const response = await fetch('\${API_BASE_URL}/api/profile/change-email', {
+                const response = await fetch('${API_BASE_URL}/api/profile/change-email', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify(data)
@@ -198,7 +198,7 @@ export const handleLoginSettings = () => {
             submitButton.textContent = 'Зміна...';
 
             try {
-                const response = await fetch('\${API_BASE_URL}/api/profile/change-password', {
+                const response = await fetch('${API_BASE_URL}/api/profile/change-password', {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({

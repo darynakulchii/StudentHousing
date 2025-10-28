@@ -86,7 +86,7 @@ export const fetchAndDisplayNotifications = async () => {
     container.innerHTML = '<p style="padding: 20px; text-align: center; color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
 
     try {
-        const response = await fetch('\${API_BASE_URL}/api/my-notifications', { headers: getAuthHeaders() });
+        const response = await fetch('${API_BASE_URL}/api/my-notifications', { headers: getAuthHeaders() });
         if (!response.ok) throw new Error('Не вдалося завантажити сповіщення');
         const notifications = await response.json();
         container.innerHTML = '';
@@ -127,7 +127,7 @@ export const markNotificationsAsRead = async () => {
     }
 
     try {
-        const response = await fetch('\${API_BASE_URL}/api/my-notifications/read', {
+        const response = await fetch('${API_BASE_URL}/api/my-notifications/read', {
             method: 'PATCH',
             headers: getAuthHeaders()
         });
@@ -183,7 +183,7 @@ export const setupNavLinks = async () => {
         if (navLoginLink) navLoginLink.style.display = 'none';
         if (navRegisterLink) navRegisterLink.style.display = 'none';
         try {
-            const response = await fetch('\${API_BASE_URL}/api/profile', { headers: getAuthHeaders() });
+            const response = await fetch('${API_BASE_URL}/api/profile', { headers: getAuthHeaders() });
             if (response.ok) {
                 const user = await response.json();
                 userAvatarElement.style.backgroundImage = `url('${user.avatar_url || DEFAULT_AVATAR_URL}')`;
