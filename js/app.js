@@ -9,12 +9,17 @@ import {loadProfileData, setupProfileEventListeners, loadSettingsData, handleSet
 import { DEFAULT_AVATAR_URL, initializeNavigation} from './modules/navigation.js'
 import { universitiesData } from './modules/universities.js';
 
-export const DEFAULT_LISTING_IMAGE = {
+/*export const DEFAULT_LISTING_IMAGE = {
     'rent_out': './photo/default_listing_photo.png',
     'find_mate': './photo/default_listing_photo.png',
     'find_home': './photo/default_listing_photo.png',
-    'default': './photo/default_listing_photo.png'
-};
+    'default': './photo/default_listing_photo.png'}*/
+export const DEFAULT_LISTING_IMAGE = {
+    'rent_out': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome',
+    'find_mate': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome',
+    'find_home': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome',
+    'default': 'https://placehold.co/1920x1080/E9E8F5/333399?text=UniHome'}
+
 
 window.toggleOtherInput = (checkboxElement, inputId) => {
     const inputElement = document.getElementById(inputId);

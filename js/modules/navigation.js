@@ -2,7 +2,7 @@ import { MY_USER_ID, getAuthHeaders, removeToken } from './auth.js';
 
 export let mobileMenuWindow, filterSidebar, notificationSidebar, overlay, notificationBadge;
 export let currentNotificationCount = 0; //  лічильник непрочитаних сповіщень
-export const DEFAULT_AVATAR_URL = 'https://placehold.co/120x120/EBF4FF/7F9CF5?text=User';
+export const DEFAULT_AVATAR_URL = 'https://placehold.co/120x120/E9E8F5/333399?text=User';
 
 // функція для показу/приховування бічних панелей та overlay.
 const toggleSidebar = (sidebar, action) => {
