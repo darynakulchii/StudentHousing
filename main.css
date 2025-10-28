@@ -1247,12 +1247,10 @@ select option[disabled] {
     margin-bottom: 20px;
 }
 .chat-page {
-    max-width: 1000px; /* Наприклад, 1100px. Оберіть значення, яке вам подобається */
-    width: 90%; /* Гарантуємо, що на маленьких екранах він не вийде за межі */
-
-    /* 2. Центруємо блок по горизонталі */
-    margin: 17px auto; /* 20px - вертикальний відступ, auto - горизонтальний відступ (центрування) */
-    padding: 0 17px; /* Запобігаємо прилипанню до країв вікна браузера */
+    max-width: 1000px;
+    width: 90%;
+    margin: 17px auto;
+    padding: 0 17px;
 }
 
 body {
@@ -1270,9 +1268,8 @@ body::before {
     content: "";
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.04); /* 0.4 = прозорість; можна 0.3 або 0.5 */
-    /*background-color: var(--background-light);*/
-    z-index: 0; /* щоб не перекривав контент */
+    background-color: rgba(0, 0, 0, 0.04);
+    z-index: 0;
 }
 
 /* увесь основний контент над затемненням */
@@ -1287,18 +1284,15 @@ h1 {
 }
 
 .chat-container {
-    /* New: Card style */
     display: flex;
-    height: calc(100vh - 600px); /* Adjust height for the new layout */
+    height: calc(100vh - 600px);
     min-height: 400px;
-    border: 1px solid var(--border-color); /* Lighter border */
+    border: 1px solid var(--border-color);
     background: var(--background-light);
-    border-radius: 8px; /* Slightly smaller radius */
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: var(--box-shadow-light); /* Subtle shadow */
-    backdrop-filter: none; /* Remove blur effect */
-    /*max-width: 1100px; /* Наприклад, 1100px. Оберіть значення, яке вам подобається */
-    /*width: 90%; /* Гарантуємо, що на маленьких екранах він не вийде за межі */
+    box-shadow: var(--box-shadow-light);
+    backdrop-filter: none;
 
 }
 
@@ -1307,8 +1301,8 @@ h1 {
     width: 250px;
     min-width: 300px;
     border-right: 1px solid var(--border-color);
-    display: flex; /* Має бути flex */
-    flex-direction: column; /* Має бути column */
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     background: var(--background-light);
 }
@@ -1316,11 +1310,11 @@ h1 {
 /* --- 3.2. Search Bar Fix and Style --- */
 .search-chats {
     padding: 10px;
-    border-bottom: 1px solid var(--border-color); /* Використовуємо змінну */
-    background: #f8f9fa; /* Фон білий */
+    border-bottom: 1px solid var(--border-color);
+    background: #f8f9fa;
     flex-shrink: 0;
-    position: relative; /* ***КЛЮЧОВЕ***: Контекст для іконки */
-    display: block; /* Змінюємо на block для кращої сумісності з position: absolute; */
+    position: relative;
+    display: block;
 }
 
 .search-chats input {
@@ -1329,57 +1323,54 @@ h1 {
     border: 1px solid var(--border-color);
     border-radius: 10px;
     font-size: 16px;
-    background-color: var(--background-white); /* Light gray background for input */
-    padding-left: 35px; /* Make space for the icon */
+    background-color: var(--background-white);
+    padding-left: 35px;
 }
 
 .search-chats i {
     position: absolute;
-    left: 20px; /* Відстань від лівого краю */
-    top: 50%; /* Центруємо відносно вертикалі */
-    transform: translateY(-50%); /* Зміщуємо на половину власної висоти назад */
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
     color: var(--text-light);
     pointer-events: none;
-    /* Видалено: margin-left: 12px; margin-top: 10px; */
 }
 
 #chatsContainer {
     flex: 1;
     overflow-y: auto;
-    /* Remove the default padding so that list items are flush with the edges */
     padding: 0;
 }
 
 .conversation-item {
-    padding: 12px 15px; /* Smaller padding */
-    border-bottom: none; /* Remove separator lines */
-    border-left: 3px solid transparent; /* For the active indicator */
+    padding: 12px 15px;
+    border-bottom: none;
+    border-left: 3px solid transparent;
     cursor: pointer;
     gap: 10px;
-    /* Ensure the conversation item takes the full width and text doesn't overflow */
     display: flex;
     align-items: center;
 }
 
 .conversation-item:hover { background: #f1f1ff;; }
 .conversation-item.active {
-    background: #f8f8f8; /* Lightest background */
+    background: #f8f8f8;
     font-weight: 500;
-    border-left: 3px solid var(--primary-color); /* Blue indicator bar */
+    border-left: 3px solid var(--primary-color);
 }
 .conversation-item .avatar-placeholder {
-    font-size: 2rem; /* Larger icon */
+    font-size: 2rem;
     color: var(--primary-color);
 }
 .conversation-item span:last-child {
-    font-size: 1.1rem; /* Slightly larger text */
+    font-size: 1.1rem;
 }
 
 /* --ПРАВА ПАНЕЛЬ*/
 /* --- 3.3. Chat Window (Right Panel) --- */
 .chat-window {
-    flex-grow: 1; /* Use the remaining space */
-    width: auto; /* Remove fixed 70% width */
+    flex-grow: 1;
+    width: auto;
     display: flex;
     flex-direction: column;
 }
@@ -1388,18 +1379,16 @@ h1 {
     padding: 17.5px 30px;
     border-bottom: 1px solid var(--border-color);
     font-weight: 600;
-    background: #f8f9fa; /* Світло-сірий фон, як в оригіналі */
+    background: #f8f9fa;
 }
 
 .messages-area {
-    /* Center the empty message content to match the screenshot */
     flex-grow: 1;
     padding: 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    /*justify-content: center; /* Center vertically */
-    align-items: center; /* Center horizontally */
+    align-items: center;
     text-align: center;
     gap: 20px;
 }
@@ -1409,21 +1398,17 @@ h1 {
     font-size: 1.1rem;
 }
 
-/* 2. Текстове поле: змушуємо його зайняти ВЕСЬ вільний простір */
 #messageInput {
-    flex-grow: 1; /* Це змушує поле розтягнутися на всю ширину */
+    flex-grow: 1;
     padding: 10px;
-    margin-right: 10px; /* Додаємо невеликий відступ від кнопки */
+    margin-right: 10px;
     border: 1px solid var(--border-color);
     border-radius: 20px;
-    /* ... інші стилі ... */
 }
 
 .chat-input-area {
-    /* Ensure it's hidden in the default state */
-
     display: flex;
-    align-items: center; /* Вирівнюємо елементи по вертикалі */
+    align-items: center;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
@@ -1447,7 +1432,6 @@ h1 {
 
 .chat-input-area button:hover { background: #2c2c8c; }
 
-/* Стилі для вікна повідомлень */
 .chat-window .messages-area {
     display: flex;
     overflow-y: auto;
@@ -1457,30 +1441,28 @@ h1 {
 }
 
 .message {
-    max-width: 60%; /* Обмежуємо ширину, щоб повідомлення не розтягувалося на весь екран */
+    max-width: 60%;
     padding: 4px 15px;
     border-radius: 20px;
     margin-top: 1px;
-    margin-bottom: 1px; /* Невеликий відступ між повідомленнями */
-    word-wrap: break-word; /* Гарантуємо перенесення довгих слів */
+    margin-bottom: 1px;
+    word-wrap: break-word;
 }
 
 /*  2.1. СТИЛЬ ДЛЯ ВІДПРАВЛЕНИХ ПОВІДОМЛЕНЬ (НАША СТОРОНА)  */
 .message.sent {
-    background-color: var(--border-color); /* Яскравий колір для наших повідомлень */
-    /* КЛЮЧ: Виштовхує блок вправо */
+    background-color: var(--border-color);
     margin-left: auto;
     margin-right: 0;
 }
 
 /*  2.2. СТИЛЬ ДЛЯ ОТРИМАНИХ ПОВІДОМЛЕНЬ (СПІВРОЗМОВНИК)  */
 .message.received {
-    background-color: var(--border-color); /* Світлий колір для повідомлень співрозмовника */
-    /* КЛЮЧ: Виштовхує блок вліво */
+    background-color: var(--border-color);
     margin-right: auto;
     /*margin-left: 0;*/
     margin-left: 0;
-    align-self: flex-start; /* Вказує, що елемент має вирівнюватися на початку контейнера */
+    align-self: flex-start;
 }
 
 
@@ -2435,7 +2417,6 @@ input:checked + .slider:before {
     margin-bottom: 5px;
 }
 
-/* Зміна вигляду лейбла для згоди на обробку даних */
 .form-group .checkbox-options input#data_processing_consent + label {
     display: inline-flex;
     align-items: center;
@@ -2443,20 +2424,17 @@ input:checked + .slider:before {
     background: none !important;
     color: var(--text-dark) !important;
     padding: 0;
-    margin-left: 10px; /* Відступ від input */
+    margin-left: 10px;
     font-size: 0.9rem;
     font-weight: 400;
 }
 
-/* Переконайтеся, що прихований input не викликає помилок, але його функціональність зберігається */
 .form-group .checkbox-options input#data_processing_consent:checked + label {
-    /* Не змінюємо вигляд тексту, коли позначено */
     color: var(--text-dark) !important;
     background: none !important;
     border: none !important;
 }
 
-/* Відображення "галочки" */
 .form-group .checkbox-options input#data_processing_consent + label::before {
     content: '';
     display: inline-block;
@@ -2470,7 +2448,7 @@ input:checked + .slider:before {
 }
 
 .form-group .checkbox-options input#data_processing_consent:checked + label::before {
-    content: '\2713'; /* Символ галочки */
+    content: '\2713';
     font-size: 12px;
     line-height: 14px;
     text-align: center;
@@ -2479,21 +2457,18 @@ input:checked + .slider:before {
     border-color: var(--primary-color);
 }
 
-
-/* Стиль для позначки "Неперевірене" */
 .tag-unverified {
-    background: #f1c40f; /* Жовтий колір, що привертає увагу */
+    background: #f1c40f;
     color: var(--text-dark);
     padding: 3px 7px;
     border-radius: 8px;
     font-size: 0.75rem;
     font-weight: 600;
-    margin-left: 5px; /* Для відокремлення від інших тегів */
+    margin-left: 5px;
     text-transform: uppercase;
 }
-/* Стиль для позначки "Перевірене" (якщо будете її використовувати) */
 .tag-verified {
-    background: var(--success-color); /* Зелений колір */
+    background: var(--success-color);
     color: var(--text-white);
     padding: 3px 7px;
     border-radius: 8px;
@@ -2503,7 +2478,6 @@ input:checked + .slider:before {
     text-transform: uppercase;
 }
 
-/* На сторінці деталей, де теги більші */
 .listing-detail-info .tag-unverified,
 .listing-detail-info .tag-verified {
     font-size: 0.9rem;
@@ -2511,20 +2485,18 @@ input:checked + .slider:before {
     border-radius: 10px;
 }
 
-/* Стиль для позначки "Неперевірене" */
 .tag-unverified {
-    background: #f1c40f; /*#f1c40f Жовтий колір, що привертає увагу */
+    background: #f1c40f;
     color: var(--text-dark);
     padding: 3px 7px;
     border-radius: 8px;
     font-size: 0.75rem;
     font-weight: 600;
-    margin-left: 5px; /* Для відокремлення від інших тегів */
+    margin-left: 5px;
     text-transform: uppercase;
 }
-/* Стиль для позначки "Перевірене" (якщо будете її використовувати) */
 .tag-verified {
-    background: var(--success-color); /* Зелений колір */
+    background: var(--success-color);
     color: var(--text-white);
     padding: 3px 7px;
     border-radius: 8px;
@@ -2534,7 +2506,6 @@ input:checked + .slider:before {
     text-transform: uppercase;
 }
 
-/* На сторінці деталей, де теги більші */
 .listing-detail-info .tag-unverified,
 .listing-detail-info .tag-verified {
     font-size: 0.9rem;
