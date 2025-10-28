@@ -5,12 +5,18 @@ let socket;
 let currentOpenConversationId = null; // ID поточної відкритої розмови
 let currentOpenReceiverId = null; // ID співрозмовника в поточній відкритій розмові
 
-// Завантажує список розмов користувача та відображає їх у бічній панелі.
-export const loadConversations = async () => {
-    const container = document.getElementById('conversationsList');
-    if (!container) return;
 
-    container.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Завантаження розмов...</p>';
+const chatsContainer = document.getElementById('chatsContainer');
+// Завантажує список розмов користувача та відображає їх у бічній панелі.
+export const loadConversations = async ()=> {
+    // ЗМІНА 1: Отримуємо контейнер для чатів (chatsContainer)
+    const chatsContainer = document.getElementById('chatsContainer');
+
+    // ЗМІНА 2: Перевіряємо chatsContainer
+    if (!chatsContainer) return;
+
+    // ЗМІНА 3: Вставляємо спіннер ТІЛЬКИ в контейнер чатів (залишаючи пошук)
+    chatsContainer.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Завантаження розмов...</p>';
 
     try {
         const response = await fetch('http://localhost:3000/api/my-conversations', {
@@ -20,10 +26,12 @@ export const loadConversations = async () => {
         if (!response.ok) throw new Error(`HTTP помилка! статус: ${response.status}`);
 
         const conversations = await response.json();
-        container.innerHTML = '';
+        // ЗМІНА 4: Очищаємо ТІЛЬКИ контейнер чатів
+        chatsContainer.innerHTML = '';
 
         if (conversations.length === 0) {
-            container.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);">У вас ще немає розмов.</p>';
+            // ЗМІНА 5: Вставляємо повідомлення ТІЛЬКИ в контейнер чатів
+            chatsContainer.innerHTML = '<p style="text-align: center; padding: 10px; color: var(--text-light);">У вас ще немає розмов.</p>';
 
             const messagesArea = document.getElementById('messagesArea');
             const chatHeader = document.getElementById('chatHeader');
@@ -49,14 +57,17 @@ export const loadConversations = async () => {
                 document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
             });
-            container.appendChild(item);
+            // ЗМІНА 6: Додаємо елемент ТІЛЬКИ в контейнер чатів
+            chatsContainer.appendChild(item);
         });
 
     } catch (error) {
         console.error('Помилка завантаження розмов:', error);
-        container.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
+        chatsContainer.innerHTML = `<p style="color: red; padding: 10px;">Помилка завантаження. ${error.message}</p>`;
     }
 };
+
+
 
 /**
  * Завантажує та відображає повідомлення для обраної розмови.
